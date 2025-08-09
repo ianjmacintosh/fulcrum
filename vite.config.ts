@@ -10,7 +10,10 @@ export default defineConfig({
     },
     plugins: [
         tsConfigPaths(),
-        tanstackStart({ customViteReactPlugin: true }),
+        tanstackStart({ 
+            target: 'node-server',
+            customViteReactPlugin: true 
+        }),
         viteReact(),
     ],
 })
