@@ -48,3 +48,29 @@ Typical user settings (like change email address, password, time zone, etc), and
 
 - Set up auto-complete info to help fill in forms using a separate browser extension
 - See a custom email address where the user can forward emails related to their job search (instead of updating status manually)
+
+## Setup Instructions
+
+### Development
+
+To run the app in dev mode:
+
+```
+npm run dev
+```
+
+### Production
+
+To build the app:
+
+```
+npm run build
+```
+
+To start the server:
+
+```
+npm run start
+```
+
+Railway (the infrastructure platform that hosts Fulcrum) has the server start command defined as a "Custom Start Command" in the Settings. It may be better to couple this with the build command, but for now it is a separate command.
