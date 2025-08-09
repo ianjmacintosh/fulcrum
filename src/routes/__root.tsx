@@ -7,6 +7,9 @@ import {
     HeadContent,
     Scripts,
 } from '@tanstack/react-router'
+import { Navigation } from '../components/Navigation'
+import { Footer } from '../components/Footer'
+import '../styles/global.css'
 
 export const Route = createRootRoute({
     head: () => ({
@@ -19,7 +22,7 @@ export const Route = createRootRoute({
                 content: 'width=device-width, initial-scale=1',
             },
             {
-                title: 'TanStack Start Starter',
+                title: 'Fulcrum - Find your next job like a pro',
             },
         ],
     }),
@@ -29,7 +32,9 @@ export const Route = createRootRoute({
 function RootComponent() {
     return (
         <RootDocument>
+            <Navigation />
             <Outlet />
+            <Footer />
         </RootDocument>
     )
 }

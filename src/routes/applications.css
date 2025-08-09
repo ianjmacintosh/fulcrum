@@ -1,0 +1,132 @@
+.applications-summary {
+    margin-bottom: 2rem;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.applications-table {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #e8e8e8;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-cell {
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.application-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.2s ease;
+}
+
+.application-row:hover {
+    background-color: #f0f0f0;
+}
+
+.application-row:last-child {
+    border-bottom: none;
+}
+
+.cell {
+    color: #333;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.applied {
+    background-color: #e8e8e8;
+    color: #666;
+}
+
+.status-badge.phone-screen {
+    background-color: #d8d8d8;
+    color: #333;
+}
+
+.status-badge.interview {
+    background-color: #c8c8c8;
+    color: #333;
+}
+
+.status-badge.rejected {
+    background-color: #f0f0f0;
+    color: #888;
+}
+
+.add-application {
+    text-align: center;
+}
+
+.add-button {
+    padding: 1rem 2rem;
+    background-color: #f0f0f0;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    color: #666;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-button:hover {
+    background-color: #e8e8e8;
+    border-color: #999;
+    color: #333;
+}
