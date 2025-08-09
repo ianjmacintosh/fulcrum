@@ -8,6 +8,9 @@
     "dev": "vite dev --host",
     "build": "vite build"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
