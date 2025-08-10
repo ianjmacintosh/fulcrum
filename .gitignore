@@ -2,3 +2,5 @@ node_modules
 .nitro
 .output
 .tanstack
+
+.env
