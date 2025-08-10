@@ -1,0 +1,172 @@
+{
+  "data": [
+    {
+      "id": "event_001",
+      "applicationId": "app_001",
+      "statusId": "cold_apply",
+      "eventDate": "2025-01-15T10:30:00Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-01-15T10:30:00Z"
+    },
+    {
+      "id": "event_002",
+      "applicationId": "app_001",
+      "statusId": "phone_screen",
+      "eventDate": "2025-01-22T14:15:00Z",
+      "notes": "Phone screen with hiring manager",
+      "createdAt": "2025-01-22T14:15:00Z"
+    },
+    {
+      "id": "event_003",
+      "applicationId": "app_002",
+      "statusId": "cold_apply",
+      "eventDate": "2025-01-10T09:15:00Z",
+      "notes": "Applied through Indeed",
+      "createdAt": "2025-01-10T09:15:00Z"
+    },
+    {
+      "id": "event_004",
+      "applicationId": "app_002",
+      "statusId": "declined",
+      "eventDate": "2025-01-18T16:30:00Z",
+      "notes": "Automated rejection email",
+      "createdAt": "2025-01-18T16:30:00Z"
+    },
+    {
+      "id": "event_005",
+      "applicationId": "app_003",
+      "statusId": "warm_apply",
+      "eventDate": "2025-01-05T14:45:00Z",
+      "notes": "Referred by colleague",
+      "createdAt": "2025-01-05T14:45:00Z"
+    },
+    {
+      "id": "event_006",
+      "applicationId": "app_003",
+      "statusId": "phone_screen",
+      "eventDate": "2025-01-12T10:00:00Z",
+      "notes": "Phone screen completed",
+      "createdAt": "2025-01-12T10:00:00Z"
+    },
+    {
+      "id": "event_007",
+      "applicationId": "app_003",
+      "statusId": "round_2",
+      "eventDate": "2025-01-28T11:20:00Z",
+      "notes": "Technical interview with team",
+      "createdAt": "2025-01-28T11:20:00Z"
+    },
+    {
+      "id": "event_008",
+      "applicationId": "app_004",
+      "statusId": "cold_apply",
+      "eventDate": "2025-02-01T08:00:00Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-02-01T08:00:00Z"
+    },
+    {
+      "id": "event_009",
+      "applicationId": "app_005",
+      "statusId": "cold_apply",
+      "eventDate": "2025-01-20T13:30:00Z",
+      "notes": "Applied through Glassdoor",
+      "createdAt": "2025-01-20T13:30:00Z"
+    },
+    {
+      "id": "event_010",
+      "applicationId": "app_005",
+      "statusId": "phone_screen",
+      "eventDate": "2025-01-27T10:45:00Z",
+      "notes": "Phone screen scheduled",
+      "createdAt": "2025-01-27T10:45:00Z"
+    },
+    {
+      "id": "event_011",
+      "applicationId": "app_006",
+      "statusId": "cold_apply",
+      "eventDate": "2025-01-12T16:20:00Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-01-12T16:20:00Z"
+    },
+    {
+      "id": "event_012",
+      "applicationId": "app_006",
+      "statusId": "declined",
+      "eventDate": "2025-01-25T09:10:00Z",
+      "notes": "Position filled internally",
+      "createdAt": "2025-01-25T09:10:00Z"
+    },
+    {
+      "id": "event_013",
+      "applicationId": "app_007",
+      "statusId": "warm_apply",
+      "eventDate": "2025-01-08T11:15:00Z",
+      "notes": "Referred by former colleague",
+      "createdAt": "2025-01-08T11:15:00Z"
+    },
+    {
+      "id": "event_014",
+      "applicationId": "app_007",
+      "statusId": "phone_screen",
+      "eventDate": "2025-01-15T14:00:00Z",
+      "notes": "Phone screen with tech lead",
+      "createdAt": "2025-01-15T14:00:00Z"
+    },
+    {
+      "id": "event_015",
+      "applicationId": "app_007",
+      "statusId": "round_2",
+      "eventDate": "2025-01-25T16:30:00Z",
+      "notes": "Technical coding challenge",
+      "createdAt": "2025-01-25T16:30:00Z"
+    },
+    {
+      "id": "event_016",
+      "applicationId": "app_007",
+      "statusId": "round_3",
+      "eventDate": "2025-02-05T15:30:00Z",
+      "notes": "Final interview with team",
+      "createdAt": "2025-02-05T15:30:00Z"
+    },
+    {
+      "id": "event_017",
+      "applicationId": "app_008",
+      "statusId": "cold_apply",
+      "eventDate": "2024-12-20T14:00:00Z",
+      "notes": "Applied through company website",
+      "createdAt": "2024-12-20T14:00:00Z"
+    },
+    {
+      "id": "event_018",
+      "applicationId": "app_008",
+      "statusId": "phone_screen",
+      "eventDate": "2025-01-05T10:00:00Z",
+      "notes": "Initial phone screen",
+      "createdAt": "2025-01-05T10:00:00Z"
+    },
+    {
+      "id": "event_019",
+      "applicationId": "app_008",
+      "statusId": "round_2",
+      "eventDate": "2025-01-15T14:30:00Z",
+      "notes": "Technical interview",
+      "createdAt": "2025-01-15T14:30:00Z"
+    },
+    {
+      "id": "event_020",
+      "applicationId": "app_008",
+      "statusId": "round_3",
+      "eventDate": "2025-01-25T11:00:00Z",
+      "notes": "Final round interview",
+      "createdAt": "2025-01-25T11:00:00Z"
+    },
+    {
+      "id": "event_021",
+      "applicationId": "app_008",
+      "statusId": "offer",
+      "eventDate": "2025-01-30T12:00:00Z",
+      "notes": "Offer received",
+      "createdAt": "2025-01-30T12:00:00Z"
+    }
+  ]
+}
