@@ -44,7 +44,7 @@ function Dashboard() {
                     <div className="metric-card">
                         <h3>Cold Apply Conversion</h3>
                         <div className="metric-value">
-                            {coldApplyConversion ? Math.round(coldApplyConversion.conversionRate * 100) : 0}%
+                            {coldApplyConversion ? parseFloat((coldApplyConversion.conversionRate * 100).toFixed(2)) : 0}%
                         </div>
                         <p className="metric-description">Response rate for cold applications</p>
                     </div>
@@ -52,7 +52,7 @@ function Dashboard() {
                     <div className="metric-card">
                         <h3>Phone Screen Conversion</h3>
                         <div className="metric-value">
-                            {phoneScreenConversion ? Math.round(phoneScreenConversion.conversionRate * 100) : 0}%
+                            {phoneScreenConversion ? parseFloat((phoneScreenConversion.conversionRate * 100).toFixed(2)) : 0}%
                         </div>
                         <p className="metric-description">Phone screens that advance</p>
                     </div>

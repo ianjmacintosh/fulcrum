@@ -12,10 +12,6 @@ export const getDashboardAnalytics = createServerFn({ method: 'GET' }).handler(a
   }
 
   // TODO: Replace with real database queries
-  // const applications = await db.applications.findMany(...)
-  // const events = await db.applicationEvents.findMany(...)
-  // return calculateDashboardMetrics(applications, events)
-
   throw new Error('Real data implementation not yet available')
 })
 
@@ -28,10 +24,6 @@ export const getJobProjection = createServerFn({ method: 'GET' }).handler(async 
   }
 
   // TODO: Replace with real database queries and projection calculations
-  // const applications = await db.applications.findMany(...)
-  // const events = await db.applicationEvents.findMany(...)
-  // return calculateJobProjection(applications, events)
-
   throw new Error('Real data implementation not yet available')
 })
 
