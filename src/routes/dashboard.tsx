@@ -1,11 +1,31 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { getDashboardAnalytics, getJobProjection } from '../server/analytics'
 import './dashboard.css'
 
 export const Route = createFileRoute('/dashboard')({
+    loader: async () => {
+        const [dashboardData, projectionData] = await Promise.all([
+            getDashboardAnalytics(),
+            getJobProjection()
+        ])
+        return { dashboardData, projectionData }
+    },
     component: Dashboard,
 })
 
 function Dashboard() {
+    const { dashboardData, projectionData } = Route.useLoaderData()
+
+    // Find cold apply conversion rate
+    const coldApplyConversion = dashboardData.conversionRates.find(
+        (rate: any) => rate.fromStatusName === "Cold Apply"
+    )
+
+    // Find phone screen conversion rate
+    const phoneScreenConversion = dashboardData.conversionRates.find(
+        (rate: any) => rate.fromStatusName === "Phone Screen"
+    )
+
     return (
         <div className="page">
             <header className="page-header">
@@ -16,41 +36,44 @@ function Dashboard() {
             <main className="page-content">
                 <section className="metrics-grid">
                     <div className="metric-card">
-                        <h3>Applications Submitted</h3>
-                        <div className="metric-value">42</div>
-                        <p className="metric-description">Total applications this month</p>
+                        <h3>Total Applications</h3>
+                        <div className="metric-value">{dashboardData.totalApplications}</div>
+                        <p className="metric-description">Applications submitted all time</p>
                     </div>
 
                     <div className="metric-card">
                         <h3>Cold Apply Conversion</h3>
-                        <div className="metric-value">12%</div>
+                        <div className="metric-value">
+                            {coldApplyConversion ? Math.round(coldApplyConversion.conversionRate * 100) : 0}%
+                        </div>
                         <p className="metric-description">Response rate for cold applications</p>
                     </div>
 
                     <div className="metric-card">
                         <h3>Phone Screen Conversion</h3>
-                        <div className="metric-value">68%</div>
+                        <div className="metric-value">
+                            {phoneScreenConversion ? Math.round(phoneScreenConversion.conversionRate * 100) : 0}%
+                        </div>
                         <p className="metric-description">Phone screens that advance</p>
                     </div>
 
                     <div className="metric-card">
-                        <h3>Expected Timeline</h3>
-                        <div className="metric-value">6-8 weeks</div>
-                        <p className="metric-description">Projected time to job offer</p>
+                        <h3>90% Job Offer By</h3>
+                        <div className="metric-value">
+                            {new Date(projectionData.projectedTimeToOffer.targetDate).toLocaleDateString()}
+                        </div>
+                        <p className="metric-description">Projected date with 90% confidence</p>
                     </div>
                 </section>
 
                 <section className="suggestions">
-                    <h2>Focus Areas</h2>
+                    <h2>Recommendations</h2>
                     <div className="suggestion-list">
-                        <div className="suggestion-item">
-                            <h4>Increase Application Volume</h4>
-                            <p>Consider applying to 5-7 more positions this week to improve your pipeline.</p>
-                        </div>
-                        <div className="suggestion-item">
-                            <h4>Optimize Resume Performance</h4>
-                            <p>Your "Software Engineer" resume has a 15% higher response rate than others.</p>
-                        </div>
+                        {projectionData.recommendedActions.map((action: string, index: number) => (
+                            <div key={index} className="suggestion-item">
+                                <p>{action}</p>
+                            </div>
+                        ))}
                     </div>
                 </section>
             </main>
