@@ -1,114 +1,97 @@
 {
   "data": [
     {
-      "id": "app_001",
-      "companyName": "TechCorp",
-      "roleName": "Senior Software Engineer",
-      "jobPostingUrl": "https://techcorp.com/jobs/senior-swe",
-      "jobBoardId": "linkedin",
-      "workflowId": "cold_apply_workflow",
-      "roleType": "engineer",
-      "locationType": "remote",
-      "currentStatusId": "phone_screen",
-      "createdAt": "2025-01-15T10:30:00Z",
-      "updatedAt": "2025-01-22T14:15:00Z"
-    },
-    {
-      "id": "app_002",
-      "companyName": "StartupInc",
-      "roleName": "Frontend Engineer",
-      "jobPostingUrl": "https://startupinc.com/careers/frontend",
-      "jobBoardId": "indeed",
-      "workflowId": "cold_apply_workflow",
-      "roleType": "engineer",
-      "locationType": "hybrid",
-      "currentStatusId": "declined",
-      "createdAt": "2025-01-10T09:15:00Z",
-      "updatedAt": "2025-01-18T16:30:00Z"
-    },
-    {
-      "id": "app_003",
-      "companyName": "BigTech",
-      "roleName": "Software Engineering Manager",
-      "jobPostingUrl": "https://bigtech.com/jobs/manager-123",
-      "jobBoardId": "company_site",
-      "workflowId": "warm_apply_workflow",
+      "_id": "66b8f1234567890123456789",
+      "companyName": "TechCorp Alpha",
+      "roleName": "Senior Frontend Manager",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
       "roleType": "manager",
       "locationType": "on-site",
-      "currentStatusId": "round_2",
-      "createdAt": "2025-01-05T14:45:00Z",
-      "updatedAt": "2025-01-28T11:20:00Z"
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-06-17", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen completed" },
+        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-07-29", "notes": "Technical interview" }
+      ],
+      "currentStatus": { "id": "round_2", "name": "Round 2" },
+      "createdAt": "2025-06-17T00:00:00.000Z",
+      "updatedAt": "2025-07-29T00:00:00.000Z"
     },
     {
-      "id": "app_004",
-      "companyName": "DataCorp",
-      "roleName": "Senior Software Engineer",
-      "jobPostingUrl": "https://datacorp.com/jobs/senior-eng",
-      "jobBoardId": "linkedin",
-      "workflowId": "cold_apply_workflow",
+      "_id": "66b8f1234567890123456790",
+      "companyName": "StartupBeta",
+      "roleName": "Frontend Engineer - Platform",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
       "roleType": "engineer",
       "locationType": "remote",
-      "currentStatusId": "cold_apply",
-      "createdAt": "2025-02-01T08:00:00Z",
-      "updatedAt": "2025-02-01T08:00:00Z"
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-13", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen with hiring manager" },
+        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-08-06", "notes": "Technical coding challenge" },
+        { "statusId": "round_3", "statusName": "Round 3", "date": "2025-08-13", "notes": "Final round interview" }
+      ],
+      "currentStatus": { "id": "round_3", "name": "Round 3" },
+      "createdAt": "2025-07-13T00:00:00.000Z",
+      "updatedAt": "2025-08-13T00:00:00.000Z"
     },
     {
-      "id": "app_005",
-      "companyName": "FinanceApp",
-      "roleName": "Full Stack Developer",
-      "jobPostingUrl": "https://financeapp.com/careers/fullstack",
-      "jobBoardId": "glassdoor",
-      "workflowId": "cold_apply_workflow",
+      "_id": "66b8f1234567890123456791",
+      "companyName": "ScaleTech",
+      "roleName": "Engineering Manager - Web",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "warm_apply", "name": "Warm Apply Process" },
+      "applicationType": "warm",
+      "roleType": "manager",
+      "locationType": "on-site",
+      "events": [
+        { "statusId": "warm_apply", "statusName": "Warm Apply", "date": "2025-05-28", "notes": "Referral from former colleague" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-06-10", "notes": "Phone screen completed" },
+        { "statusId": "declined", "statusName": "Declined", "date": "2025-06-20", "notes": "Position filled internally" }
+      ],
+      "currentStatus": { "id": "declined", "name": "Declined" },
+      "createdAt": "2025-05-28T00:00:00.000Z",
+      "updatedAt": "2025-06-20T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456792",
+      "companyName": "GrowthCo",
+      "roleName": "Engineering Manager - Growth",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
+      "roleType": "manager",
+      "locationType": "on-site",
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-31", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-08-14", "notes": "Phone screen scheduled" }
+      ],
+      "currentStatus": { "id": "phone_screen", "name": "Phone Screen" },
+      "createdAt": "2025-07-31T00:00:00.000Z",
+      "updatedAt": "2025-08-14T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456793",
+      "companyName": "InnovateLabs",
+      "roleName": "Principal Software Engineer",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
       "roleType": "engineer",
       "locationType": "hybrid",
-      "currentStatusId": "phone_screen",
-      "createdAt": "2025-01-20T13:30:00Z",
-      "updatedAt": "2025-01-27T10:45:00Z"
-    },
-    {
-      "id": "app_006",
-      "companyName": "CloudSystems",
-      "roleName": "DevOps Engineer",
-      "jobPostingUrl": "https://cloudsystems.com/jobs/devops",
-      "jobBoardId": "linkedin",
-      "workflowId": "cold_apply_workflow",
-      "roleType": "engineer",
-      "locationType": "remote",
-      "currentStatusId": "declined",
-      "createdAt": "2025-01-12T16:20:00Z",
-      "updatedAt": "2025-01-25T09:10:00Z"
-    },
-    {
-      "id": "app_007",
-      "companyName": "MobileFirst",
-      "roleName": "iOS Developer",
-      "jobPostingUrl": "https://mobilefirst.com/careers/ios",
-      "jobBoardId": "indeed",
-      "workflowId": "warm_apply_workflow",
-      "roleType": "engineer",
-      "locationType": "hybrid",
-      "currentStatusId": "round_3",
-      "createdAt": "2025-01-08T11:15:00Z",
-      "updatedAt": "2025-02-05T15:30:00Z"
-    },
-    {
-      "id": "app_008",
-      "companyName": "WebScale",
-      "roleName": "Senior Software Engineer",
-      "jobPostingUrl": "https://webscale.com/jobs/senior-swe",
-      "jobBoardId": "company_site",
-      "workflowId": "cold_apply_workflow",
-      "roleType": "engineer",
-      "locationType": "remote",
-      "currentStatusId": "offer",
-      "createdAt": "2024-12-20T14:00:00Z",
-      "updatedAt": "2025-01-30T12:00:00Z"
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-08-01", "notes": "Applied through LinkedIn" }
+      ],
+      "currentStatus": { "id": "cold_apply", "name": "Cold Apply" },
+      "createdAt": "2025-08-01T00:00:00.000Z",
+      "updatedAt": "2025-08-01T00:00:00.000Z"
     }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 8,
-    "totalPages": 1
-  }
+  ]
 }

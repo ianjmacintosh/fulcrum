@@ -1,51 +1,51 @@
 {
   "projectedTimeToOffer": {
     "weeksEstimate": 4.2,
-    "targetDate": "2025-03-10",
-    "confidenceLevel": 0.90,
-    "basedOnApplications": 8,
+    "targetDate": "2025-09-15",
+    "confidenceLevel": 0.85,
+    "basedOnApplications": 5,
     "methodology": "pipeline_projection"
   },
   "calculationInputs": {
-    "currentPipelineApplications": 5,
-    "averageApplicationsPerWeek": 2.1,
+    "currentPipelineApplications": 4,
+    "averageApplicationsPerWeek": 1.5,
     "stepTransitions": [
       {
         "fromStatusId": "cold_apply",
         "toStatusId": "phone_screen",
-        "conversionRate": 0.67,
-        "averageDays": 7
-      },
-      {
-        "fromStatusId": "phone_screen", 
-        "toStatusId": "round_2",
         "conversionRate": 0.75,
-        "averageDays": 10
-      },
-      {
-        "fromStatusId": "round_2",
-        "toStatusId": "round_3", 
-        "conversionRate": 0.67,
-        "averageDays": 8
-      },
-      {
-        "fromStatusId": "round_3",
-        "toStatusId": "offer",
-        "conversionRate": 0.50,
-        "averageDays": 5
+        "averageDays": 21
       },
       {
         "fromStatusId": "warm_apply",
         "toStatusId": "phone_screen",
         "conversionRate": 1.0,
+        "averageDays": 13
+      },
+      {
+        "fromStatusId": "phone_screen", 
+        "toStatusId": "round_2",
+        "conversionRate": 0.5,
+        "averageDays": 8
+      },
+      {
+        "fromStatusId": "round_2",
+        "toStatusId": "round_3",
+        "conversionRate": 0.5,
+        "averageDays": 7
+      },
+      {
+        "fromStatusId": "round_3",
+        "toStatusId": "offer",
+        "conversionRate": 0.0,
         "averageDays": 5
       }
     ],
-    "confidenceBuffer": 1.5
+    "confidenceBuffer": 1.2
   },
   "recommendedActions": [
-    "Apply to 3-5 more positions this week to maintain pipeline",
-    "LinkedIn shows 75% response rate vs 67% average - focus there",
-    "Your phone screen conversion rate is strong at 75%"
+    "Your 75% phone screen rate from cold applications is excellent - maintain current quality",
+    "Focus on advancing current round 3 candidate to offer stage",
+    "Continue leveraging LinkedIn as your primary job board - 100% success rate"
   ]
 }

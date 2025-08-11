@@ -135,12 +135,11 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
     roleType: 'engineer',
     locationType: 'hybrid',
     events: [
-      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-08-01', notes: 'Applied through LinkedIn' },
-      { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-08-07', notes: 'Phone screen completed' }
+      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-08-01', notes: 'Applied through LinkedIn' }
     ],
-    currentStatus: { id: 'phone_screen', name: 'Phone Screen' },
+    currentStatus: { id: 'cold_apply', name: 'Cold Apply' },
     createdAt: new Date('2025-08-01'),
-    updatedAt: new Date('2025-08-07')
+    updatedAt: new Date('2025-08-01')
   }
 ]
 
