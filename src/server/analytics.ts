@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { USE_MOCK_DATA } from './config'
 import dashboardMockData from '../mock-data/api/analytics-dashboard.json'
 import projectionMockData from '../mock-data/api/analytics-projection.json'
+import { analyticsService } from '../db/services/analytics'
 
 // GET /api/analytics/dashboard
 export const getDashboardAnalytics = createServerFn({ method: 'GET' }).handler(async () => {
@@ -11,8 +12,13 @@ export const getDashboardAnalytics = createServerFn({ method: 'GET' }).handler(a
     return dashboardMockData
   }
 
-  // TODO: Replace with real database queries
-  throw new Error('Real data implementation not yet available')
+  // Use MongoDB database service
+  try {
+    return await analyticsService.getDashboardMetrics()
+  } catch (error) {
+    console.error('Dashboard analytics error:', error)
+    throw new Error('Failed to load dashboard metrics')
+  }
 })
 
 // GET /api/analytics/projection
@@ -23,8 +29,13 @@ export const getJobProjection = createServerFn({ method: 'GET' }).handler(async 
     return projectionMockData
   }
 
-  // TODO: Replace with real database queries and projection calculations
-  throw new Error('Real data implementation not yet available')
+  // Use MongoDB database service
+  try {
+    return await analyticsService.getJobProjection()
+  } catch (error) {
+    console.error('Job projection error:', error)
+    throw new Error('Failed to load job projection')
+  }
 })
 
 // GET /api/analytics/conversion
