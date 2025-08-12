@@ -146,14 +146,28 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
 export async function seedDatabase() {
   const db = await connectToDatabase()
 
-  console.log('🌱 Starting database seed...')
+  console.log('🌱 Checking database seed status...')
 
   try {
-    // Clear existing data
-    await db.collection('application_statuses').deleteMany({})
-    await db.collection('workflows').deleteMany({})
-    await db.collection('job_boards').deleteMany({})
-    await db.collection('applications').deleteMany({})
+    // Check if data already exists
+    const existingStatuses = await db.collection('application_statuses').countDocuments()
+    const existingWorkflows = await db.collection('workflows').countDocuments()
+    const existingJobBoards = await db.collection('job_boards').countDocuments()
+    const existingApps = await db.collection('applications').countDocuments()
+
+    const totalExistingRecords = existingStatuses + existingWorkflows + existingJobBoards + existingApps
+
+    if (totalExistingRecords > 0) {
+      console.log(`✅ Database already contains ${totalExistingRecords} records:`)
+      console.log(`   - Application statuses: ${existingStatuses}`)
+      console.log(`   - Workflows: ${existingWorkflows}`)
+      console.log(`   - Job boards: ${existingJobBoards}`)
+      console.log(`   - Applications: ${existingApps}`)
+      console.log('🔒 Skipping seed to preserve existing data')
+      return
+    }
+
+    console.log('📦 Database is empty, proceeding with seed...')
 
     // Insert default statuses
     const statusResult = await db.collection('application_statuses').insertMany(defaultStatuses)
