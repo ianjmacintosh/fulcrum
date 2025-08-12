@@ -1,20 +1,26 @@
 import { connectToDatabase } from './connection'
 import { JobApplication, ApplicationStatus, Workflow, JobBoard } from './schemas'
+import { adminService } from './services/admin'
+import { hashPassword } from '../utils/crypto'
+
+// Hard-coded test user ID for development
+const TEST_USER_ID = 'test-user-123'
 
 // Default application statuses
 const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
-  { name: 'Cold Apply', isTerminal: false, createdAt: new Date() },
-  { name: 'Warm Apply', isTerminal: false, createdAt: new Date() },
-  { name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
-  { name: 'Round 2', isTerminal: false, createdAt: new Date() },
-  { name: 'Round 3', isTerminal: false, createdAt: new Date() },
-  { name: 'Offer', isTerminal: true, createdAt: new Date() },
-  { name: 'Declined', isTerminal: true, createdAt: new Date() }
+  { userId: TEST_USER_ID, name: 'Cold Apply', isTerminal: false, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Warm Apply', isTerminal: false, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Round 2', isTerminal: false, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Round 3', isTerminal: false, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Offer', isTerminal: true, createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Declined', isTerminal: true, createdAt: new Date() }
 ]
 
 // Default workflows
 const defaultWorkflows: Omit<Workflow, '_id'>[] = [
   {
+    userId: TEST_USER_ID,
     name: 'Cold Apply Process',
     description: 'Standard cold application workflow',
     isDefault: true,
@@ -28,6 +34,7 @@ const defaultWorkflows: Omit<Workflow, '_id'>[] = [
     createdAt: new Date()
   },
   {
+    userId: TEST_USER_ID,
     name: 'Warm Apply Process',
     description: 'Referral/warm application workflow',
     isDefault: true,
@@ -44,16 +51,17 @@ const defaultWorkflows: Omit<Workflow, '_id'>[] = [
 
 // Default job boards
 const defaultJobBoards: Omit<JobBoard, '_id'>[] = [
-  { name: 'LinkedIn', url: 'https://linkedin.com', createdAt: new Date() },
-  { name: 'Indeed', url: 'https://indeed.com', createdAt: new Date() },
-  { name: 'Glassdoor', url: 'https://glassdoor.com', createdAt: new Date() },
-  { name: 'Otta', url: 'https://otta.com', createdAt: new Date() },
-  { name: 'Company Site', url: '', createdAt: new Date() }
+  { userId: TEST_USER_ID, name: 'LinkedIn', url: 'https://linkedin.com', createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Indeed', url: 'https://indeed.com', createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Glassdoor', url: 'https://glassdoor.com', createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Otta', url: 'https://otta.com', createdAt: new Date() },
+  { userId: TEST_USER_ID, name: 'Company Site', url: '', createdAt: new Date() }
 ]
 
 // Sample applications based on your real data
 const sampleApplications: Omit<JobApplication, '_id'>[] = [
   {
+    userId: TEST_USER_ID,
     companyName: 'TechCorp Alpha',
     roleName: 'Senior Frontend Manager',
     jobPostingUrl: '',
@@ -72,6 +80,7 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
     updatedAt: new Date('2025-07-29')
   },
   {
+    userId: TEST_USER_ID,
     companyName: 'StartupBeta',
     roleName: 'Frontend Engineer - Platform',
     jobPostingUrl: '',
@@ -91,6 +100,7 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
     updatedAt: new Date('2025-08-13')
   },
   {
+    userId: TEST_USER_ID,
     companyName: 'ScaleTech',
     roleName: 'Engineering Manager - Web',
     jobPostingUrl: '',
@@ -109,6 +119,7 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
     updatedAt: new Date('2025-06-20')
   },
   {
+    userId: TEST_USER_ID,
     companyName: 'GrowthCo',
     roleName: 'Engineering Manager - Growth',
     jobPostingUrl: '',
@@ -126,6 +137,7 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
     updatedAt: new Date('2025-08-14')
   },
   {
+    userId: TEST_USER_ID,
     companyName: 'InnovateLabs',
     roleName: 'Principal Software Engineer',
     jobPostingUrl: '',
@@ -143,12 +155,39 @@ const sampleApplications: Omit<JobApplication, '_id'>[] = [
   }
 ]
 
+async function seedAdmin() {
+  console.log('🔐 Setting up admin user...')
+  
+  const defaultUsername = 'admin'
+  const defaultPassword = 'admin123'
+  
+  // Check if admin already exists
+  const existingAdmin = await adminService.getAdminByUsername(defaultUsername)
+  if (existingAdmin) {
+    console.log('✅ Admin user already exists')
+    return
+  }
+  
+  // Hash the default password
+  const hashedPassword = await hashPassword(defaultPassword)
+  
+  // Create admin user
+  await adminService.createAdminUser(defaultUsername, hashedPassword)
+  console.log('✅ Default admin user created')
+  console.log('📋 Admin credentials:')
+  console.log(`   Username: ${defaultUsername}`)
+  console.log(`   Password: ${defaultPassword}`)
+  console.log('⚠️  Please change these credentials after first login!')
+}
+
 export async function seedDatabase() {
   const db = await connectToDatabase()
 
   console.log('🌱 Checking database seed status...')
 
   try {
+    // Always ensure admin exists
+    await seedAdmin()
     // Check if data already exists
     const existingStatuses = await db.collection('application_statuses').countDocuments()
     const existingWorkflows = await db.collection('workflows').countDocuments()

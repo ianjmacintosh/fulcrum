@@ -15,6 +15,9 @@ import { Route as JobBoardsRouteImport } from './routes/job-boards'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -46,6 +49,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLogoutRoute = AdminLogoutRouteImport.update({
+  id: '/admin/logout',
+  path: '/admin/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +72,9 @@ export interface FileRoutesByFullPath {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +83,9 @@ export interface FileRoutesByTo {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +95,9 @@ export interface FileRoutesById {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +108,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +119,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -97,6 +130,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +142,9 @@ export interface RootRouteChildren {
   JobBoardsRoute: typeof JobBoardsRoute
   ResumesRoute: typeof ResumesRoute
   SettingsRoute: typeof SettingsRoute
+  AdminLogoutRoute: typeof AdminLogoutRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +191,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/logout': {
+      id: '/admin/logout'
+      path: '/admin/logout'
+      fullPath: '/admin/logout'
+      preLoaderRoute: typeof AdminLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   JobBoardsRoute: JobBoardsRoute,
   ResumesRoute: ResumesRoute,
   SettingsRoute: SettingsRoute,
+  AdminLogoutRoute: AdminLogoutRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

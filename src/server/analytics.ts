@@ -4,6 +4,9 @@ import dashboardMockData from '../mock-data/api/analytics-dashboard.json'
 import projectionMockData from '../mock-data/api/analytics-projection.json'
 import { analyticsService } from '../db/services/analytics'
 
+// Hard-coded test user ID for development
+const TEST_USER_ID = 'test-user-123'
+
 // GET /api/analytics/dashboard
 export const getDashboardAnalytics = createServerFn({ method: 'GET' }).handler(async () => {
   if (USE_MOCK_DATA) {
@@ -12,9 +15,9 @@ export const getDashboardAnalytics = createServerFn({ method: 'GET' }).handler(a
     return dashboardMockData
   }
 
-  // Use MongoDB database service
+  // Use MongoDB database service with hard-coded user ID
   try {
-    return await analyticsService.getDashboardMetrics()
+    return await analyticsService.getDashboardMetrics(TEST_USER_ID)
   } catch (error) {
     console.error('Dashboard analytics error:', error)
     throw new Error('Failed to load dashboard metrics')
@@ -29,9 +32,9 @@ export const getJobProjection = createServerFn({ method: 'GET' }).handler(async 
     return projectionMockData
   }
 
-  // Use MongoDB database service
+  // Use MongoDB database service with hard-coded user ID
   try {
-    return await analyticsService.getJobProjection()
+    return await analyticsService.getJobProjection(TEST_USER_ID)
   } catch (error) {
     console.error('Job projection error:', error)
     throw new Error('Failed to load job projection')

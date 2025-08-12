@@ -3,9 +3,9 @@ import { JobApplication } from '../schemas'
 
 export class AnalyticsService {
   
-  async getDashboardMetrics() {
-    // Get all applications
-    const applications = await applicationService.getApplications()
+  async getDashboardMetrics(userId: string) {
+    // Get all applications for user
+    const applications = await applicationService.getApplications(userId)
     const totalApplications = applications.length
 
     if (totalApplications === 0) {
@@ -35,8 +35,8 @@ export class AnalyticsService {
     }
   }
 
-  async getJobProjection() {
-    const applications = await applicationService.getApplications()
+  async getJobProjection(userId: string) {
+    const applications = await applicationService.getApplications(userId)
     
     if (applications.length === 0) {
       return this.getDefaultProjection()

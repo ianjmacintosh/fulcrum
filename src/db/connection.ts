@@ -20,7 +20,11 @@ export async function connectToDatabase(): Promise<Db> {
     return db
   }
 
-  console.log('🔗 Attempting to connect with URI:', MONGODB_URI.replace(/:([^:@]+)@/, ':***@'))
+  console.log('🔗 Environment check:', {
+  MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'NOT SET',
+  NODE_ENV: process.env.NODE_ENV
+})
+console.log('🔗 Attempting to connect with URI:', MONGODB_URI.replace(/:([^:@]+)@/, ':***@'))
 
   try {
     if (!client) {
