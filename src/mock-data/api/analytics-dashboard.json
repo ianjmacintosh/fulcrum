@@ -1,0 +1,82 @@
+{
+  "totalApplications": 5,
+  "monthlyOverview": {
+    "applicationsThisMonth": 2,
+    "trendVsPreviousMonth": 100.0,
+    "dailyAverage": 0.7
+  },
+  "conversionRates": [
+    {
+      "fromStatusId": "cold_apply",
+      "fromStatusName": "Cold Apply", 
+      "toStatusId": "phone_screen",
+      "toStatusName": "Phone Screen",
+      "conversionRate": 0.75,
+      "total": 4,
+      "converted": 3
+    },
+    {
+      "fromStatusId": "warm_apply",
+      "fromStatusName": "Warm Apply", 
+      "toStatusId": "phone_screen",
+      "toStatusName": "Phone Screen",
+      "conversionRate": 1.0,
+      "total": 1,
+      "converted": 1
+    },
+    {
+      "fromStatusId": "phone_screen", 
+      "fromStatusName": "Phone Screen",
+      "toStatusId": "round_2",
+      "toStatusName": "Round 2", 
+      "conversionRate": 0.5,
+      "total": 4,
+      "converted": 2
+    },
+    {
+      "fromStatusId": "round_2",
+      "fromStatusName": "Round 2", 
+      "toStatusId": "round_3",
+      "toStatusName": "Round 3", 
+      "conversionRate": 0.5,
+      "total": 2,
+      "converted": 1
+    }
+  ],
+  "pipelineHealth": {
+    "byStatus": [
+      {
+        "statusId": "cold_apply",
+        "statusName": "Cold Apply",
+        "count": 1
+      },
+      {
+        "statusId": "phone_screen", 
+        "statusName": "Phone Screen",
+        "count": 1
+      },
+      {
+        "statusId": "round_2",
+        "statusName": "Round 2", 
+        "count": 1
+      },
+      {
+        "statusId": "round_3",
+        "statusName": "Round 3", 
+        "count": 1
+      },
+      {
+        "statusId": "declined",
+        "statusName": "Declined",
+        "count": 1
+      }
+    ],
+    "daysSinceLastApplication": 10
+  },
+  "performanceInsights": {
+    "topJobBoard": {
+      "name": "LinkedIn", 
+      "responseRate": 0.8
+    }
+  }
+}

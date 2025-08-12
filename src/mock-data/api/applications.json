@@ -1,0 +1,97 @@
+{
+  "data": [
+    {
+      "_id": "66b8f1234567890123456789",
+      "companyName": "TechCorp Alpha",
+      "roleName": "Senior Frontend Manager",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
+      "roleType": "manager",
+      "locationType": "on-site",
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-06-17", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen completed" },
+        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-07-29", "notes": "Technical interview" }
+      ],
+      "currentStatus": { "id": "round_2", "name": "Round 2" },
+      "createdAt": "2025-06-17T00:00:00.000Z",
+      "updatedAt": "2025-07-29T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456790",
+      "companyName": "StartupBeta",
+      "roleName": "Frontend Engineer - Platform",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
+      "roleType": "engineer",
+      "locationType": "remote",
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-13", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen with hiring manager" },
+        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-08-06", "notes": "Technical coding challenge" },
+        { "statusId": "round_3", "statusName": "Round 3", "date": "2025-08-13", "notes": "Final round interview" }
+      ],
+      "currentStatus": { "id": "round_3", "name": "Round 3" },
+      "createdAt": "2025-07-13T00:00:00.000Z",
+      "updatedAt": "2025-08-13T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456791",
+      "companyName": "ScaleTech",
+      "roleName": "Engineering Manager - Web",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "warm_apply", "name": "Warm Apply Process" },
+      "applicationType": "warm",
+      "roleType": "manager",
+      "locationType": "on-site",
+      "events": [
+        { "statusId": "warm_apply", "statusName": "Warm Apply", "date": "2025-05-28", "notes": "Referral from former colleague" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-06-10", "notes": "Phone screen completed" },
+        { "statusId": "declined", "statusName": "Declined", "date": "2025-06-20", "notes": "Position filled internally" }
+      ],
+      "currentStatus": { "id": "declined", "name": "Declined" },
+      "createdAt": "2025-05-28T00:00:00.000Z",
+      "updatedAt": "2025-06-20T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456792",
+      "companyName": "GrowthCo",
+      "roleName": "Engineering Manager - Growth",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
+      "roleType": "manager",
+      "locationType": "on-site",
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-31", "notes": "Applied through LinkedIn" },
+        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-08-14", "notes": "Phone screen scheduled" }
+      ],
+      "currentStatus": { "id": "phone_screen", "name": "Phone Screen" },
+      "createdAt": "2025-07-31T00:00:00.000Z",
+      "updatedAt": "2025-08-14T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f1234567890123456793",
+      "companyName": "InnovateLabs",
+      "roleName": "Principal Software Engineer",
+      "jobPostingUrl": "",
+      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
+      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "applicationType": "cold",
+      "roleType": "engineer",
+      "locationType": "hybrid",
+      "events": [
+        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-08-01", "notes": "Applied through LinkedIn" }
+      ],
+      "currentStatus": { "id": "cold_apply", "name": "Cold Apply" },
+      "createdAt": "2025-08-01T00:00:00.000Z",
+      "updatedAt": "2025-08-01T00:00:00.000Z"
+    }
+  ]
+}

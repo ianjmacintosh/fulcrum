@@ -1,0 +1,121 @@
+{
+  "data": [
+    {
+      "_id": "66b8f2234567890123456801",
+      "applicationId": "66b8f1234567890123456789",
+      "statusId": "cold_apply",
+      "statusName": "Cold Apply",
+      "eventDate": "2025-06-17T00:00:00.000Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-06-17T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456802",
+      "applicationId": "66b8f1234567890123456789",
+      "statusId": "phone_screen",
+      "statusName": "Phone Screen",
+      "eventDate": "2025-07-24T00:00:00.000Z",
+      "notes": "Phone screen completed",
+      "createdAt": "2025-07-24T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456803",
+      "applicationId": "66b8f1234567890123456789",
+      "statusId": "round_2",
+      "statusName": "Round 2",
+      "eventDate": "2025-07-29T00:00:00.000Z",
+      "notes": "Technical interview",
+      "createdAt": "2025-07-29T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456804",
+      "applicationId": "66b8f1234567890123456790",
+      "statusId": "cold_apply",
+      "statusName": "Cold Apply",
+      "eventDate": "2025-07-13T00:00:00.000Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-07-13T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456805",
+      "applicationId": "66b8f1234567890123456790",
+      "statusId": "phone_screen",
+      "statusName": "Phone Screen",
+      "eventDate": "2025-07-24T00:00:00.000Z",
+      "notes": "Phone screen with hiring manager",
+      "createdAt": "2025-07-24T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456806",
+      "applicationId": "66b8f1234567890123456790",
+      "statusId": "round_2",
+      "statusName": "Round 2",
+      "eventDate": "2025-08-06T00:00:00.000Z",
+      "notes": "Technical coding challenge",
+      "createdAt": "2025-08-06T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456807",
+      "applicationId": "66b8f1234567890123456790",
+      "statusId": "round_3",
+      "statusName": "Round 3",
+      "eventDate": "2025-08-13T00:00:00.000Z",
+      "notes": "Final round interview",
+      "createdAt": "2025-08-13T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456808",
+      "applicationId": "66b8f1234567890123456791",
+      "statusId": "warm_apply",
+      "statusName": "Warm Apply",
+      "eventDate": "2025-05-28T00:00:00.000Z",
+      "notes": "Referral from former colleague",
+      "createdAt": "2025-05-28T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456809",
+      "applicationId": "66b8f1234567890123456791",
+      "statusId": "phone_screen",
+      "statusName": "Phone Screen",
+      "eventDate": "2025-06-10T00:00:00.000Z",
+      "notes": "Phone screen completed",
+      "createdAt": "2025-06-10T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456810",
+      "applicationId": "66b8f1234567890123456791",
+      "statusId": "declined",
+      "statusName": "Declined",
+      "eventDate": "2025-06-20T00:00:00.000Z",
+      "notes": "Position filled internally",
+      "createdAt": "2025-06-20T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456811",
+      "applicationId": "66b8f1234567890123456792",
+      "statusId": "cold_apply",
+      "statusName": "Cold Apply",
+      "eventDate": "2025-07-31T00:00:00.000Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-07-31T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456812",
+      "applicationId": "66b8f1234567890123456792",
+      "statusId": "phone_screen",
+      "statusName": "Phone Screen",
+      "eventDate": "2025-08-14T00:00:00.000Z",
+      "notes": "Phone screen scheduled",
+      "createdAt": "2025-08-14T00:00:00.000Z"
+    },
+    {
+      "_id": "66b8f2234567890123456813",
+      "applicationId": "66b8f1234567890123456793",
+      "statusId": "cold_apply",
+      "statusName": "Cold Apply",
+      "eventDate": "2025-08-01T00:00:00.000Z",
+      "notes": "Applied through LinkedIn",
+      "createdAt": "2025-08-01T00:00:00.000Z"
+    }
+  ]
+}
