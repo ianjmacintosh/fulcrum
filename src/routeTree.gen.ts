@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createServerRootRoute } from '@tanstack/react-start/server'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResumesRouteImport } from './routes/resumes'
@@ -18,6 +20,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
+import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
+
+const rootServerRouteImport = createServerRootRoute()
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -63,6 +68,11 @@ const AdminLogoutRoute = AdminLogoutRouteImport.update({
   id: '/admin/logout',
   path: '/admin/logout',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootServerRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -146,6 +156,27 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
+export interface FileServerRoutesByFullPath {
+  '/api/admin/users': typeof ApiAdminUsersServerRoute
+}
+export interface FileServerRoutesByTo {
+  '/api/admin/users': typeof ApiAdminUsersServerRoute
+}
+export interface FileServerRoutesById {
+  __root__: typeof rootServerRouteImport
+  '/api/admin/users': typeof ApiAdminUsersServerRoute
+}
+export interface FileServerRouteTypes {
+  fileServerRoutesByFullPath: FileServerRoutesByFullPath
+  fullPaths: '/api/admin/users'
+  fileServerRoutesByTo: FileServerRoutesByTo
+  to: '/api/admin/users'
+  id: '__root__' | '/api/admin/users'
+  fileServerRoutesById: FileServerRoutesById
+}
+export interface RootServerRouteChildren {
+  ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRoute
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
@@ -214,6 +245,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+declare module '@tanstack/react-start/server' {
+  interface ServerFileRoutesByPath {
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+  }
+}
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -229,3 +271,9 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiAdminUsersServerRoute: ApiAdminUsersServerRoute,
+}
+export const serverRouteTree = rootServerRouteImport
+  ._addFileChildren(rootServerRouteChildren)
+  ._addFileTypes<FileServerRouteTypes>()
