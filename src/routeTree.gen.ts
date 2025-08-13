@@ -20,9 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
+import { Route as AdminChangePasswordRouteImport } from './routes/admin/change-password'
 import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
 import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
+import { ServerRoute as ApiAdminChangePasswordServerRouteImport } from './routes/api/admin/change-password'
 import { ServerRoute as ApiAdminUsersCreateServerRouteImport } from './routes/api/admin/users/create'
 import { ServerRoute as ApiAdminUsersIdServerRouteImport } from './routes/api/admin/users/$id'
 
@@ -73,6 +75,11 @@ const AdminLogoutRoute = AdminLogoutRouteImport.update({
   path: '/admin/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminChangePasswordRoute = AdminChangePasswordRouteImport.update({
+  id: '/admin/change-password',
+  path: '/admin/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
   id: '/api/admin/users',
   path: '/api/admin/users',
@@ -88,6 +95,12 @@ const ApiAdminLoginServerRoute = ApiAdminLoginServerRouteImport.update({
   path: '/api/admin/login',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiAdminChangePasswordServerRoute =
+  ApiAdminChangePasswordServerRouteImport.update({
+    id: '/api/admin/change-password',
+    path: '/api/admin/change-password',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
 const ApiAdminUsersCreateServerRoute =
   ApiAdminUsersCreateServerRouteImport.update({
     id: '/create',
@@ -107,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
@@ -118,6 +132,7 @@ export interface FileRoutesByTo {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin': typeof AdminIndexRoute
@@ -130,6 +145,7 @@ export interface FileRoutesById {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/': typeof AdminIndexRoute
@@ -143,6 +159,7 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
     | '/admin'
@@ -154,6 +171,7 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
     | '/admin'
@@ -165,6 +183,7 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
     | '/admin/'
@@ -177,11 +196,13 @@ export interface RootRouteChildren {
   JobBoardsRoute: typeof JobBoardsRoute
   ResumesRoute: typeof ResumesRoute
   SettingsRoute: typeof SettingsRoute
+  AdminChangePasswordRoute: typeof AdminChangePasswordRoute
   AdminLogoutRoute: typeof AdminLogoutRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 export interface FileServerRoutesByFullPath {
+  '/api/admin/change-password': typeof ApiAdminChangePasswordServerRoute
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
@@ -189,6 +210,7 @@ export interface FileServerRoutesByFullPath {
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
 }
 export interface FileServerRoutesByTo {
+  '/api/admin/change-password': typeof ApiAdminChangePasswordServerRoute
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
@@ -197,6 +219,7 @@ export interface FileServerRoutesByTo {
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
+  '/api/admin/change-password': typeof ApiAdminChangePasswordServerRoute
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
@@ -206,6 +229,7 @@ export interface FileServerRoutesById {
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
   fullPaths:
+    | '/api/admin/change-password'
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
@@ -213,6 +237,7 @@ export interface FileServerRouteTypes {
     | '/api/admin/users/create'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
+    | '/api/admin/change-password'
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
@@ -220,6 +245,7 @@ export interface FileServerRouteTypes {
     | '/api/admin/users/create'
   id:
     | '__root__'
+    | '/api/admin/change-password'
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
@@ -228,6 +254,7 @@ export interface FileServerRouteTypes {
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
+  ApiAdminChangePasswordServerRoute: typeof ApiAdminChangePasswordServerRoute
   ApiAdminLoginServerRoute: typeof ApiAdminLoginServerRoute
   ApiAdminLogoutServerRoute: typeof ApiAdminLogoutServerRoute
   ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRouteWithChildren
@@ -298,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/change-password': {
+      id: '/admin/change-password'
+      path: '/admin/change-password'
+      fullPath: '/admin/change-password'
+      preLoaderRoute: typeof AdminChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -321,6 +355,13 @@ declare module '@tanstack/react-start/server' {
       path: '/api/admin/login'
       fullPath: '/api/admin/login'
       preLoaderRoute: typeof ApiAdminLoginServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/admin/change-password': {
+      id: '/api/admin/change-password'
+      path: '/api/admin/change-password'
+      fullPath: '/api/admin/change-password'
+      preLoaderRoute: typeof ApiAdminChangePasswordServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
     '/api/admin/users/create': {
@@ -360,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobBoardsRoute: JobBoardsRoute,
   ResumesRoute: ResumesRoute,
   SettingsRoute: SettingsRoute,
+  AdminChangePasswordRoute: AdminChangePasswordRoute,
   AdminLogoutRoute: AdminLogoutRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -368,6 +410,7 @@ export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiAdminChangePasswordServerRoute: ApiAdminChangePasswordServerRoute,
   ApiAdminLoginServerRoute: ApiAdminLoginServerRoute,
   ApiAdminLogoutServerRoute: ApiAdminLogoutServerRoute,
   ApiAdminUsersServerRoute: ApiAdminUsersServerRouteWithChildren,

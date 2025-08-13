@@ -303,6 +303,155 @@
         }
       }
     },
+    "/api/admin/change-password": {
+      "post": {
+        "tags": ["Admin Authentication"],
+        "summary": "Change admin password",
+        "description": "Change the password for the current admin user",
+        "operationId": "changeAdminPassword",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword", "confirmPassword"],
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "description": "Current admin password",
+                    "minLength": 1
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "description": "New password (minimum 8 characters)",
+                    "minLength": 8
+                  },
+                  "confirmPassword": {
+                    "type": "string",
+                    "description": "Confirmation of new password",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Password changed successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or same password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "validation": {
+                    "summary": "Validation error",
+                    "value": {
+                      "success": false,
+                      "error": "New password and confirmation don't match"
+                    }
+                  },
+                  "samePassword": {
+                    "summary": "Same password error",
+                    "value": {
+                      "success": false,
+                      "error": "New password must be different from current password"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Current password incorrect or not authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "wrongPassword": {
+                    "summary": "Incorrect current password",
+                    "value": {
+                      "success": false,
+                      "error": "Current password is incorrect"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many password change attempts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Too many password change attempts. Try again in 900 seconds."
+                    },
+                    "retryAfter": {
+                      "type": "integer",
+                      "description": "Seconds to wait before retrying",
+                      "example": 900
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/analytics/dashboard": {
       "get": {
         "tags": ["Analytics"],
