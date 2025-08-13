@@ -21,7 +21,10 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
+import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
+import { ServerRoute as ApiAdminUsersCreateServerRouteImport } from './routes/api/admin/users/create'
+import { ServerRoute as ApiAdminUsersChar91idChar93DeleteServerRouteImport } from './routes/api/admin/users/[id]/delete'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -75,11 +78,28 @@ const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
   path: '/api/admin/users',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiAdminLogoutServerRoute = ApiAdminLogoutServerRouteImport.update({
+  id: '/api/admin/logout',
+  path: '/api/admin/logout',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
 const ApiAdminLoginServerRoute = ApiAdminLoginServerRouteImport.update({
   id: '/api/admin/login',
   path: '/api/admin/login',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiAdminUsersCreateServerRoute =
+  ApiAdminUsersCreateServerRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => ApiAdminUsersServerRoute,
+  } as any)
+const ApiAdminUsersChar91idChar93DeleteServerRoute =
+  ApiAdminUsersChar91idChar93DeleteServerRouteImport.update({
+    id: '/[id]/delete',
+    path: '/[id]/delete',
+    getParentRoute: () => ApiAdminUsersServerRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -164,28 +184,54 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
-  '/api/admin/users': typeof ApiAdminUsersServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
-  '/api/admin/users': typeof ApiAdminUsersServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/admin/login': typeof ApiAdminLoginServerRoute
-  '/api/admin/users': typeof ApiAdminUsersServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/admin/login' | '/api/admin/users'
+  fullPaths:
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/create'
+    | '/api/admin/users/[id]/delete'
   fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/admin/login' | '/api/admin/users'
-  id: '__root__' | '/api/admin/login' | '/api/admin/users'
+  to:
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/create'
+    | '/api/admin/users/[id]/delete'
+  id:
+    | '__root__'
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/create'
+    | '/api/admin/users/[id]/delete'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiAdminLoginServerRoute: typeof ApiAdminLoginServerRoute
-  ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRoute
+  ApiAdminLogoutServerRoute: typeof ApiAdminLogoutServerRoute
+  ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -264,6 +310,13 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiAdminUsersServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/admin/logout': {
+      id: '/api/admin/logout'
+      path: '/api/admin/logout'
+      fullPath: '/api/admin/logout'
+      preLoaderRoute: typeof ApiAdminLogoutServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/admin/login': {
       id: '/api/admin/login'
       path: '/api/admin/login'
@@ -271,8 +324,36 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiAdminLoginServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/admin/users/create': {
+      id: '/api/admin/users/create'
+      path: '/create'
+      fullPath: '/api/admin/users/create'
+      preLoaderRoute: typeof ApiAdminUsersCreateServerRouteImport
+      parentRoute: typeof ApiAdminUsersServerRoute
+    }
+    '/api/admin/users/[id]/delete': {
+      id: '/api/admin/users/[id]/delete'
+      path: '/[id]/delete'
+      fullPath: '/api/admin/users/[id]/delete'
+      preLoaderRoute: typeof ApiAdminUsersChar91idChar93DeleteServerRouteImport
+      parentRoute: typeof ApiAdminUsersServerRoute
+    }
   }
 }
+
+interface ApiAdminUsersServerRouteChildren {
+  ApiAdminUsersCreateServerRoute: typeof ApiAdminUsersCreateServerRoute
+  ApiAdminUsersChar91idChar93DeleteServerRoute: typeof ApiAdminUsersChar91idChar93DeleteServerRoute
+}
+
+const ApiAdminUsersServerRouteChildren: ApiAdminUsersServerRouteChildren = {
+  ApiAdminUsersCreateServerRoute: ApiAdminUsersCreateServerRoute,
+  ApiAdminUsersChar91idChar93DeleteServerRoute:
+    ApiAdminUsersChar91idChar93DeleteServerRoute,
+}
+
+const ApiAdminUsersServerRouteWithChildren =
+  ApiAdminUsersServerRoute._addFileChildren(ApiAdminUsersServerRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -290,7 +371,8 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAdminLoginServerRoute: ApiAdminLoginServerRoute,
-  ApiAdminUsersServerRoute: ApiAdminUsersServerRoute,
+  ApiAdminLogoutServerRoute: ApiAdminLogoutServerRoute,
+  ApiAdminUsersServerRoute: ApiAdminUsersServerRouteWithChildren,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

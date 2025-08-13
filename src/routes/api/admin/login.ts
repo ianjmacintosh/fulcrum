@@ -3,6 +3,7 @@ import { adminService } from '../../../db/services/admin'
 import { verifyPassword } from '../../../utils/crypto'
 import { createAdminSession, ADMIN_SESSION_COOKIE, SESSION_MAX_AGE } from '../../../utils/admin-session'
 import { adminRateLimiter, getClientIP } from '../../../utils/rate-limiter'
+import { createSuccessResponse, createErrorResponse } from '../../../utils/admin-auth-helpers'
 import { z } from 'zod'
 
 // Schema for login validation
@@ -40,39 +41,21 @@ export const ServerRoute = createServerFileRoute('/api/admin/login').methods({
       const validation = LoginSchema.safeParse({ username, password })
       if (!validation.success) {
         adminRateLimiter.record(clientIP, false)
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Invalid username or password.'
-        }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        })
+        return createErrorResponse('Invalid username or password.', 400)
       }
       
       // Find admin user
       const admin = await adminService.getAdminByUsername(username)
       if (!admin) {
         adminRateLimiter.record(clientIP, false)
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Invalid username or password.'
-        }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' }
-        })
+        return createErrorResponse('Invalid username or password.', 401)
       }
       
       // Verify password
       const isValidPassword = await verifyPassword(password, admin.hashedPassword)
       if (!isValidPassword) {
         adminRateLimiter.record(clientIP, false)
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Invalid username or password.'
-        }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' }
-        })
+        return createErrorResponse('Invalid username or password.', 401)
       }
       
       // Success - create session
@@ -100,13 +83,7 @@ export const ServerRoute = createServerFileRoute('/api/admin/login').methods({
     } catch (error) {
       // Record failed attempt for server errors too
       adminRateLimiter.record(clientIP, false)
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'An error occurred. Please try again.'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return createErrorResponse('An error occurred. Please try again.')
     }
   }
 })

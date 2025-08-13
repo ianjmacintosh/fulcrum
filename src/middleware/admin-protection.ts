@@ -1,4 +1,4 @@
-import { getAdminSession } from '../server/admin-auth'
+import { getAdminSession } from '../utils/admin-session'
 
 /**
  * Middleware to protect admin routes

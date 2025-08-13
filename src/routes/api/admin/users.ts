@@ -1,19 +1,13 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../db/services/users'
-import { getAdminSession } from '../../../utils/admin-session'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../utils/admin-auth-helpers'
 
 export const ServerRoute = createServerFileRoute('/api/admin/users').methods({
   GET: async ({ request }) => {
     // Check admin authentication
-    const adminId = getAdminSession(request)
-    if (!adminId) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Unauthorized'
-      }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      })
+    const authResult = requireAdminAuth(request)
+    if ('response' in authResult) {
+      return authResult.response
     }
     
     try {
@@ -28,22 +22,10 @@ export const ServerRoute = createServerFileRoute('/api/admin/users').methods({
         updatedAt: user.updatedAt
       }))
       
-      return new Response(JSON.stringify({
-        success: true,
-        users: safeUsers
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return createSuccessResponse({ users: safeUsers })
       
     } catch (error) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Failed to fetch users'
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return createErrorResponse('Failed to fetch users')
     }
   }
 })
