@@ -25,6 +25,7 @@ export const CurrentStatusSchema = z.object({
 })
 
 export const JobApplicationSchema = z.object({
+  userId: z.string(),
   companyName: z.string(),
   roleName: z.string(),
   jobPostingUrl: z.string().optional(),
@@ -40,6 +41,7 @@ export const JobApplicationSchema = z.object({
 })
 
 export const ApplicationStatusSchema = z.object({
+  userId: z.string(),
   name: z.string(),
   description: z.string().optional(),
   isTerminal: z.boolean(),
@@ -52,6 +54,7 @@ export const WorkflowStepSchema = z.object({
 })
 
 export const WorkflowSchema = z.object({
+  userId: z.string(),
   name: z.string(),
   description: z.string().optional(),
   isDefault: z.boolean(),
@@ -60,9 +63,26 @@ export const WorkflowSchema = z.object({
 })
 
 export const JobBoardSchema = z.object({
+  userId: z.string(),
   name: z.string(),
   url: z.string(),
   description: z.string().optional(),
+  createdAt: z.date()
+})
+
+// User and Admin schemas
+export const UserSchema = z.object({
+  id: z.string(), // UUID
+  email: z.string().email(),
+  name: z.string(),
+  hashedPassword: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+})
+
+export const AdminUserSchema = z.object({
+  username: z.string(),
+  hashedPassword: z.string(),
   createdAt: z.date()
 })
 
@@ -91,6 +111,7 @@ export interface CurrentStatus {
 
 export interface JobApplication {
   _id?: ObjectId
+  userId: string
   companyName: string
   roleName: string
   jobPostingUrl?: string
@@ -107,6 +128,7 @@ export interface JobApplication {
 
 export interface ApplicationStatus {
   _id?: ObjectId
+  userId: string
   name: string
   description?: string
   isTerminal: boolean
@@ -120,6 +142,7 @@ export interface WorkflowStep {
 
 export interface Workflow {
   _id?: ObjectId
+  userId: string
   name: string
   description?: string
   isDefault: boolean
@@ -129,8 +152,27 @@ export interface Workflow {
 
 export interface JobBoard {
   _id?: ObjectId
+  userId: string
   name: string
   url: string
   description?: string
+  createdAt: Date
+}
+
+// User and Admin interfaces
+export interface User {
+  _id?: ObjectId
+  id: string // UUID
+  email: string
+  name: string
+  hashedPassword: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AdminUser {
+  _id?: ObjectId
+  username: string
+  hashedPassword: string
   createdAt: Date
 }

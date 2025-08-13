@@ -30,6 +30,11 @@ npm run build
 - **Build Tool**: Vite 6 with React plugin
 - **Server**: TanStack Start for full-stack capabilities
 
+## Code Standards and Conventions
+
+* Modules must always be managed using ES module syntax (`import`) and never using CommonJS (`require`)
+* Presume the dev server is already running locally on port 3000 -- only start the dev server if you've already tried to reach it and believe it's not running
+
 ## Architecture
 
 ### Routing Structure

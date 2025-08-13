@@ -38,18 +38,19 @@ export class ApplicationService {
     return { ...newApplication, _id: result.insertedId }
   }
 
-  async getApplications(filter: any = {}, limit: number = 100, skip: number = 0): Promise<JobApplication[]> {
+  async getApplications(userId: string, filter: any = {}, limit: number = 100, skip: number = 0): Promise<JobApplication[]> {
     const collection = await this.getCollection()
-    return await collection.find(filter).limit(limit).skip(skip).sort({ createdAt: -1 }).toArray()
+    const userFilter = { ...filter, userId }
+    return await collection.find(userFilter).limit(limit).skip(skip).sort({ createdAt: -1 }).toArray()
   }
 
-  async getApplicationById(id: string | ObjectId): Promise<JobApplication | null> {
+  async getApplicationById(userId: string, id: string | ObjectId): Promise<JobApplication | null> {
     const collection = await this.getCollection()
     const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    return await collection.findOne({ _id: objectId })
+    return await collection.findOne({ _id: objectId, userId })
   }
 
-  async updateApplication(id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
+  async updateApplication(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
     const collection = await this.getCollection()
     const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
@@ -59,9 +60,10 @@ export class ApplicationService {
     }
     
     delete updateDoc._id // Don't update the _id field
+    delete updateDoc.userId // Don't allow userId to be changed
 
     const result = await collection.findOneAndUpdate(
-      { _id: objectId },
+      { _id: objectId, userId },
       { $set: updateDoc },
       { returnDocument: 'after' }
     )
@@ -69,33 +71,35 @@ export class ApplicationService {
     return result || null
   }
 
-  async deleteApplication(id: string | ObjectId): Promise<boolean> {
+  async deleteApplication(userId: string, id: string | ObjectId): Promise<boolean> {
     const collection = await this.getCollection()
     const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
-    const result = await collection.deleteOne({ _id: objectId })
+    const result = await collection.deleteOne({ _id: objectId, userId })
     return result.deletedCount === 1
   }
 
-  async getApplicationCount(filter: any = {}): Promise<number> {
+  async getApplicationCount(userId: string, filter: any = {}): Promise<number> {
     const collection = await this.getCollection()
-    return await collection.countDocuments(filter)
+    const userFilter = { ...filter, userId }
+    return await collection.countDocuments(userFilter)
   }
 
   // Analytics helper methods
-  async getApplicationsByStatus(statusId: string): Promise<JobApplication[]> {
+  async getApplicationsByStatus(userId: string, statusId: string): Promise<JobApplication[]> {
     const collection = await this.getCollection()
-    return await collection.find({ 'currentStatus.id': statusId }).toArray()
+    return await collection.find({ userId, 'currentStatus.id': statusId }).toArray()
   }
 
-  async getApplicationsByWorkflow(workflowId: string): Promise<JobApplication[]> {
+  async getApplicationsByWorkflow(userId: string, workflowId: string): Promise<JobApplication[]> {
     const collection = await this.getCollection()
-    return await collection.find({ 'workflow.id': workflowId }).toArray()
+    return await collection.find({ userId, 'workflow.id': workflowId }).toArray()
   }
 
-  async getApplicationsInDateRange(startDate: Date, endDate: Date): Promise<JobApplication[]> {
+  async getApplicationsInDateRange(userId: string, startDate: Date, endDate: Date): Promise<JobApplication[]> {
     const collection = await this.getCollection()
     return await collection.find({
+      userId,
       createdAt: {
         $gte: startDate,
         $lte: endDate
@@ -103,18 +107,32 @@ export class ApplicationService {
     }).toArray()
   }
 
-  async getApplicationsWithPhoneScreens(): Promise<JobApplication[]> {
+  async getApplicationsWithPhoneScreens(userId: string): Promise<JobApplication[]> {
     const collection = await this.getCollection()
     return await collection.find({
+      userId,
       'events.statusId': { $in: ['phone_screen'] }
     }).toArray()
   }
 
-  async getApplicationsWithStatus(statusIds: string[]): Promise<JobApplication[]> {
+  async getApplicationsWithStatus(userId: string, statusIds: string[]): Promise<JobApplication[]> {
     const collection = await this.getCollection()
     return await collection.find({
+      userId,
       'currentStatus.id': { $in: statusIds }
     }).toArray()
+  }
+
+  // Admin methods (bypass user scoping)
+  async getAllApplicationsForUser(userId: string): Promise<JobApplication[]> {
+    const collection = await this.getCollection()
+    return await collection.find({ userId }).toArray()
+  }
+
+  async deleteAllApplicationsForUser(userId: string): Promise<number> {
+    const collection = await this.getCollection()
+    const result = await collection.deleteMany({ userId })
+    return result.deletedCount
   }
 }
 

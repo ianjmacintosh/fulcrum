@@ -20,7 +20,6 @@ export async function connectToDatabase(): Promise<Db> {
     return db
   }
 
-  console.log('🔗 Attempting to connect with URI:', MONGODB_URI.replace(/:([^:@]+)@/, ':***@'))
 
   try {
     if (!client) {
@@ -31,13 +30,11 @@ export async function connectToDatabase(): Promise<Db> {
         maxPoolSize: 10
       })
       await client.connect()
-      console.log('✅ Connected to MongoDB')
     }
 
     db = client.db('fulcrum')
     return db
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error)
     throw error
   }
 }
@@ -47,7 +44,6 @@ export async function closeDatabaseConnection(): Promise<void> {
     await client.close()
     client = null
     db = null
-    console.log('✅ MongoDB connection closed')
   }
 }
 

@@ -1,147 +1,120 @@
 import { connectToDatabase } from './connection'
 import { JobApplication, ApplicationStatus, Workflow, JobBoard } from './schemas'
+import { adminService } from './services/admin'
+import { userService } from './services/users'
+import { hashPassword } from '../utils/crypto'
 
-// Default application statuses
-const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
-  { name: 'Cold Apply', isTerminal: false, createdAt: new Date() },
-  { name: 'Warm Apply', isTerminal: false, createdAt: new Date() },
-  { name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
-  { name: 'Round 2', isTerminal: false, createdAt: new Date() },
-  { name: 'Round 3', isTerminal: false, createdAt: new Date() },
-  { name: 'Offer', isTerminal: true, createdAt: new Date() },
-  { name: 'Declined', isTerminal: true, createdAt: new Date() }
-]
-
-// Default workflows
-const defaultWorkflows: Omit<Workflow, '_id'>[] = [
-  {
-    name: 'Cold Apply Process',
-    description: 'Standard cold application workflow',
-    isDefault: true,
-    steps: [
-      { statusId: 'cold_apply', isOptional: false },
-      { statusId: 'phone_screen', isOptional: false },
-      { statusId: 'round_2', isOptional: false },
-      { statusId: 'round_3', isOptional: false },
-      { statusId: 'offer', isOptional: false }
-    ],
-    createdAt: new Date()
-  },
-  {
-    name: 'Warm Apply Process',
-    description: 'Referral/warm application workflow',
-    isDefault: true,
-    steps: [
-      { statusId: 'warm_apply', isOptional: false },
-      { statusId: 'phone_screen', isOptional: false },
-      { statusId: 'round_2', isOptional: false },
-      { statusId: 'round_3', isOptional: false },
-      { statusId: 'offer', isOptional: false }
-    ],
-    createdAt: new Date()
+async function seedAdmin() {
+  console.log('🔐 Setting up admin user...')
+  
+  const defaultUsername = 'admin'
+  
+  // Check if admin already exists
+  const existingAdmin = await adminService.getAdminByUsername(defaultUsername)
+  if (existingAdmin) {
+    console.log('✅ Admin user already exists')
+    return
   }
-]
-
-// Default job boards
-const defaultJobBoards: Omit<JobBoard, '_id'>[] = [
-  { name: 'LinkedIn', url: 'https://linkedin.com', createdAt: new Date() },
-  { name: 'Indeed', url: 'https://indeed.com', createdAt: new Date() },
-  { name: 'Glassdoor', url: 'https://glassdoor.com', createdAt: new Date() },
-  { name: 'Otta', url: 'https://otta.com', createdAt: new Date() },
-  { name: 'Company Site', url: '', createdAt: new Date() }
-]
-
-// Sample applications based on your real data
-const sampleApplications: Omit<JobApplication, '_id'>[] = [
-  {
-    companyName: 'TechCorp Alpha',
-    roleName: 'Senior Frontend Manager',
-    jobPostingUrl: '',
-    jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-    workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
-    applicationType: 'cold',
-    roleType: 'manager',
-    locationType: 'on-site',
-    events: [
-      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-06-17', notes: 'Applied through LinkedIn' },
-      { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen completed' },
-      { statusId: 'round_2', statusName: 'Round 2', date: '2025-07-29', notes: 'Technical interview' }
-    ],
-    currentStatus: { id: 'round_2', name: 'Round 2' },
-    createdAt: new Date('2025-06-17'),
-    updatedAt: new Date('2025-07-29')
-  },
-  {
-    companyName: 'StartupBeta',
-    roleName: 'Frontend Engineer - Platform',
-    jobPostingUrl: '',
-    jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-    workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
-    applicationType: 'cold',
-    roleType: 'engineer',
-    locationType: 'remote',
-    events: [
-      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-13', notes: 'Applied through LinkedIn' },
-      { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen with hiring manager' },
-      { statusId: 'round_2', statusName: 'Round 2', date: '2025-08-06', notes: 'Technical coding challenge' },
-      { statusId: 'round_3', statusName: 'Round 3', date: '2025-08-13', notes: 'Final round interview' }
-    ],
-    currentStatus: { id: 'round_3', name: 'Round 3' },
-    createdAt: new Date('2025-07-13'),
-    updatedAt: new Date('2025-08-13')
-  },
-  {
-    companyName: 'ScaleTech',
-    roleName: 'Engineering Manager - Web',
-    jobPostingUrl: '',
-    jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-    workflow: { id: 'warm_apply', name: 'Warm Apply Process' },
-    applicationType: 'warm',
-    roleType: 'manager',
-    locationType: 'on-site',
-    events: [
-      { statusId: 'warm_apply', statusName: 'Warm Apply', date: '2025-05-28', notes: 'Referral from former colleague' },
-      { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-06-10', notes: 'Phone screen completed' },
-      { statusId: 'declined', statusName: 'Declined', date: '2025-06-20', notes: 'Position filled internally' }
-    ],
-    currentStatus: { id: 'declined', name: 'Declined' },
-    createdAt: new Date('2025-05-28'),
-    updatedAt: new Date('2025-06-20')
-  },
-  {
-    companyName: 'GrowthCo',
-    roleName: 'Engineering Manager - Growth',
-    jobPostingUrl: '',
-    jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-    workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
-    applicationType: 'cold',
-    roleType: 'manager',
-    locationType: 'on-site',
-    events: [
-      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-31', notes: 'Applied through LinkedIn' },
-      { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-08-14', notes: 'Phone screen scheduled' }
-    ],
-    currentStatus: { id: 'phone_screen', name: 'Phone Screen' },
-    createdAt: new Date('2025-07-31'),
-    updatedAt: new Date('2025-08-14')
-  },
-  {
-    companyName: 'InnovateLabs',
-    roleName: 'Principal Software Engineer',
-    jobPostingUrl: '',
-    jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-    workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
-    applicationType: 'cold',
-    roleType: 'engineer',
-    locationType: 'hybrid',
-    events: [
-      { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-08-01', notes: 'Applied through LinkedIn' }
-    ],
-    currentStatus: { id: 'cold_apply', name: 'Cold Apply' },
-    createdAt: new Date('2025-08-01'),
-    updatedAt: new Date('2025-08-01')
+  
+  // Generate a secure random password for first-time setup
+  const generateSecurePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(x => chars[x % chars.length])
+      .join('')
   }
-]
+  
+  const tempPassword = generateSecurePassword()
+  
+  // Hash the temporary password
+  const hashedPassword = await hashPassword(tempPassword)
+  
+  // Create admin user
+  await adminService.createAdminUser(defaultUsername, hashedPassword)
+  
+  console.log('✅ Default admin user created')
+  console.log('')
+  console.log('🔐 IMPORTANT: Save this temporary password (will not be shown again):')
+  console.log('   Username:', defaultUsername)
+  console.log('   Password:', tempPassword)
+  console.log('')
+  console.log('⚠️  Please change this password immediately after first login!')
+}
+
+async function seedUser() {
+  console.log('👤 Setting up default user...')
+  
+  const defaultEmail = 'alice@wonderland.dev'
+  const defaultName = 'Alice'
+  const defaultPassword = 'followthewhiterabbit'
+  
+  // Check if user already exists
+  let existingUser = await userService.getUserByEmail(defaultEmail)
+  if (existingUser) {
+    console.log('✅ Default user Alice already exists')
+    return existingUser.id
+  }
+  
+  // Hash the password
+  const hashedPassword = await hashPassword(defaultPassword)
+  
+  // Create user
+  const user = await userService.createUser({
+    email: defaultEmail,
+    name: defaultName,
+    hashedPassword
+  })
+  
+  console.log('✅ Default user Alice created')
+  console.log(`   Email: ${defaultEmail}`)
+  console.log(`   Password: ${defaultPassword}`)
+  
+  return user.id
+}
+
+async function migrateTestUserDataToAlice(aliceUserId: string) {
+  console.log('🔄 Migrating existing test user data to Alice...')
+  
+  const db = await connectToDatabase()
+  const testUserId = 'test-user-123'
+  
+  // Update application statuses
+  const statusResult = await db.collection('application_statuses').updateMany(
+    { userId: testUserId },
+    { $set: { userId: aliceUserId } }
+  )
+  
+  // Update workflows
+  const workflowResult = await db.collection('workflows').updateMany(
+    { userId: testUserId },
+    { $set: { userId: aliceUserId } }
+  )
+  
+  // Update job boards
+  const jobBoardResult = await db.collection('job_boards').updateMany(
+    { userId: testUserId },
+    { $set: { userId: aliceUserId } }
+  )
+  
+  // Update applications
+  const appResult = await db.collection('applications').updateMany(
+    { userId: testUserId },
+    { $set: { userId: aliceUserId } }
+  )
+  
+  const totalMigrated = statusResult.modifiedCount + workflowResult.modifiedCount + 
+                       jobBoardResult.modifiedCount + appResult.modifiedCount
+  
+  if (totalMigrated > 0) {
+    console.log(`✅ Migrated ${totalMigrated} records from test user to Alice:`)
+    console.log(`   - Application statuses: ${statusResult.modifiedCount}`)
+    console.log(`   - Workflows: ${workflowResult.modifiedCount}`)
+    console.log(`   - Job boards: ${jobBoardResult.modifiedCount}`)
+    console.log(`   - Applications: ${appResult.modifiedCount}`)
+  } else {
+    console.log('✅ No test user data found to migrate')
+  }
+}
 
 export async function seedDatabase() {
   const db = await connectToDatabase()
@@ -149,6 +122,161 @@ export async function seedDatabase() {
   console.log('🌱 Checking database seed status...')
 
   try {
+    // Always ensure admin exists
+    await seedAdmin()
+    
+    // Always ensure default user exists and get their ID
+    const aliceUserId = await seedUser()
+    
+    // Migrate any existing test user data to Alice
+    await migrateTestUserDataToAlice(aliceUserId)
+    
+    // Define sample data using Alice's real user ID
+    const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
+      { userId: aliceUserId, name: 'Cold Apply', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Warm Apply', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Round 2', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Round 3', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Offer', isTerminal: true, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Declined', isTerminal: true, createdAt: new Date() }
+    ]
+
+    const defaultWorkflows: Omit<Workflow, '_id'>[] = [
+      {
+        userId: aliceUserId,
+        name: 'Cold Apply Process',
+        description: 'Standard cold application workflow',
+        isDefault: true,
+        steps: [
+          { statusId: 'cold_apply', isOptional: false },
+          { statusId: 'phone_screen', isOptional: false },
+          { statusId: 'round_2', isOptional: false },
+          { statusId: 'round_3', isOptional: false },
+          { statusId: 'offer', isOptional: false }
+        ],
+        createdAt: new Date()
+      },
+      {
+        userId: aliceUserId,
+        name: 'Warm Apply Process',
+        description: 'Referral/warm application workflow',
+        isDefault: true,
+        steps: [
+          { statusId: 'warm_apply', isOptional: false },
+          { statusId: 'phone_screen', isOptional: false },
+          { statusId: 'round_2', isOptional: false },
+          { statusId: 'round_3', isOptional: false },
+          { statusId: 'offer', isOptional: false }
+        ],
+        createdAt: new Date()
+      }
+    ]
+
+    const defaultJobBoards: Omit<JobBoard, '_id'>[] = [
+      { userId: aliceUserId, name: 'LinkedIn', url: 'https://linkedin.com', createdAt: new Date() },
+      { userId: aliceUserId, name: 'Indeed', url: 'https://indeed.com', createdAt: new Date() },
+      { userId: aliceUserId, name: 'Glassdoor', url: 'https://glassdoor.com', createdAt: new Date() },
+      { userId: aliceUserId, name: 'Otta', url: 'https://otta.com', createdAt: new Date() },
+      { userId: aliceUserId, name: 'Company Site', url: '', createdAt: new Date() }
+    ]
+
+    const sampleApplications: Omit<JobApplication, '_id'>[] = [
+      {
+        userId: aliceUserId,
+        companyName: 'TechCorp Alpha',
+        roleName: 'Senior Frontend Manager',
+        jobPostingUrl: '',
+        jobBoard: { id: 'linkedin', name: 'LinkedIn' },
+        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        applicationType: 'cold',
+        roleType: 'manager',
+        locationType: 'on-site',
+        events: [
+          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-06-17', notes: 'Applied through LinkedIn' },
+          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen completed' },
+          { statusId: 'round_2', statusName: 'Round 2', date: '2025-07-29', notes: 'Technical interview' }
+        ],
+        currentStatus: { id: 'round_2', name: 'Round 2' },
+        createdAt: new Date('2025-06-17'),
+        updatedAt: new Date('2025-07-29')
+      },
+      {
+        userId: aliceUserId,
+        companyName: 'StartupBeta',
+        roleName: 'Frontend Engineer - Platform',
+        jobPostingUrl: '',
+        jobBoard: { id: 'linkedin', name: 'LinkedIn' },
+        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        applicationType: 'cold',
+        roleType: 'engineer',
+        locationType: 'remote',
+        events: [
+          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-13', notes: 'Applied through LinkedIn' },
+          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen with hiring manager' },
+          { statusId: 'round_2', statusName: 'Round 2', date: '2025-08-06', notes: 'Technical coding challenge' },
+          { statusId: 'round_3', statusName: 'Round 3', date: '2025-08-13', notes: 'Final round interview' }
+        ],
+        currentStatus: { id: 'round_3', name: 'Round 3' },
+        createdAt: new Date('2025-07-13'),
+        updatedAt: new Date('2025-08-13')
+      },
+      {
+        userId: aliceUserId,
+        companyName: 'ScaleTech',
+        roleName: 'Engineering Manager - Web',
+        jobPostingUrl: '',
+        jobBoard: { id: 'linkedin', name: 'LinkedIn' },
+        workflow: { id: 'warm_apply', name: 'Warm Apply Process' },
+        applicationType: 'warm',
+        roleType: 'manager',
+        locationType: 'on-site',
+        events: [
+          { statusId: 'warm_apply', statusName: 'Warm Apply', date: '2025-05-28', notes: 'Referral from former colleague' },
+          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-06-10', notes: 'Phone screen completed' },
+          { statusId: 'declined', statusName: 'Declined', date: '2025-06-20', notes: 'Position filled internally' }
+        ],
+        currentStatus: { id: 'declined', name: 'Declined' },
+        createdAt: new Date('2025-05-28'),
+        updatedAt: new Date('2025-06-20')
+      },
+      {
+        userId: aliceUserId,
+        companyName: 'GrowthCo',
+        roleName: 'Engineering Manager - Growth',
+        jobPostingUrl: '',
+        jobBoard: { id: 'linkedin', name: 'LinkedIn' },
+        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        applicationType: 'cold',
+        roleType: 'manager',
+        locationType: 'on-site',
+        events: [
+          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-31', notes: 'Applied through LinkedIn' },
+          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-08-14', notes: 'Phone screen scheduled' }
+        ],
+        currentStatus: { id: 'phone_screen', name: 'Phone Screen' },
+        createdAt: new Date('2025-07-31'),
+        updatedAt: new Date('2025-08-14')
+      },
+      {
+        userId: aliceUserId,
+        companyName: 'InnovateLabs',
+        roleName: 'Principal Software Engineer',
+        jobPostingUrl: '',
+        jobBoard: { id: 'linkedin', name: 'LinkedIn' },
+        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        applicationType: 'cold',
+        roleType: 'engineer',
+        locationType: 'hybrid',
+        events: [
+          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-08-01', notes: 'Applied through LinkedIn' }
+        ],
+        currentStatus: { id: 'cold_apply', name: 'Cold Apply' },
+        createdAt: new Date('2025-08-01'),
+        updatedAt: new Date('2025-08-01')
+      }
+    ]
+    
     // Check if data already exists
     const existingStatuses = await db.collection('application_statuses').countDocuments()
     const existingWorkflows = await db.collection('workflows').countDocuments()

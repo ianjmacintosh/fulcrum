@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createServerRootRoute } from '@tanstack/react-start/server'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResumesRouteImport } from './routes/resumes'
@@ -15,6 +17,16 @@ import { Route as JobBoardsRouteImport } from './routes/job-boards'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
+import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
+import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
+import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
+import { ServerRoute as ApiAdminUsersCreateServerRouteImport } from './routes/api/admin/users/create'
+import { ServerRoute as ApiAdminUsersIdServerRouteImport } from './routes/api/admin/users/$id'
+
+const rootServerRouteImport = createServerRootRoute()
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -46,6 +58,47 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLogoutRoute = AdminLogoutRouteImport.update({
+  id: '/admin/logout',
+  path: '/admin/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAdminLogoutServerRoute = ApiAdminLogoutServerRouteImport.update({
+  id: '/api/admin/logout',
+  path: '/api/admin/logout',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAdminLoginServerRoute = ApiAdminLoginServerRouteImport.update({
+  id: '/api/admin/login',
+  path: '/api/admin/login',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAdminUsersCreateServerRoute =
+  ApiAdminUsersCreateServerRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => ApiAdminUsersServerRoute,
+  } as any)
+const ApiAdminUsersIdServerRoute = ApiAdminUsersIdServerRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAdminUsersServerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +107,9 @@ export interface FileRoutesByFullPath {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +118,9 @@ export interface FileRoutesByTo {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +130,9 @@ export interface FileRoutesById {
   '/job-boards': typeof JobBoardsRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
+  '/admin/logout': typeof AdminLogoutRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +143,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +154,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -97,6 +165,9 @@ export interface FileRouteTypes {
     | '/job-boards'
     | '/resumes'
     | '/settings'
+    | '/admin/logout'
+    | '/admin/users'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +177,60 @@ export interface RootRouteChildren {
   JobBoardsRoute: typeof JobBoardsRoute
   ResumesRoute: typeof ResumesRoute
   SettingsRoute: typeof SettingsRoute
+  AdminLogoutRoute: typeof AdminLogoutRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+export interface FileServerRoutesByFullPath {
+  '/api/admin/login': typeof ApiAdminLoginServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+}
+export interface FileServerRoutesByTo {
+  '/api/admin/login': typeof ApiAdminLoginServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+}
+export interface FileServerRoutesById {
+  __root__: typeof rootServerRouteImport
+  '/api/admin/login': typeof ApiAdminLoginServerRoute
+  '/api/admin/logout': typeof ApiAdminLogoutServerRoute
+  '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
+  '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
+}
+export interface FileServerRouteTypes {
+  fileServerRoutesByFullPath: FileServerRoutesByFullPath
+  fullPaths:
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/$id'
+    | '/api/admin/users/create'
+  fileServerRoutesByTo: FileServerRoutesByTo
+  to:
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/$id'
+    | '/api/admin/users/create'
+  id:
+    | '__root__'
+    | '/api/admin/login'
+    | '/api/admin/logout'
+    | '/api/admin/users'
+    | '/api/admin/users/$id'
+    | '/api/admin/users/create'
+  fileServerRoutesById: FileServerRoutesById
+}
+export interface RootServerRouteChildren {
+  ApiAdminLoginServerRoute: typeof ApiAdminLoginServerRoute
+  ApiAdminLogoutServerRoute: typeof ApiAdminLogoutServerRoute
+  ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -152,8 +277,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/logout': {
+      id: '/admin/logout'
+      path: '/admin/logout'
+      fullPath: '/admin/logout'
+      preLoaderRoute: typeof AdminLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+declare module '@tanstack/react-start/server' {
+  interface ServerFileRoutesByPath {
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/admin/logout': {
+      id: '/api/admin/logout'
+      path: '/api/admin/logout'
+      fullPath: '/api/admin/logout'
+      preLoaderRoute: typeof ApiAdminLogoutServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/admin/login': {
+      id: '/api/admin/login'
+      path: '/api/admin/login'
+      fullPath: '/api/admin/login'
+      preLoaderRoute: typeof ApiAdminLoginServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/admin/users/create': {
+      id: '/api/admin/users/create'
+      path: '/create'
+      fullPath: '/api/admin/users/create'
+      preLoaderRoute: typeof ApiAdminUsersCreateServerRouteImport
+      parentRoute: typeof ApiAdminUsersServerRoute
+    }
+    '/api/admin/users/$id': {
+      id: '/api/admin/users/$id'
+      path: '/$id'
+      fullPath: '/api/admin/users/$id'
+      preLoaderRoute: typeof ApiAdminUsersIdServerRouteImport
+      parentRoute: typeof ApiAdminUsersServerRoute
+    }
+  }
+}
+
+interface ApiAdminUsersServerRouteChildren {
+  ApiAdminUsersIdServerRoute: typeof ApiAdminUsersIdServerRoute
+  ApiAdminUsersCreateServerRoute: typeof ApiAdminUsersCreateServerRoute
+}
+
+const ApiAdminUsersServerRouteChildren: ApiAdminUsersServerRouteChildren = {
+  ApiAdminUsersIdServerRoute: ApiAdminUsersIdServerRoute,
+  ApiAdminUsersCreateServerRoute: ApiAdminUsersCreateServerRoute,
+}
+
+const ApiAdminUsersServerRouteWithChildren =
+  ApiAdminUsersServerRoute._addFileChildren(ApiAdminUsersServerRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -162,7 +360,18 @@ const rootRouteChildren: RootRouteChildren = {
   JobBoardsRoute: JobBoardsRoute,
   ResumesRoute: ResumesRoute,
   SettingsRoute: SettingsRoute,
+  AdminLogoutRoute: AdminLogoutRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+const rootServerRouteChildren: RootServerRouteChildren = {
+  ApiAdminLoginServerRoute: ApiAdminLoginServerRoute,
+  ApiAdminLogoutServerRoute: ApiAdminLogoutServerRoute,
+  ApiAdminUsersServerRoute: ApiAdminUsersServerRouteWithChildren,
+}
+export const serverRouteTree = rootServerRouteImport
+  ._addFileChildren(rootServerRouteChildren)
+  ._addFileTypes<FileServerRouteTypes>()
