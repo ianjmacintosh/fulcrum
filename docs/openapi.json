@@ -1,0 +1,1200 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Fulcrum Job Search Tracking API",
+    "description": "API for tracking job applications, job boards, workflows, and analytics throughout the job search process",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Fulcrum API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/admin/login": {
+      "post": {
+        "tags": ["Admin Authentication"],
+        "summary": "Admin login",
+        "description": "Authenticate an admin user and create a session",
+        "operationId": "adminLogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "csrf_token", "csrf_hash"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "Admin username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Admin password"
+                  },
+                  "csrf_token": {
+                    "type": "string",
+                    "description": "CSRF protection token"
+                  },
+                  "csrf_hash": {
+                    "type": "string",
+                    "description": "CSRF protection hash"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF token invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/logout": {
+      "post": {
+        "tags": ["Admin Authentication"],
+        "summary": "Admin logout",
+        "description": "End the admin session",
+        "operationId": "adminLogout",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": ["Admin User Management"],
+        "summary": "Get all users",
+        "description": "Retrieve a list of all users in the system",
+        "operationId": "getUsers",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "users": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/UserSafe"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/admin/users/create": {
+      "post": {
+        "tags": ["Admin User Management"],
+        "summary": "Create a new user",
+        "description": "Create a new user account (admin only)",
+        "operationId": "createUser",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "name", "password", "csrf_token", "csrf_hash"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User email address"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "User full name"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "User password (minimum 8 characters)"
+                  },
+                  "csrf_token": {
+                    "type": "string",
+                    "description": "CSRF protection token"
+                  },
+                  "csrf_hash": {
+                    "type": "string",
+                    "description": "CSRF protection hash"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/UserSafe"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": ["Admin User Management"],
+        "summary": "Get user by ID",
+        "description": "Retrieve a specific user by their ID",
+        "operationId": "getUserById",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/UserSafe"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/analytics/dashboard": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get dashboard analytics",
+        "description": "Retrieve dashboard metrics including total applications, monthly overview, conversion rates, and pipeline health",
+        "operationId": "getDashboardAnalytics",
+        "responses": {
+          "200": {
+            "description": "Dashboard analytics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalytics"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/analytics/projection": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get job offer projection",
+        "description": "Get projected timeline to next job offer based on current application data and conversion rates",
+        "operationId": "getJobProjection",
+        "responses": {
+          "200": {
+            "description": "Job projection data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobProjection"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/analytics/conversion": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Get conversion rates",
+        "description": "Get conversion rates between different application stages",
+        "operationId": "getConversionRates",
+        "responses": {
+          "200": {
+            "description": "Conversion rates data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversionRates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConversionRate"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "adminSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "admin_session",
+        "description": "Admin session cookie"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "email", "name", "hashedPassword", "createdAt", "updatedAt"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique user identifier (UUID)",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address (lowercase)",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "example": "John Doe"
+          },
+          "hashedPassword": {
+            "type": "string",
+            "description": "Hashed password (never plaintext)",
+            "example": "$2b$10$..."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "User creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "UserSafe": {
+        "type": "object",
+        "description": "User object without sensitive information",
+        "required": ["id", "email", "name", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique user identifier (UUID)",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "example": "John Doe"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "User creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "AdminUser": {
+        "type": "object",
+        "required": ["username", "hashedPassword", "createdAt"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "username": {
+            "type": "string",
+            "description": "Admin username",
+            "example": "admin"
+          },
+          "hashedPassword": {
+            "type": "string",
+            "description": "Hashed password (never plaintext)",
+            "example": "$2b$10$..."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Admin user creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "JobBoardRef": {
+        "type": "object",
+        "description": "Reference to a job board (embedded object)",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Job board identifier",
+            "example": "linkedin"
+          },
+          "name": {
+            "type": "string",
+            "description": "Job board display name",
+            "example": "LinkedIn"
+          }
+        }
+      },
+      "WorkflowRef": {
+        "type": "object",
+        "description": "Reference to a workflow (embedded object)",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Workflow identifier",
+            "example": "cold_apply"
+          },
+          "name": {
+            "type": "string",
+            "description": "Workflow display name",
+            "example": "Cold Apply Process"
+          }
+        }
+      },
+      "CurrentStatus": {
+        "type": "object",
+        "description": "Current status of the application (embedded object)",
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Status identifier",
+            "example": "phone_screen"
+          },
+          "name": {
+            "type": "string",
+            "description": "Status display name",
+            "example": "Phone Screen"
+          }
+        }
+      },
+      "ApplicationEvent": {
+        "type": "object",
+        "description": "An event in the job application timeline",
+        "required": ["statusId", "statusName", "date"],
+        "properties": {
+          "statusId": {
+            "type": "string",
+            "description": "Status identifier for this event",
+            "example": "phone_screen"
+          },
+          "statusName": {
+            "type": "string",
+            "description": "Human-readable status name",
+            "example": "Phone Screen"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when this event occurred (ISO 8601 date)",
+            "example": "2025-01-22"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional notes about this event",
+            "example": "Phone screen with hiring manager"
+          }
+        }
+      },
+      "JobApplication": {
+        "type": "object",
+        "description": "A job application tracking entry",
+        "required": [
+          "userId",
+          "companyName",
+          "roleName",
+          "jobBoard",
+          "workflow",
+          "applicationType",
+          "roleType",
+          "locationType",
+          "events",
+          "currentStatus",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "66b8f1234567890123456789"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns this application",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Name of the company",
+            "example": "TechCorp Alpha"
+          },
+          "roleName": {
+            "type": "string",
+            "description": "Job title/role name",
+            "example": "Senior Frontend Engineer"
+          },
+          "jobPostingUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the original job posting",
+            "example": "https://techcorp.com/jobs/senior-frontend"
+          },
+          "jobBoard": {
+            "$ref": "#/components/schemas/JobBoardRef"
+          },
+          "workflow": {
+            "$ref": "#/components/schemas/WorkflowRef"
+          },
+          "applicationType": {
+            "type": "string",
+            "enum": ["cold", "warm"],
+            "description": "Type of application - cold apply or warm apply (through referral/connection)",
+            "example": "cold"
+          },
+          "roleType": {
+            "type": "string",
+            "enum": ["manager", "engineer"],
+            "description": "Type of role being applied for",
+            "example": "engineer"
+          },
+          "locationType": {
+            "type": "string",
+            "enum": ["on-site", "hybrid", "remote"],
+            "description": "Work location type",
+            "example": "remote"
+          },
+          "events": {
+            "type": "array",
+            "description": "Timeline of events for this application (embedded array)",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationEvent"
+            }
+          },
+          "currentStatus": {
+            "$ref": "#/components/schemas/CurrentStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Application creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp",
+            "example": "2025-01-22T14:15:00.000Z"
+          }
+        }
+      },
+      "ApplicationStatus": {
+        "type": "object",
+        "description": "A configurable status that can be used in workflows",
+        "required": ["userId", "name", "isTerminal", "createdAt"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns this status",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Status name",
+            "example": "Phone Screen"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of this status",
+            "example": "Initial phone screening with recruiter or hiring manager"
+          },
+          "isTerminal": {
+            "type": "boolean",
+            "description": "Whether this status ends the application process",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Status creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "WorkflowStep": {
+        "type": "object",
+        "description": "A step in a workflow sequence",
+        "required": ["statusId", "isOptional"],
+        "properties": {
+          "statusId": {
+            "type": "string",
+            "description": "Reference to an ApplicationStatus ID",
+            "example": "phone_screen"
+          },
+          "isOptional": {
+            "type": "boolean",
+            "description": "Whether this step can be skipped",
+            "example": false
+          }
+        }
+      },
+      "Workflow": {
+        "type": "object",
+        "description": "A workflow defining the sequence of statuses for job applications",
+        "required": ["userId", "name", "isDefault", "steps", "createdAt"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns this workflow",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Workflow name",
+            "example": "Cold Apply Process"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional workflow description",
+            "example": "Standard workflow for cold job applications"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Whether this is a system default workflow",
+            "example": true
+          },
+          "steps": {
+            "type": "array",
+            "description": "Ordered sequence of workflow steps",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStep"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Workflow creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "JobBoard": {
+        "type": "object",
+        "description": "A job board or platform where jobs are found",
+        "required": ["userId", "name", "url", "createdAt"],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "MongoDB ObjectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the user who owns this job board",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Job board name",
+            "example": "LinkedIn"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Base URL of the job board",
+            "example": "https://linkedin.com/jobs"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional notes about the job board",
+            "example": "Professional networking platform with job listings"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Job board creation timestamp",
+            "example": "2025-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "ConversionRate": {
+        "type": "object",
+        "description": "Conversion rate between two application statuses",
+        "required": [
+          "fromStatusId",
+          "fromStatusName",
+          "toStatusId",
+          "toStatusName",
+          "conversionRate",
+          "total",
+          "converted"
+        ],
+        "properties": {
+          "fromStatusId": {
+            "type": "string",
+            "description": "Starting status ID",
+            "example": "cold_apply"
+          },
+          "fromStatusName": {
+            "type": "string",
+            "description": "Starting status name",
+            "example": "Cold Apply"
+          },
+          "toStatusId": {
+            "type": "string",
+            "description": "Target status ID",
+            "example": "phone_screen"
+          },
+          "toStatusName": {
+            "type": "string",
+            "description": "Target status name",
+            "example": "Phone Screen"
+          },
+          "conversionRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Conversion rate as decimal (0.18 = 18%)",
+            "example": 0.18
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total applications at starting status",
+            "example": 50
+          },
+          "converted": {
+            "type": "integer",
+            "description": "Applications that converted to target status",
+            "example": 9
+          }
+        }
+      },
+      "MonthlyOverview": {
+        "type": "object",
+        "required": ["applicationsThisMonth", "trendVsPreviousMonth", "dailyAverage"],
+        "properties": {
+          "applicationsThisMonth": {
+            "type": "integer",
+            "description": "Number of applications submitted this month",
+            "example": 15
+          },
+          "trendVsPreviousMonth": {
+            "type": "number",
+            "description": "Percentage change from previous month",
+            "example": 25.5
+          },
+          "dailyAverage": {
+            "type": "number",
+            "description": "Average applications per day this month",
+            "example": 0.75
+          }
+        }
+      },
+      "PipelineStatusCount": {
+        "type": "object",
+        "required": ["statusId", "statusName", "count"],
+        "properties": {
+          "statusId": {
+            "type": "string",
+            "description": "Status identifier",
+            "example": "phone_screen"
+          },
+          "statusName": {
+            "type": "string",
+            "description": "Status display name",
+            "example": "Phone Screen"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of applications in this status",
+            "example": 3
+          }
+        }
+      },
+      "PipelineHealth": {
+        "type": "object",
+        "required": ["byStatus", "daysSinceLastApplication"],
+        "properties": {
+          "byStatus": {
+            "type": "array",
+            "description": "Application counts by current status",
+            "items": {
+              "$ref": "#/components/schemas/PipelineStatusCount"
+            }
+          },
+          "daysSinceLastApplication": {
+            "type": "integer",
+            "description": "Days since the last application was submitted",
+            "example": 3
+          }
+        }
+      },
+      "TopJobBoard": {
+        "type": "object",
+        "required": ["name", "responseRate"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Job board name",
+            "example": "LinkedIn"
+          },
+          "responseRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Response rate as decimal",
+            "example": 0.22
+          }
+        }
+      },
+      "PerformanceInsights": {
+        "type": "object",
+        "required": ["topJobBoard"],
+        "properties": {
+          "topJobBoard": {
+            "$ref": "#/components/schemas/TopJobBoard"
+          }
+        }
+      },
+      "DashboardAnalytics": {
+        "type": "object",
+        "description": "Dashboard analytics data",
+        "required": [
+          "totalApplications",
+          "monthlyOverview",
+          "conversionRates",
+          "pipelineHealth",
+          "performanceInsights"
+        ],
+        "properties": {
+          "totalApplications": {
+            "type": "integer",
+            "description": "Total number of applications",
+            "example": 127
+          },
+          "monthlyOverview": {
+            "$ref": "#/components/schemas/MonthlyOverview"
+          },
+          "conversionRates": {
+            "type": "array",
+            "description": "Conversion rates between application stages",
+            "items": {
+              "$ref": "#/components/schemas/ConversionRate"
+            }
+          },
+          "pipelineHealth": {
+            "$ref": "#/components/schemas/PipelineHealth"
+          },
+          "performanceInsights": {
+            "$ref": "#/components/schemas/PerformanceInsights"
+          }
+        }
+      },
+      "ProjectionTimeToOffer": {
+        "type": "object",
+        "required": [
+          "weeksEstimate",
+          "targetDate",
+          "confidenceLevel",
+          "basedOnApplications",
+          "methodology"
+        ],
+        "properties": {
+          "weeksEstimate": {
+            "type": "number",
+            "description": "Estimated weeks to next offer",
+            "example": 6.5
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Projected date for next offer",
+            "example": "2025-03-01"
+          },
+          "confidenceLevel": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence level of the projection",
+            "example": 0.9
+          },
+          "basedOnApplications": {
+            "type": "integer",
+            "description": "Number of applications used for calculation",
+            "example": 45
+          },
+          "methodology": {
+            "type": "string",
+            "description": "Projection methodology used",
+            "example": "pipeline_projection"
+          }
+        }
+      },
+      "StepTransition": {
+        "type": "object",
+        "required": ["fromStatusId", "toStatusId", "conversionRate", "averageDays"],
+        "properties": {
+          "fromStatusId": {
+            "type": "string",
+            "description": "Starting status ID",
+            "example": "cold_apply"
+          },
+          "toStatusId": {
+            "type": "string",
+            "description": "Target status ID",
+            "example": "phone_screen"
+          },
+          "conversionRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Conversion rate between these statuses",
+            "example": 0.165
+          },
+          "averageDays": {
+            "type": "integer",
+            "description": "Average days for this transition",
+            "example": 14
+          }
+        }
+      },
+      "CalculationInputs": {
+        "type": "object",
+        "required": [
+          "currentPipelineApplications",
+          "averageApplicationsPerWeek",
+          "stepTransitions",
+          "confidenceBuffer"
+        ],
+        "properties": {
+          "currentPipelineApplications": {
+            "type": "integer",
+            "description": "Applications currently in pipeline",
+            "example": 12
+          },
+          "averageApplicationsPerWeek": {
+            "type": "number",
+            "description": "Weekly application rate",
+            "example": 3.2
+          },
+          "stepTransitions": {
+            "type": "array",
+            "description": "Transition data between statuses",
+            "items": {
+              "$ref": "#/components/schemas/StepTransition"
+            }
+          },
+          "confidenceBuffer": {
+            "type": "number",
+            "description": "Buffer factor for uncertainty",
+            "example": 1.5
+          }
+        }
+      },
+      "JobProjection": {
+        "type": "object",
+        "description": "Job offer projection analytics",
+        "required": [
+          "projectedTimeToOffer",
+          "calculationInputs",
+          "recommendedActions"
+        ],
+        "properties": {
+          "projectedTimeToOffer": {
+            "$ref": "#/components/schemas/ProjectionTimeToOffer"
+          },
+          "calculationInputs": {
+            "$ref": "#/components/schemas/CalculationInputs"
+          },
+          "recommendedActions": {
+            "type": "array",
+            "description": "Recommended actions for improvement",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Your 16.5% phone screen rate is above industry average of 15%",
+              "Focus on improving application quality and targeting",
+              "Consider diversifying job boards and application strategies"
+            ]
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "description": "Response data (varies by endpoint)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional success message"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["success", "error"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Admin Authentication",
+      "description": "Admin login and session management"
+    },
+    {
+      "name": "Admin User Management",
+      "description": "User administration endpoints (admin only)"
+    },
+    {
+      "name": "Analytics",
+      "description": "Job search analytics and insights"
+    }
+  ]
+}
