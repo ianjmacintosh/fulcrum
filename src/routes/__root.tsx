@@ -26,6 +26,8 @@ export const Route = createRootRoute({
             },
         ],
     }),
+    scripts: () => [
+    ],
     component: RootComponent,
 })
 
@@ -48,6 +50,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             <body>
                 {children}
                 <Scripts />
+
+                {/* Hard-coding <script> tag to avoid loading bug: https://github.com/TanStack/router/issues/4585 */}
+                <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
             </body>
         </html>
     )
