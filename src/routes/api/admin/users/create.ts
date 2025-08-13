@@ -1,7 +1,6 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../../db/services/users'
 import { hashPassword } from '../../../../utils/crypto'
-import { validateCSRFFromRequest } from '../../../../utils/csrf-server'
 import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/admin-auth-helpers'
 import { z } from 'zod'
 
@@ -21,13 +20,23 @@ export const ServerRoute = createServerFileRoute('/api/admin/users/create').meth
     }
     
     try {
-      // Validate CSRF token
-      if (!(await validateCSRFFromRequest(request))) {
+      // Parse form data first
+      const formData = await request.formData()
+      
+      // Validate CSRF token from form data
+      const csrfToken = formData.get('csrf_token') as string
+      const csrfHash = formData.get('csrf_hash') as string
+      
+      if (!csrfToken || !csrfHash) {
         return createErrorResponse('Invalid security token. Please refresh the page and try again.', 403)
       }
       
-      // Parse form data
-      const formData = await request.formData()
+      // Import CSRF validation function directly to avoid request consumption issue
+      const { verifyCSRFToken } = await import('../../../../utils/csrf-server')
+      if (!verifyCSRFToken(csrfToken, csrfHash)) {
+        return createErrorResponse('Invalid security token. Please refresh the page and try again.', 403)
+      }
+      
       const email = formData.get('email') as string
       const name = formData.get('name') as string
       const password = formData.get('password') as string

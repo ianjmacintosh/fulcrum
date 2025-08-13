@@ -121,7 +121,7 @@ function AdminUsersPage() {
       formData.append('csrf_token', csrfTokens.csrfToken)
       formData.append('csrf_hash', csrfTokens.csrfHash)
 
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/admin/users/create', {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -184,11 +184,11 @@ function AdminUsersPage() {
     setSuccess('')
 
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-Token': csrfTokens.csrfToken,
-          'X-CSRF-Hash': csrfTokens.csrfHash,
+          'x-csrf-token': csrfTokens.csrfToken,
+          'x-csrf-hash': csrfTokens.csrfHash,
         },
         credentials: 'include'
       })

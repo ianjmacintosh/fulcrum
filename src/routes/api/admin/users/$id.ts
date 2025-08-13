@@ -1,10 +1,9 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
-import { userService } from '../../../../../db/services/users'
-import { applicationService } from '../../../../../db/services/applications'
-import { validateCSRFFromRequest } from '../../../../../utils/csrf-server'
-import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../../utils/admin-auth-helpers'
+import { userService } from '../../../../db/services/users'
+import { applicationService } from '../../../../db/services/applications'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/admin-auth-helpers'
 
-export const ServerRoute = createServerFileRoute('/api/admin/users/[id]/delete').methods({
+export const ServerRoute = createServerFileRoute('/api/admin/users/$id').methods({
   DELETE: async ({ request, params }) => {
     // Check admin authentication
     const authResult = requireAdminAuth(request)
@@ -18,8 +17,17 @@ export const ServerRoute = createServerFileRoute('/api/admin/users/[id]/delete')
     }
     
     try {
-      // Validate CSRF token
-      if (!(await validateCSRFFromRequest(request))) {
+      // Validate CSRF token from headers
+      const csrfToken = request.headers.get('x-csrf-token')
+      const csrfHash = request.headers.get('x-csrf-hash')
+      
+      if (!csrfToken || !csrfHash) {
+        return createErrorResponse('Invalid security token. Please refresh the page and try again.', 403)
+      }
+      
+      // Import CSRF validation function directly
+      const { verifyCSRFToken } = await import('../../../../utils/csrf-server')
+      if (!verifyCSRFToken(csrfToken, csrfHash)) {
         return createErrorResponse('Invalid security token. Please refresh the page and try again.', 403)
       }
       

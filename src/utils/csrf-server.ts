@@ -117,14 +117,20 @@ export function getCSRFTokenData(): { csrfToken: string; csrfHash: string } {
  */
 export async function validateCSRFFromRequest(request: Request): Promise<boolean> {
   try {
-    // Try to get CSRF data from form data first
-    if (request.headers.get('content-type')?.includes('application/x-www-form-urlencoded')) {
-      const formData = await request.formData()
-      const token = formData.get('csrf_token') as string
-      const hash = formData.get('csrf_hash') as string
-      
-      if (token && hash) {
-        return verifyCSRFToken(token, hash)
+    const contentType = request.headers.get('content-type') || ''
+    
+    // Try to get CSRF data from form data first (supports both multipart/form-data and application/x-www-form-urlencoded)
+    if (contentType.includes('multipart/form-data') || contentType.includes('application/x-www-form-urlencoded')) {
+      try {
+        const formData = await request.formData()
+        const token = formData.get('csrf_token') as string
+        const hash = formData.get('csrf_hash') as string
+        
+        if (token && hash) {
+          return verifyCSRFToken(token, hash)
+        }
+      } catch (formError) {
+        // If form parsing fails, fall through to headers
       }
     }
     

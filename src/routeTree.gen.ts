@@ -24,7 +24,7 @@ import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admi
 import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
 import { ServerRoute as ApiAdminUsersCreateServerRouteImport } from './routes/api/admin/users/create'
-import { ServerRoute as ApiAdminUsersChar91idChar93DeleteServerRouteImport } from './routes/api/admin/users/[id]/delete'
+import { ServerRoute as ApiAdminUsersIdServerRouteImport } from './routes/api/admin/users/$id'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -94,12 +94,11 @@ const ApiAdminUsersCreateServerRoute =
     path: '/create',
     getParentRoute: () => ApiAdminUsersServerRoute,
   } as any)
-const ApiAdminUsersChar91idChar93DeleteServerRoute =
-  ApiAdminUsersChar91idChar93DeleteServerRouteImport.update({
-    id: '/[id]/delete',
-    path: '/[id]/delete',
-    getParentRoute: () => ApiAdminUsersServerRoute,
-  } as any)
+const ApiAdminUsersIdServerRoute = ApiAdminUsersIdServerRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiAdminUsersServerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -186,23 +185,23 @@ export interface FileServerRoutesByFullPath {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/admin/users/[id]/delete': typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
@@ -210,22 +209,22 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/admin/users/[id]/delete'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/admin/users/[id]/delete'
   id:
     | '__root__'
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/admin/users/[id]/delete'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
@@ -331,25 +330,24 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiAdminUsersCreateServerRouteImport
       parentRoute: typeof ApiAdminUsersServerRoute
     }
-    '/api/admin/users/[id]/delete': {
-      id: '/api/admin/users/[id]/delete'
-      path: '/[id]/delete'
-      fullPath: '/api/admin/users/[id]/delete'
-      preLoaderRoute: typeof ApiAdminUsersChar91idChar93DeleteServerRouteImport
+    '/api/admin/users/$id': {
+      id: '/api/admin/users/$id'
+      path: '/$id'
+      fullPath: '/api/admin/users/$id'
+      preLoaderRoute: typeof ApiAdminUsersIdServerRouteImport
       parentRoute: typeof ApiAdminUsersServerRoute
     }
   }
 }
 
 interface ApiAdminUsersServerRouteChildren {
+  ApiAdminUsersIdServerRoute: typeof ApiAdminUsersIdServerRoute
   ApiAdminUsersCreateServerRoute: typeof ApiAdminUsersCreateServerRoute
-  ApiAdminUsersChar91idChar93DeleteServerRoute: typeof ApiAdminUsersChar91idChar93DeleteServerRoute
 }
 
 const ApiAdminUsersServerRouteChildren: ApiAdminUsersServerRouteChildren = {
+  ApiAdminUsersIdServerRoute: ApiAdminUsersIdServerRoute,
   ApiAdminUsersCreateServerRoute: ApiAdminUsersCreateServerRoute,
-  ApiAdminUsersChar91idChar93DeleteServerRoute:
-    ApiAdminUsersChar91idChar93DeleteServerRoute,
 }
 
 const ApiAdminUsersServerRouteWithChildren =
