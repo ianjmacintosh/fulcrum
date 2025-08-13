@@ -159,7 +159,6 @@ async function seedAdmin() {
   console.log('🔐 Setting up admin user...')
   
   const defaultUsername = 'admin'
-  const defaultPassword = 'admin123'
   
   // Check if admin already exists
   const existingAdmin = await adminService.getAdminByUsername(defaultUsername)
@@ -168,16 +167,29 @@ async function seedAdmin() {
     return
   }
   
-  // Hash the default password
-  const hashedPassword = await hashPassword(defaultPassword)
+  // Generate a secure random password for first-time setup
+  const generateSecurePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(x => chars[x % chars.length])
+      .join('')
+  }
+  
+  const tempPassword = generateSecurePassword()
+  
+  // Hash the temporary password
+  const hashedPassword = await hashPassword(tempPassword)
   
   // Create admin user
   await adminService.createAdminUser(defaultUsername, hashedPassword)
+  
   console.log('✅ Default admin user created')
-  console.log('📋 Admin credentials:')
-  console.log(`   Username: ${defaultUsername}`)
-  console.log(`   Password: ${defaultPassword}`)
-  console.log('⚠️  Please change these credentials after first login!')
+  console.log('')
+  console.log('🔐 IMPORTANT: Save this temporary password (will not be shown again):')
+  console.log('   Username:', defaultUsername)
+  console.log('   Password:', tempPassword)
+  console.log('')
+  console.log('⚠️  Please change this password immediately after first login!')
 }
 
 export async function seedDatabase() {
