@@ -30,6 +30,10 @@ npm run build
 - **Build Tool**: Vite 6 with React plugin
 - **Server**: TanStack Start for full-stack capabilities
 
+## Code Standards and Conventions
+
+* Modules must always be managed using ES module syntax (`import`) and never using CommonJS (`require`)
+
 ## Architecture
 
 ### Routing Structure
