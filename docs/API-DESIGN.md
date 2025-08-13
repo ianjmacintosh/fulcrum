@@ -2,24 +2,27 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [Data Model](#data-model)
+2. [Implementation Status](#implementation-status)
+3. [Data Model](#data-model)
    - [Core Entities](#core-entities)
    - [Entity Relationships](#entity-relationships)
-3. [API Endpoints](#api-endpoints)
-   - [Applications Collection](#applications-collection)
-   - [Job Boards Collection](#job-boards-collection)
-   - [Resumes Collection](#resumes-collection)
-   - [Analytics Endpoints](#analytics-endpoints)
-4. [Filtering and Querying](#filtering-and-querying)
+4. [API Endpoints](#api-endpoints)
+   - [Admin Endpoints](#admin-endpoints) ✅ Implemented
+   - [Analytics Endpoints](#analytics-endpoints) ✅ Implemented
+   - [Applications Collection](#applications-collection) ⚠️ Partial
+   - [Job Boards Collection](#job-boards-collection) ❌ Not Implemented
+   - [Workflows Collection](#workflows-collection) ❌ Not Implemented
+   - [Application Statuses Collection](#application-statuses-collection) ❌ Not Implemented
+5. [Filtering and Querying](#filtering-and-querying)
    - [Application Filters](#application-filters)
    - [Analytics Query Parameters](#analytics-query-parameters)
    - [Example Queries](#example-queries)
-5. [Homepage/Dashboard Requirements](#homepagedashboard-requirements)
+6. [Homepage/Dashboard Requirements](#homepagedashboard-requirements)
    - [Key Metrics](#key-metrics)
    - [Data Visualization](#data-visualization)
-6. [Implementation Notes](#implementation-notes)
-   - [OpenAPI/Swagger Preparation](#openapiswagger-preparation)
-   - [MSW Mock Data Strategy](#msw-mock-data-strategy)
+7. [Implementation Notes](#implementation-notes)
+   - [Design Decisions](#design-decisions)
+   - [Future Considerations](#future-considerations)
 
 ## Overview
 
@@ -30,6 +33,31 @@ Fulcrum is a job search tracking application that replaces spreadsheet-based job
 - Analyze conversion rates for different application types (cold vs warm applications)
 - Monitor performance of different job boards and resume versions
 - Generate monthly trends and success rate analytics
+
+## Implementation Status
+
+### ✅ **Fully Implemented**
+- **Admin Authentication**: Login/logout with session management
+- **Admin User Management**: CRUD operations for users
+- **Analytics Engine**: Dashboard metrics, job projection, conversion rates
+- **Database Layer**: MongoDB with Zod validation schemas
+- **Core Data Models**: All entities defined with proper relationships
+
+### ⚠️ **Partially Implemented** 
+- **Application Management**: Service layer exists, API routes missing
+- **Mock Data**: Comprehensive sample data available for development
+
+### ❌ **Not Yet Implemented**
+- **Public API Endpoints**: Applications, Job Boards, Workflows, Application Statuses
+- **User Authentication**: Only admin auth exists
+- **Filtering/Search**: Advanced query capabilities
+- **Pagination**: For large data sets
+
+### 🔄 **Current Architecture**
+- **Backend**: TanStack Start with server functions
+- **Database**: MongoDB with connection pooling
+- **Validation**: Zod schemas for all entities
+- **Security**: CSRF protection, password hashing, admin sessions
 
 ## Data Model
 
@@ -213,15 +241,52 @@ const customStatuses = [
 
 ## API Endpoints
 
-### Applications Collection
+### Admin Endpoints ✅ Implemented
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/applications` | List applications with optional filtering |
-| `POST` | `/api/applications` | Create a new job application |
-| `GET` | `/api/applications/:id` | Get specific application by ID |
-| `PATCH` | `/api/applications/:id` | Update existing application |
-| `DELETE` | `/api/applications/:id` | Delete application |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `POST` | `/api/admin/login` | Authenticate admin user | ✅ |
+| `POST` | `/api/admin/logout` | End admin session | ✅ |
+| `GET` | `/api/admin/users` | Get all users | ✅ |
+| `POST` | `/api/admin/users/create` | Create new user | ✅ |
+| `GET` | `/api/admin/users/{id}` | Get user by ID | ✅ |
+
+**Implementation Details:**
+- Form-based authentication with CSRF protection
+- Session-based authorization using cookies
+- Password hashing with bcrypt
+- Comprehensive error handling
+
+### Analytics Endpoints ✅ Implemented
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/api/analytics/dashboard` | Dashboard metrics | ✅ |
+| `GET` | `/api/analytics/projection` | Job offer projection | ✅ |
+| `GET` | `/api/analytics/conversion` | Conversion rates | ✅ |
+
+**Implementation Details:**
+- Server functions with automatic caching
+- Real-time calculations from database
+- Fallback to mock data during development
+- Comprehensive analytics with ML-style projections
+
+### Applications Collection ⚠️ Partial Implementation
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/api/applications` | List applications with filtering | ❌ Route missing |
+| `POST` | `/api/applications` | Create a new job application | ❌ Route missing |
+| `GET` | `/api/applications/:id` | Get specific application by ID | ❌ Route missing |
+| `PATCH` | `/api/applications/:id` | Update existing application | ❌ Route missing |
+| `DELETE` | `/api/applications/:id` | Delete application | ❌ Route missing |
+
+**Current Status:**
+- ✅ Database service layer fully implemented (`ApplicationService`)
+- ✅ Zod validation schemas defined
+- ✅ CRUD operations with MongoDB
+- ❌ API route handlers not created
+- ✅ Mock data available for testing
 
 #### Response Examples
 
@@ -255,44 +320,56 @@ const customStatuses = [
 }
 ```
 
-### Application Statuses Collection
+### Application Statuses Collection ❌ Not Implemented
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/application-statuses` | List all user-defined statuses |
-| `POST` | `/api/application-statuses` | Create new status |
-| `GET` | `/api/application-statuses/:id` | Get status by ID |
-| `PATCH` | `/api/application-statuses/:id` | Update status |
-| `DELETE` | `/api/application-statuses/:id` | Delete status |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/api/application-statuses` | List all user-defined statuses | ❌ |
+| `POST` | `/api/application-statuses` | Create new status | ❌ |
+| `GET` | `/api/application-statuses/:id` | Get status by ID | ❌ |
+| `PATCH` | `/api/application-statuses/:id` | Update status | ❌ |
+| `DELETE` | `/api/application-statuses/:id` | Delete status | ❌ |
 
-### Workflows Collection
+**Current Status:**
+- ✅ Database schema defined (`ApplicationStatus`)
+- ✅ Referenced in job application events
+- ❌ Service layer not implemented
+- ❌ API routes not implemented
+- ⚠️ Currently using hardcoded status IDs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/workflows` | List all workflows (default + custom) |
-| `POST` | `/api/workflows` | Create new custom workflow |
-| `GET` | `/api/workflows/:id` | Get workflow by ID |
-| `PATCH` | `/api/workflows/:id` | Update custom workflow |
-| `DELETE` | `/api/workflows/:id` | Delete custom workflow (only non-default) |
+### Workflows Collection ❌ Not Implemented
 
-### Job Boards Collection
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/api/workflows` | List all workflows (default + custom) | ❌ |
+| `POST` | `/api/workflows` | Create new custom workflow | ❌ |
+| `GET` | `/api/workflows/:id` | Get workflow by ID | ❌ |
+| `PATCH` | `/api/workflows/:id` | Update custom workflow | ❌ |
+| `DELETE` | `/api/workflows/:id` | Delete custom workflow | ❌ |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/job-boards` | List all job boards |
-| `POST` | `/api/job-boards` | Create new job board |
-| `GET` | `/api/job-boards/:id` | Get job board by ID |
-| `PATCH` | `/api/job-boards/:id` | Update job board |
-| `DELETE` | `/api/job-boards/:id` | Delete job board |
+**Current Status:**
+- ✅ Database schema defined (`Workflow`)
+- ✅ Referenced in job applications as embedded objects
+- ❌ Service layer not implemented
+- ❌ API routes not implemented
+- ⚠️ Currently using embedded references only
 
-### Analytics Endpoints
+### Job Boards Collection ❌ Not Implemented
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/analytics/dashboard` | Homepage dashboard metrics |
-| `GET` | `/api/analytics/conversion` | Conversion rates by stage |
-| `GET` | `/api/analytics/trends` | Application trends over time |
-| `GET` | `/api/analytics/performance` | Job board & resume performance |
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|---------|
+| `GET` | `/api/job-boards` | List all job boards | ❌ |
+| `POST` | `/api/job-boards` | Create new job board | ❌ |
+| `GET` | `/api/job-boards/:id` | Get job board by ID | ❌ |
+| `PATCH` | `/api/job-boards/:id` | Update job board | ❌ |
+| `DELETE` | `/api/job-boards/:id` | Delete job board | ❌ |
+
+**Current Status:**
+- ✅ Database schema defined (`JobBoard`)
+- ✅ Referenced in job applications as embedded objects  
+- ❌ Service layer not implemented
+- ❌ API routes not implemented
+- ⚠️ Currently using embedded references only
 
 #### Analytics Response Examples
 
@@ -443,49 +520,128 @@ Charts and graphs to implement:
 
 ## Implementation Notes
 
-### OpenAPI/Swagger Preparation
+### Design Decisions
 
-When creating the OpenAPI specification:
+#### **Application Attributes Strategy**
+The current implementation uses fixed enum fields for application categorization:
 
-1. **Base Configuration**:
-   - Set `openapi: 3.0.0`
-   - Define base URL and common response schemas
-   - Include authentication schemes if needed
+```typescript
+applicationType: 'cold' | 'warm'
+roleType: 'manager' | 'engineer' 
+locationType: 'on-site' | 'hybrid' | 'remote'
+```
 
-2. **Schema Definitions**:
-   - Define all entity schemas in `components/schemas`
-   - Include validation rules (required fields, string patterns, etc.)
-   - Add examples for each schema
+**Rationale:**
+- ✅ Type-safe and predictable
+- ✅ Easy to implement filtering and analytics
+- ✅ Good for MVP and initial development
+- ❌ Less flexible for user customization
 
-3. **Error Responses**:
-   - Define standard error response format
-   - Include common HTTP status codes (400, 401, 404, 500)
+**Future Consideration:** The user has expressed interest in a more flexible label/attribute system that would allow:
+- Arbitrary labels per application
+- User-defined attribute categories
+- More flexible categorization beyond current enums
 
-4. **Query Parameters**:
-   - Document all filtering parameters with descriptions
-   - Include parameter constraints (min/max values, enum options)
+#### **Event Structure: Embedded vs Separate Collections**
+Current implementation uses **embedded events array** within job applications:
 
-### MSW Mock Data Strategy
+```typescript
+// JobApplication document contains:
+events: ApplicationEvent[]  // Embedded array
+currentStatus: { id: string, name: string }  // Derived from latest event
+```
 
-For Mock Service Worker implementation:
+**Rationale:**
+- ✅ Better performance (single query gets full timeline)
+- ✅ Atomic updates (events always consistent with application)
+- ✅ Simpler data model for analytics
+- ❌ Less flexible for complex event querying
 
-1. **Sample Data Sets**:
-   - Create ~50 sample job applications across different stages
-   - Include 8-10 job boards (LinkedIn, Indeed, company pages, etc.)
-   - Create 3-4 resume versions
+#### **Reference Pattern: Embedded Objects**
+Job boards, workflows, and statuses are referenced as lightweight embedded objects:
 
-2. **Realistic Data Patterns**:
-   - Applications should show realistic conversion funnel (high applied, lower phone screens, etc.)
-   - Include seasonal trends in application dates
-   - Vary success rates by job board and resume type
+```typescript
+jobBoard: { id: string, name: string }
+workflow: { id: string, name: string }  
+currentStatus: { id: string, name: string }
+```
 
-3. **Dynamic Calculations**:
-   - Analytics endpoints should calculate metrics from mock application data
-   - Ensure dashboard metrics reflect the underlying application data
-   - Include edge cases (no applications, 100% conversion, etc.)
+**Rationale:**
+- ✅ Denormalized for read performance
+- ✅ Most queries need both ID and display name
+- ✅ Reduces joins for common operations
+- ❌ Requires updates when names change
 
-4. **Mock Response Delays**:
-   - Add realistic delays (200-500ms) to simulate network requests
-   - Consider occasional failures for error state testing
+#### **Authentication Architecture**
+Current implementation focuses on admin-only authentication:
 
-This specification provides a foundation for building a comprehensive job tracking system that replaces spreadsheet-based workflows with rich analytics and insights.
+```typescript
+// Only admin routes implemented
+/api/admin/login
+/api/admin/users/*
+```
+
+**Rationale:**
+- ✅ Simple initial implementation
+- ✅ Good for administrative tasks
+- ❌ No user self-service capabilities
+- ❌ Single-tenant architecture
+
+### Future Considerations
+
+#### **Migration to Label-Based Attributes**
+If moving to a flexible label system:
+
+```typescript
+// Potential future schema
+JobApplication {
+  labels: Array<{
+    category: string  // 'application_type', 'location', 'role_type'
+    value: string     // 'cold', 'remote', 'engineer'
+  }>
+  // OR
+  attributes: Record<string, string[]>  // Multiple values per category
+}
+```
+
+**Migration Strategy:**
+1. Add new label fields alongside existing enums
+2. Migrate existing data to labels
+3. Update analytics to work with both systems
+4. Remove enum fields once labels are stable
+
+#### **Missing Core Endpoints**
+Priority order for implementing missing API endpoints:
+
+1. **Applications CRUD** - Service layer exists, just need route handlers
+2. **Job Boards** - Most referenced, needed for application creation
+3. **Workflows** - Needed for application flow management  
+4. **Application Statuses** - Currently hardcoded, should be user-configurable
+
+#### **User Authentication & Multi-tenancy**
+Future considerations for user authentication:
+
+- JWT-based authentication for API access
+- User registration/login flows
+- Multi-user support with proper data isolation
+- Role-based permissions (user vs admin)
+
+#### **Advanced Features**
+Potential future enhancements identified in the codebase:
+
+- **Resume tracking** - Referenced in API design but not implemented
+- **Filtering & search** - Complex query capabilities
+- **Bulk operations** - Import/export functionality
+- **Real-time updates** - WebSocket support for live dashboards
+- **Integrations** - Email parsing, job board scraping
+
+### OpenAPI Specification
+
+The current `docs/openapi.json` accurately reflects:
+- ✅ All implemented admin endpoints
+- ✅ All analytics endpoints with complete schemas
+- ✅ Comprehensive entity definitions matching database schemas
+- ✅ Proper error handling and security schemes
+- ✅ Future-ready structure for missing endpoints
+
+This provides a solid foundation for both current development and future API expansion.

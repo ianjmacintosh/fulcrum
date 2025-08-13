@@ -256,9 +256,17 @@ function AdminUsersPage() {
     <div className="admin-users">
       <div className="admin-header">
         <h1>User Management</h1>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+        <div className="admin-nav">
+          <button 
+            onClick={() => router.navigate({ to: '/admin/change-password' })}
+            className="nav-button"
+          >
+            Change Password
+          </button>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -376,6 +384,28 @@ function AdminUsersPage() {
         .admin-header h1 {
           margin: 0;
           color: #333;
+        }
+
+        .admin-nav {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .nav-button {
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 600;
+          transition: background-color 0.2s ease;
+        }
+
+        .nav-button:hover {
+          background-color: #5a6268;
         }
 
         .logout-button {
