@@ -20,10 +20,6 @@ setInterval(() => {
   }
   
   expiredTokens.forEach(token => tokenStore.delete(token))
-  
-  if (expiredTokens.length > 0) {
-    console.log(`🧹 Cleaned up ${expiredTokens.length} expired CSRF tokens`)
-  }
 }, 60 * 60 * 1000)
 
 /**
@@ -142,7 +138,6 @@ export async function validateCSRFFromRequest(request: Request): Promise<boolean
     
     return false
   } catch (error) {
-    console.error('CSRF validation error:', error)
     return false
   }
 }

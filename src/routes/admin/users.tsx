@@ -67,7 +67,9 @@ function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users')
+      const response = await fetch('/api/admin/users', {
+        credentials: 'include'  // This ensures cookies are sent with the request
+      })
       const result = await response.json()
 
       if (response.status === 401) {
@@ -89,7 +91,9 @@ function AdminUsersPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout')
+      await fetch('/api/admin/logout', {
+        credentials: 'include'
+      })
       router.navigate({ to: '/admin/logout' })
     } catch (err) {
       console.error('Logout error:', err)
@@ -120,6 +124,7 @@ function AdminUsersPage() {
       const response = await fetch('/api/users', {
         method: 'POST',
         body: formData,
+        credentials: 'include'
       })
 
       const result = await response.json()
@@ -185,6 +190,7 @@ function AdminUsersPage() {
           'X-CSRF-Token': csrfTokens.csrfToken,
           'X-CSRF-Hash': csrfTokens.csrfHash,
         },
+        credentials: 'include'
       })
 
       const result = await response.json()

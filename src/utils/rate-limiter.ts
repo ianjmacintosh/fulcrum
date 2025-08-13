@@ -132,10 +132,6 @@ class RateLimiter {
     }
 
     expiredKeys.forEach(key => this.attempts.delete(key))
-    
-    if (expiredKeys.length > 0) {
-      console.log(`🧹 Cleaned up ${expiredKeys.length} expired rate limit entries`)
-    }
   }
 }
 

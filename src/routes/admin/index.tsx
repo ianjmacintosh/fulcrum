@@ -1,6 +1,5 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
-import { adminLogin } from '../../server/admin-auth'
 
 export const Route = createFileRoute('/admin/')({
   component: AdminLoginPage,
@@ -25,33 +24,42 @@ function AdminLoginPage() {
     setLoading(true)
 
     try {
-      console.log('Attempting login with:', { username: formData.username, password: '[REDACTED]' })
-      
-      // Call the imported server function directly
-      const result = await adminLogin({
-        data: {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
           username: formData.username,
           password: formData.password
-        }
+        })
       })
       
-      console.log('Login result:', { ...result, sessionCookie: result.sessionCookie ? '[REDACTED]' : undefined })
+      const result = await response.json()
 
-      if (result && result.success) {
-        // Store session info and redirect
-        if (result.sessionCookie) {
-          document.cookie = result.sessionCookie
-        }
-        router.navigate({ to: '/admin/users' })
+      if (response.ok && result.success) {
+        setFormData({ username: '', password: '' })
+        await router.navigate({ to: '/admin/users' })
       } else {
-        setError(result?.error || 'Login failed')
+        // Handle rate limiting specially
+        if (response.status === 429) {
+          const retryAfter = result?.retryAfter
+          if (retryAfter) {
+            const minutes = Math.ceil(retryAfter / 60)
+            setError(`Too many failed attempts. Please wait ${minutes} minute${minutes > 1 ? 's' : ''} before trying again.`)
+          } else {
+            setError(result?.error || 'Too many failed attempts. Please try again later.')
+          }
+        } else {
+          setError(result?.error || 'Login failed')
+        }
+        setLoading(false)
       }
     } catch (err) {
-      console.error('Login error details:', err)
-      setError(`Debug: ${err.message || 'An error occurred. Please try again.'}`)
+      setError(`An error occurred. Please try again.`)
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,7 +116,7 @@ function AdminLoginPage() {
         </form>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .admin-login {
           min-height: 100vh;
           display: flex;
