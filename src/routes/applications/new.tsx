@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { requireUserAuth } from '../../utils/route-guards'
+import { fetchCSRFTokens } from '../../utils/csrf-client'
 import './new.css'
 
 export const Route = createFileRoute('/applications/new')({
@@ -23,6 +24,53 @@ function NewApplication() {
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [successMessage, setSuccessMessage] = useState('')
+    const [errorMessage, setErrorMessage] = useState('')
+    const [csrfTokens, setCsrfTokens] = useState<{ csrfToken: string; csrfHash: string } | null>(null)
+    const [jobBoards, setJobBoards] = useState<Array<{ id: string; name: string; url: string }>>([])
+    const [isLoadingData, setIsLoadingData] = useState(true)
+
+    // Fetch CSRF tokens and job boards on component mount
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                // Load CSRF tokens
+                const tokens = await fetchCSRFTokens()
+                setCsrfTokens(tokens)
+
+                // Load job boards
+                const response = await fetch('/api/job-boards/')
+                const result = await response.json()
+                
+                if (result.success) {
+                    setJobBoards(result.jobBoards)
+                } else {
+                    console.error('Failed to load job boards:', result.error)
+                    // If no job boards exist, provide default options
+                    setJobBoards([
+                        { id: 'linkedin', name: 'LinkedIn', url: 'https://linkedin.com' },
+                        { id: 'indeed', name: 'Indeed', url: 'https://indeed.com' },
+                        { id: 'glassdoor', name: 'Glassdoor', url: 'https://glassdoor.com' },
+                        { id: 'otta', name: 'Otta', url: 'https://otta.com' },
+                        { id: 'company_site', name: 'Company Site', url: '' }
+                    ])
+                }
+            } catch (error) {
+                console.error('Failed to load data:', error)
+                setErrorMessage('Failed to load form data. Please refresh the page.')
+                // Provide default job boards on error
+                setJobBoards([
+                    { id: 'linkedin', name: 'LinkedIn', url: 'https://linkedin.com' },
+                    { id: 'indeed', name: 'Indeed', url: 'https://indeed.com' },
+                    { id: 'glassdoor', name: 'Glassdoor', url: 'https://glassdoor.com' },
+                    { id: 'otta', name: 'Otta', url: 'https://otta.com' },
+                    { id: 'company_site', name: 'Company Site', url: '' }
+                ])
+            } finally {
+                setIsLoadingData(false)
+            }
+        }
+        loadData()
+    }, [])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -33,28 +81,53 @@ function NewApplication() {
         e.preventDefault()
         setIsSubmitting(true)
         setSuccessMessage('')
+        setErrorMessage('')
 
-        // Simulate form submission (dummy functionality as requested)
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        setSuccessMessage('Application submitted successfully! (This is a preview - not saved to database yet)')
-        setIsSubmitting(false)
-        
-        // Reset form after successful submission
-        setTimeout(() => {
-            setFormData({
-                companyName: '',
-                roleName: '',
-                jobPostingUrl: '',
-                appliedDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-                jobBoard: '',
-                applicationType: 'cold',
-                roleType: '',
-                locationType: 'on-site',
-                notes: ''
+        if (!csrfTokens) {
+            setErrorMessage('Security tokens not loaded. Please refresh the page.')
+            setIsSubmitting(false)
+            return
+        }
+
+        try {
+            // Create form data for submission
+            const submitFormData = new FormData()
+            submitFormData.append('companyName', formData.companyName)
+            submitFormData.append('roleName', formData.roleName)
+            submitFormData.append('jobPostingUrl', formData.jobPostingUrl)
+            submitFormData.append('appliedDate', formData.appliedDate)
+            submitFormData.append('jobBoard', formData.jobBoard)
+            submitFormData.append('applicationType', formData.applicationType)
+            submitFormData.append('roleType', formData.roleType)
+            submitFormData.append('locationType', formData.locationType)
+            submitFormData.append('notes', formData.notes)
+            submitFormData.append('csrf_token', csrfTokens.csrfToken)
+            submitFormData.append('csrf_hash', csrfTokens.csrfHash)
+
+            // Submit to API
+            const response = await fetch('/api/applications/create', {
+                method: 'POST',
+                body: submitFormData
             })
-            setSuccessMessage('')
-        }, 3000)
+
+            const result = await response.json()
+
+            if (result.success) {
+                setSuccessMessage('Application submitted successfully!')
+                
+                // Redirect to applications list after a brief delay
+                setTimeout(() => {
+                    router.navigate({ to: '/applications' })
+                }, 1500)
+            } else {
+                setErrorMessage(result.error || 'Failed to submit application')
+            }
+        } catch (error) {
+            console.error('Error submitting application:', error)
+            setErrorMessage('Failed to submit application. Please try again.')
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const handleCancel = () => {
@@ -81,7 +154,7 @@ function NewApplication() {
                                     value={formData.companyName}
                                     onChange={handleInputChange}
                                     required
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                     placeholder="e.g., TechCorp Inc."
                                 />
                             </div>
@@ -95,7 +168,7 @@ function NewApplication() {
                                     value={formData.roleName}
                                     onChange={handleInputChange}
                                     required
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                     placeholder="e.g., Senior Software Engineer"
                                 />
                             </div>
@@ -110,7 +183,7 @@ function NewApplication() {
                                     name="jobPostingUrl"
                                     value={formData.jobPostingUrl}
                                     onChange={handleInputChange}
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                     placeholder="https://company.com/careers/job-id"
                                 />
                             </div>
@@ -124,7 +197,7 @@ function NewApplication() {
                                     value={formData.appliedDate}
                                     onChange={handleInputChange}
                                     required
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                 />
                             </div>
                         </div>
@@ -138,14 +211,14 @@ function NewApplication() {
                                     value={formData.jobBoard}
                                     onChange={handleInputChange}
                                     required
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                 >
                                     <option value="">Select job board...</option>
-                                    <option value="linkedin">LinkedIn</option>
-                                    <option value="indeed">Indeed</option>
-                                    <option value="glassdoor">Glassdoor</option>
-                                    <option value="otta">Otta</option>
-                                    <option value="company_site">Company Site</option>
+                                    {jobBoards.map(board => (
+                                        <option key={board.id} value={board.name}>
+                                            {board.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -157,7 +230,7 @@ function NewApplication() {
                                     value={formData.roleType}
                                     onChange={handleInputChange}
                                     required
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !csrfTokens || isLoadingData}
                                 >
                                     <option value="">Select role type...</option>
                                     <option value="manager">Manager</option>
@@ -177,7 +250,7 @@ function NewApplication() {
                                             value="cold"
                                             checked={formData.applicationType === 'cold'}
                                             onChange={handleInputChange}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !csrfTokens || isLoadingData}
                                         />
                                         <span>Cold Apply</span>
                                     </label>
@@ -188,7 +261,7 @@ function NewApplication() {
                                             value="warm"
                                             checked={formData.applicationType === 'warm'}
                                             onChange={handleInputChange}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !csrfTokens || isLoadingData}
                                         />
                                         <span>Warm Apply</span>
                                     </label>
@@ -205,7 +278,7 @@ function NewApplication() {
                                             value="on-site"
                                             checked={formData.locationType === 'on-site'}
                                             onChange={handleInputChange}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !csrfTokens || isLoadingData}
                                         />
                                         <span>On-site</span>
                                     </label>
@@ -216,7 +289,7 @@ function NewApplication() {
                                             value="hybrid"
                                             checked={formData.locationType === 'hybrid'}
                                             onChange={handleInputChange}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !csrfTokens || isLoadingData}
                                         />
                                         <span>Hybrid</span>
                                     </label>
@@ -227,7 +300,7 @@ function NewApplication() {
                                             value="remote"
                                             checked={formData.locationType === 'remote'}
                                             onChange={handleInputChange}
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || !csrfTokens || isLoadingData}
                                         />
                                         <span>Remote</span>
                                     </label>
@@ -242,7 +315,7 @@ function NewApplication() {
                                 name="notes"
                                 value={formData.notes}
                                 onChange={handleInputChange}
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !csrfTokens || isLoadingData}
                                 placeholder="Any additional notes about this application..."
                                 rows={4}
                             />
@@ -254,21 +327,27 @@ function NewApplication() {
                             </div>
                         )}
 
+                        {errorMessage && (
+                            <div className="error-message">
+                                {errorMessage}
+                            </div>
+                        )}
+
                         <div className="form-actions">
                             <button 
                                 type="button" 
                                 onClick={handleCancel}
                                 className="cancel-button"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !csrfTokens || isLoadingData}
                             >
                                 Cancel
                             </button>
                             <button 
                                 type="submit" 
                                 className="submit-button"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !csrfTokens || isLoadingData}
                             >
-                                {isSubmitting ? 'Submitting...' : 'Add Application'}
+                                {isSubmitting ? 'Submitting...' : (!csrfTokens || isLoadingData) ? 'Loading...' : 'Add Application'}
                             </button>
                         </div>
                     </form>

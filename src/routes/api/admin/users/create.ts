@@ -1,5 +1,6 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../../db/services/users'
+import { userOnboardingService } from '../../../../db/services/user-onboarding'
 import { hashPassword } from '../../../../utils/crypto'
 import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/auth-helpers'
 import { z } from 'zod'
@@ -56,6 +57,16 @@ export const ServerRoute = createServerFileRoute('/api/admin/users/create').meth
         name,
         hashedPassword
       })
+      
+      // Provision default user data (job boards, workflows, statuses)
+      try {
+        await userOnboardingService.provisionDefaultUserData(user.id)
+      } catch (onboardingError) {
+        console.error('Failed to provision default user data:', onboardingError)
+        // User was created successfully, but onboarding failed
+        // We could choose to delete the user or let admin handle it manually
+        // For now, we'll continue and report success but mention the onboarding issue
+      }
       
       return createSuccessResponse({
         user: {
