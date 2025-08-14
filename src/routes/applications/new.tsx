@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { requireUserAuth } from '../utils/route-guards'
-import './applications-new.css'
+import { requireUserAuth } from '../../utils/route-guards'
+import './new.css'
 
-export const Route = createFileRoute('/applications-new')({
+export const Route = createFileRoute('/applications/new')({
     beforeLoad: requireUserAuth,
     component: NewApplication,
 })
