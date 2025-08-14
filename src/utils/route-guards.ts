@@ -57,7 +57,7 @@ export async function requireAdminAuth({ location }: { location: any }) {
     
     if (!response.ok) {
       throw redirect({
-        to: '/admin',
+        to: '/login',
         search: {
           redirect: location.href,
         }
@@ -67,7 +67,7 @@ export async function requireAdminAuth({ location }: { location: any }) {
     const authData = await response.json()
     if (!authData.success || !authData.authenticated || authData.userType !== 'admin') {
       throw redirect({
-        to: '/admin',
+        to: '/login',
         search: {
           redirect: location.href,
         }
@@ -80,9 +80,9 @@ export async function requireAdminAuth({ location }: { location: any }) {
       throw error // Re-throw redirects
     }
     
-    // For other errors, redirect to admin login
+    // For other errors, redirect to main login
     throw redirect({
-      to: '/admin',
+      to: '/login',
       search: {
         redirect: location.href,
       }
