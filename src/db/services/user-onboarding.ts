@@ -42,27 +42,30 @@ export class UserOnboardingService {
       { name: 'Declined', description: 'Application declined or withdrawn', isTerminal: true }
     ]
 
+    const createdStatuses: { [key: string]: string } = {}
+    
     for (const statusData of defaultStatuses) {
-      await workflowService.createStatus({
+      const status = await workflowService.createStatus({
         userId,
         ...statusData
       })
+      createdStatuses[statusData.name] = status._id!.toString()
     }
 
-    // Create default workflow
+    // Create default workflow using actual status IDs
     await workflowService.createWorkflow({
       userId,
       name: 'Basic Workflow',
       description: 'Standard job application workflow',
       isDefault: true,
       steps: [
-        { statusId: 'applied', isOptional: false },
-        { statusId: 'phone_screen', isOptional: true },
-        { statusId: 'round_1', isOptional: true },
-        { statusId: 'round_2', isOptional: true },
-        { statusId: 'offer_letter_received', isOptional: true },
-        { statusId: 'accepted', isOptional: true },
-        { statusId: 'declined', isOptional: true } // Can be reached from any step
+        { statusId: createdStatuses['Applied'], isOptional: false },
+        { statusId: createdStatuses['Phone Screen'], isOptional: true },
+        { statusId: createdStatuses['Round 1'], isOptional: true },
+        { statusId: createdStatuses['Round 2'], isOptional: true },
+        { statusId: createdStatuses['Offer Letter Received'], isOptional: true },
+        { statusId: createdStatuses['Accepted'], isOptional: true },
+        { statusId: createdStatuses['Declined'], isOptional: true } // Can be reached from any step
       ]
     })
   }

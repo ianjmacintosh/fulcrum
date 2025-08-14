@@ -29,6 +29,8 @@ import { ServerRoute as ApiAuthStatusServerRouteImport } from './routes/api/auth
 import { ServerRoute as ApiAuthLogoutServerRouteImport } from './routes/api/auth/logout'
 import { ServerRoute as ApiAuthLoginServerRouteImport } from './routes/api/auth/login'
 import { ServerRoute as ApiApplicationsCreateServerRouteImport } from './routes/api/applications/create'
+import { ServerRoute as ApiAnalyticsProjectionServerRouteImport } from './routes/api/analytics/projection'
+import { ServerRoute as ApiAnalyticsDashboardServerRouteImport } from './routes/api/analytics/dashboard'
 import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
 import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
@@ -129,6 +131,18 @@ const ApiApplicationsCreateServerRoute =
   ApiApplicationsCreateServerRouteImport.update({
     id: '/api/applications/create',
     path: '/api/applications/create',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
+const ApiAnalyticsProjectionServerRoute =
+  ApiAnalyticsProjectionServerRouteImport.update({
+    id: '/api/analytics/projection',
+    path: '/api/analytics/projection',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
+const ApiAnalyticsDashboardServerRoute =
+  ApiAnalyticsDashboardServerRouteImport.update({
+    id: '/api/analytics/dashboard',
+    path: '/api/analytics/dashboard',
     getParentRoute: () => rootServerRouteImport,
   } as any)
 const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
@@ -290,6 +304,8 @@ export interface FileServerRoutesByFullPath {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/analytics/dashboard': typeof ApiAnalyticsDashboardServerRoute
+  '/api/analytics/projection': typeof ApiAnalyticsProjectionServerRoute
   '/api/applications/create': typeof ApiApplicationsCreateServerRoute
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
@@ -305,6 +321,8 @@ export interface FileServerRoutesByTo {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/analytics/dashboard': typeof ApiAnalyticsDashboardServerRoute
+  '/api/analytics/projection': typeof ApiAnalyticsProjectionServerRoute
   '/api/applications/create': typeof ApiApplicationsCreateServerRoute
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
@@ -321,6 +339,8 @@ export interface FileServerRoutesById {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/analytics/dashboard': typeof ApiAnalyticsDashboardServerRoute
+  '/api/analytics/projection': typeof ApiAnalyticsProjectionServerRoute
   '/api/applications/create': typeof ApiApplicationsCreateServerRoute
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
@@ -338,6 +358,8 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/analytics/dashboard'
+    | '/api/analytics/projection'
     | '/api/applications/create'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -353,6 +375,8 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/analytics/dashboard'
+    | '/api/analytics/projection'
     | '/api/applications/create'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -368,6 +392,8 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/analytics/dashboard'
+    | '/api/analytics/projection'
     | '/api/applications/create'
     | '/api/auth/login'
     | '/api/auth/logout'
@@ -384,6 +410,8 @@ export interface RootServerRouteChildren {
   ApiAdminLoginServerRoute: typeof ApiAdminLoginServerRoute
   ApiAdminLogoutServerRoute: typeof ApiAdminLogoutServerRoute
   ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRouteWithChildren
+  ApiAnalyticsDashboardServerRoute: typeof ApiAnalyticsDashboardServerRoute
+  ApiAnalyticsProjectionServerRoute: typeof ApiAnalyticsProjectionServerRoute
   ApiApplicationsCreateServerRoute: typeof ApiApplicationsCreateServerRoute
   ApiAuthLoginServerRoute: typeof ApiAuthLoginServerRoute
   ApiAuthLogoutServerRoute: typeof ApiAuthLogoutServerRoute
@@ -523,6 +551,20 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiApplicationsCreateServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/analytics/projection': {
+      id: '/api/analytics/projection'
+      path: '/api/analytics/projection'
+      fullPath: '/api/analytics/projection'
+      preLoaderRoute: typeof ApiAnalyticsProjectionServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/analytics/dashboard': {
+      id: '/api/analytics/dashboard'
+      path: '/api/analytics/dashboard'
+      fullPath: '/api/analytics/dashboard'
+      preLoaderRoute: typeof ApiAnalyticsDashboardServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/admin/users': {
       id: '/api/admin/users'
       path: '/api/admin/users'
@@ -633,6 +675,8 @@ const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAdminLoginServerRoute: ApiAdminLoginServerRoute,
   ApiAdminLogoutServerRoute: ApiAdminLogoutServerRoute,
   ApiAdminUsersServerRoute: ApiAdminUsersServerRouteWithChildren,
+  ApiAnalyticsDashboardServerRoute: ApiAnalyticsDashboardServerRoute,
+  ApiAnalyticsProjectionServerRoute: ApiAnalyticsProjectionServerRoute,
   ApiApplicationsCreateServerRoute: ApiApplicationsCreateServerRoute,
   ApiAuthLoginServerRoute: ApiAuthLoginServerRoute,
   ApiAuthLogoutServerRoute: ApiAuthLogoutServerRoute,
