@@ -18,6 +18,7 @@ import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as JobBoardsRouteImport } from './routes/job-boards'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ApplicationsNewRouteImport } from './routes/applications-new'
 import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -68,6 +69,11 @@ const JobBoardsRoute = JobBoardsRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsNewRoute = ApplicationsNewRouteImport.update({
+  id: '/applications-new',
+  path: '/applications-new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplicationsRoute = ApplicationsRouteImport.update({
@@ -146,6 +152,7 @@ const ApiAdminUsersIdServerRoute = ApiAdminUsersIdServerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/applications': typeof ApplicationsRoute
+  '/applications-new': typeof ApplicationsNewRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
   '/login': typeof LoginRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/applications': typeof ApplicationsRoute
+  '/applications-new': typeof ApplicationsNewRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
   '/login': typeof LoginRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/applications': typeof ApplicationsRoute
+  '/applications-new': typeof ApplicationsNewRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
   '/login': typeof LoginRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/applications'
+    | '/applications-new'
     | '/dashboard'
     | '/job-boards'
     | '/login'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/applications'
+    | '/applications-new'
     | '/dashboard'
     | '/job-boards'
     | '/login'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/applications'
+    | '/applications-new'
     | '/dashboard'
     | '/job-boards'
     | '/login'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApplicationsRoute: typeof ApplicationsRoute
+  ApplicationsNewRoute: typeof ApplicationsNewRoute
   DashboardRoute: typeof DashboardRoute
   JobBoardsRoute: typeof JobBoardsRoute
   LoginRoute: typeof LoginRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/applications-new': {
+      id: '/applications-new'
+      path: '/applications-new'
+      fullPath: '/applications-new'
+      preLoaderRoute: typeof ApplicationsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/applications': {
       id: '/applications'
       path: '/applications'
@@ -497,6 +517,7 @@ const ApiAdminUsersServerRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApplicationsRoute: ApplicationsRoute,
+  ApplicationsNewRoute: ApplicationsNewRoute,
   DashboardRoute: DashboardRoute,
   JobBoardsRoute: JobBoardsRoute,
   LoginRoute: LoginRoute,

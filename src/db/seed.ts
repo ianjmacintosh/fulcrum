@@ -133,41 +133,29 @@ export async function seedDatabase() {
     
     // Define sample data using Alice's real user ID
     const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
-      { userId: aliceUserId, name: 'Cold Apply', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Warm Apply', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Applied', isTerminal: false, createdAt: new Date() },
       { userId: aliceUserId, name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Round 1', isTerminal: false, createdAt: new Date() },
       { userId: aliceUserId, name: 'Round 2', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Round 3', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Offer', isTerminal: true, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Offer Letter Received', isTerminal: false, createdAt: new Date() },
+      { userId: aliceUserId, name: 'Accepted', isTerminal: true, createdAt: new Date() },
       { userId: aliceUserId, name: 'Declined', isTerminal: true, createdAt: new Date() }
     ]
 
     const defaultWorkflows: Omit<Workflow, '_id'>[] = [
       {
         userId: aliceUserId,
-        name: 'Cold Apply Process',
-        description: 'Standard cold application workflow',
+        name: 'Basic Workflow',
+        description: 'Standard job application workflow',
         isDefault: true,
         steps: [
-          { statusId: 'cold_apply', isOptional: false },
+          { statusId: 'applied', isOptional: false },
           { statusId: 'phone_screen', isOptional: false },
+          { statusId: 'round_1', isOptional: false },
           { statusId: 'round_2', isOptional: false },
-          { statusId: 'round_3', isOptional: false },
-          { statusId: 'offer', isOptional: false }
-        ],
-        createdAt: new Date()
-      },
-      {
-        userId: aliceUserId,
-        name: 'Warm Apply Process',
-        description: 'Referral/warm application workflow',
-        isDefault: true,
-        steps: [
-          { statusId: 'warm_apply', isOptional: false },
-          { statusId: 'phone_screen', isOptional: false },
-          { statusId: 'round_2', isOptional: false },
-          { statusId: 'round_3', isOptional: false },
-          { statusId: 'offer', isOptional: false }
+          { statusId: 'offer_letter_received', isOptional: false },
+          { statusId: 'accepted', isOptional: false },
+          { statusId: 'declined', isOptional: true }
         ],
         createdAt: new Date()
       }
@@ -188,12 +176,12 @@ export async function seedDatabase() {
         roleName: 'Senior Frontend Manager',
         jobPostingUrl: '',
         jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        workflow: { id: 'basic_workflow', name: 'Basic Workflow' },
         applicationType: 'cold',
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-06-17', notes: 'Applied through LinkedIn' },
+          { statusId: 'applied', statusName: 'Applied', date: '2025-06-17', notes: 'Applied through LinkedIn' },
           { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen completed' },
           { statusId: 'round_2', statusName: 'Round 2', date: '2025-07-29', notes: 'Technical interview' }
         ],
@@ -207,17 +195,17 @@ export async function seedDatabase() {
         roleName: 'Frontend Engineer - Platform',
         jobPostingUrl: '',
         jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        workflow: { id: 'basic_workflow', name: 'Basic Workflow' },
         applicationType: 'cold',
         roleType: 'engineer',
         locationType: 'remote',
         events: [
-          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-13', notes: 'Applied through LinkedIn' },
+          { statusId: 'applied', statusName: 'Applied', date: '2025-07-13', notes: 'Applied through LinkedIn' },
           { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen with hiring manager' },
-          { statusId: 'round_2', statusName: 'Round 2', date: '2025-08-06', notes: 'Technical coding challenge' },
-          { statusId: 'round_3', statusName: 'Round 3', date: '2025-08-13', notes: 'Final round interview' }
+          { statusId: 'round_1', statusName: 'Round 1', date: '2025-08-06', notes: 'Technical coding challenge' },
+          { statusId: 'round_2', statusName: 'Round 2', date: '2025-08-13', notes: 'Final round interview' }
         ],
-        currentStatus: { id: 'round_3', name: 'Round 3' },
+        currentStatus: { id: 'round_2', name: 'Round 2' },
         createdAt: new Date('2025-07-13'),
         updatedAt: new Date('2025-08-13')
       },
@@ -227,12 +215,12 @@ export async function seedDatabase() {
         roleName: 'Engineering Manager - Web',
         jobPostingUrl: '',
         jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-        workflow: { id: 'warm_apply', name: 'Warm Apply Process' },
+        workflow: { id: 'basic_workflow', name: 'Basic Workflow' },
         applicationType: 'warm',
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'warm_apply', statusName: 'Warm Apply', date: '2025-05-28', notes: 'Referral from former colleague' },
+          { statusId: 'applied', statusName: 'Applied', date: '2025-05-28', notes: 'Referral from former colleague' },
           { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-06-10', notes: 'Phone screen completed' },
           { statusId: 'declined', statusName: 'Declined', date: '2025-06-20', notes: 'Position filled internally' }
         ],
@@ -246,12 +234,12 @@ export async function seedDatabase() {
         roleName: 'Engineering Manager - Growth',
         jobPostingUrl: '',
         jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        workflow: { id: 'basic_workflow', name: 'Basic Workflow' },
         applicationType: 'cold',
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-07-31', notes: 'Applied through LinkedIn' },
+          { statusId: 'applied', statusName: 'Applied', date: '2025-07-31', notes: 'Applied through LinkedIn' },
           { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-08-14', notes: 'Phone screen scheduled' }
         ],
         currentStatus: { id: 'phone_screen', name: 'Phone Screen' },
@@ -264,14 +252,14 @@ export async function seedDatabase() {
         roleName: 'Principal Software Engineer',
         jobPostingUrl: '',
         jobBoard: { id: 'linkedin', name: 'LinkedIn' },
-        workflow: { id: 'cold_apply', name: 'Cold Apply Process' },
+        workflow: { id: 'basic_workflow', name: 'Basic Workflow' },
         applicationType: 'cold',
         roleType: 'engineer',
         locationType: 'hybrid',
         events: [
-          { statusId: 'cold_apply', statusName: 'Cold Apply', date: '2025-08-01', notes: 'Applied through LinkedIn' }
+          { statusId: 'applied', statusName: 'Applied', date: '2025-08-01', notes: 'Applied through LinkedIn' }
         ],
-        currentStatus: { id: 'cold_apply', name: 'Cold Apply' },
+        currentStatus: { id: 'applied', name: 'Applied' },
         createdAt: new Date('2025-08-01'),
         updatedAt: new Date('2025-08-01')
       }
