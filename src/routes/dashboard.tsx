@@ -1,16 +1,44 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { getDashboardAnalytics, getJobProjection } from '../server/analytics'
 import { requireUserAuth } from '../utils/route-guards'
 import './dashboard.css'
 
 export const Route = createFileRoute('/dashboard')({
     beforeLoad: requireUserAuth,
     loader: async () => {
-        const [dashboardData, projectionData] = await Promise.all([
-            getDashboardAnalytics(),
-            getJobProjection()
-        ])
-        return { dashboardData, projectionData }
+        // Fetch analytics data from API endpoints
+        try {
+            const [dashboardResponse, projectionResponse] = await Promise.all([
+                fetch('/api/analytics/dashboard', { 
+                    credentials: 'include' 
+                }),
+                fetch('/api/analytics/projection', { 
+                    credentials: 'include' 
+                })
+            ])
+            
+            if (!dashboardResponse.ok || !projectionResponse.ok) {
+                throw new Error('Failed to fetch analytics data')
+            }
+            
+            const dashboardResult = await dashboardResponse.json()
+            const projectionResult = await projectionResponse.json()
+            
+            if (!dashboardResult.success || !projectionResult.success) {
+                throw new Error('Analytics API returned error')
+            }
+            
+            // Extract data from response (createSuccessResponse spreads the data)
+            const { success: dashSuccess, ...dashboardData } = dashboardResult
+            const { success: projSuccess, ...projectionData } = projectionResult
+            
+            return { 
+                dashboardData, 
+                projectionData 
+            }
+        } catch (error) {
+            console.error('Dashboard loader error:', error)
+            throw error
+        }
     },
     component: Dashboard,
 })
@@ -68,16 +96,6 @@ function Dashboard() {
                     </div>
                 </section>
 
-                <section className="suggestions">
-                    <h2>Recommendations</h2>
-                    <div className="suggestion-list">
-                        {projectionData.recommendedActions.map((action: string, index: number) => (
-                            <div key={index} className="suggestion-item">
-                                <p>{action}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
             </main>
         </div>
     )

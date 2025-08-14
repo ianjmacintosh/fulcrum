@@ -34,6 +34,14 @@ interface User {
   createdAt: string
 }
 
+interface UserDataSummary {
+  hasApplications: boolean
+  hasCustomJobBoards: boolean
+  hasDefaultWorkflow: boolean
+  applicationCount: number
+  jobBoardCount: number
+}
+
 
 interface NewUser {
   email: string
@@ -56,6 +64,8 @@ function AdminUsersPage() {
   })
   const [creatingUser, setCreatingUser] = useState(false)
   const [deletingUser, setDeletingUser] = useState<string | null>(null)
+  const [resettingUser, setResettingUser] = useState<string | null>(null)
+  const [userDataSummaries, setUserDataSummaries] = useState<Record<string, UserDataSummary>>({})
 
   // Initialize component
   useEffect(() => {
@@ -81,6 +91,8 @@ function AdminUsersPage() {
 
       if (result.success) {
         setUsers(result.users)
+        // Fetch data summaries for each user
+        fetchUserDataSummaries(result.users)
       } else {
         setError(result.error || 'Failed to fetch users')
       }
@@ -89,6 +101,28 @@ function AdminUsersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchUserDataSummaries = async (userList: User[]) => {
+    const summaries: Record<string, UserDataSummary> = {}
+    
+    // Fetch data summary for each user
+    for (const user of userList) {
+      try {
+        const response = await fetch(`/api/admin/users/${user.id}/data-summary`, {
+          credentials: 'include'
+        })
+        const result = await response.json()
+        
+        if (result.success) {
+          summaries[user.id] = result.summary
+        }
+      } catch (err) {
+        console.error(`Failed to fetch data summary for user ${user.id}:`, err)
+      }
+    }
+    
+    setUserDataSummaries(summaries)
   }
 
   const handleLogout = async () => {
@@ -236,6 +270,75 @@ function AdminUsersPage() {
     }
   }
 
+  const handleResetUser = async (userId: string, userName: string, includeTestData: boolean) => {
+    const resetType = includeTestData ? 'reset with test data' : 'reset to defaults'
+    if (!confirm(`Are you sure you want to ${resetType} for user "${userName}"? This will delete all their applications and cannot be undone.`)) {
+      return
+    }
+
+    if (!csrfTokens) {
+      setError('Security token not ready. Please refresh the page.')
+      return
+    }
+
+    setResettingUser(userId)
+    setError('')
+    setSuccess('')
+
+    try {
+      const formData = new FormData()
+      formData.append('includeTestData', includeTestData.toString())
+      formData.append('preserveCustomJobBoards', 'false') // Always reset job boards for simplicity
+      formData.append('csrf_token', csrfTokens.csrfToken)
+      formData.append('csrf_hash', csrfTokens.csrfHash)
+
+      const response = await fetch(`/api/admin/users/${userId}/reset`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      const result = await response.json()
+
+      if (response.status === 401) {
+        router.navigate({ to: '/admin' })
+        return
+      }
+
+      if (result.success) {
+        setSuccess(result.message)
+        // Fetch new CSRF tokens
+        try {
+          const newTokens = await fetchCSRFTokens()
+          setCsrfTokens(newTokens)
+        } catch (tokenError) {
+          console.error('Failed to refresh CSRF tokens:', tokenError)
+        }
+        fetchUsers() // Refresh user list and data summaries
+      } else {
+        setError(result.error || 'Failed to reset user data')
+        // Fetch new CSRF tokens on error
+        try {
+          const newTokens = await fetchCSRFTokens()
+          setCsrfTokens(newTokens)
+        } catch (tokenError) {
+          console.error('Failed to refresh CSRF tokens:', tokenError)
+        }
+      }
+    } catch (err) {
+      setError('Failed to reset user data')
+      // Fetch new CSRF tokens on error
+      try {
+        const newTokens = await fetchCSRFTokens()
+        setCsrfTokens(newTokens)
+      } catch (tokenError) {
+        console.error('Failed to refresh CSRF tokens:', tokenError)
+      }
+    } finally {
+      setResettingUser(null)
+    }
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setNewUser(prev => ({ ...prev, [name]: value }))
@@ -244,6 +347,19 @@ function AdminUsersPage() {
   const clearMessages = () => {
     setError('')
     setSuccess('')
+  }
+
+  const getDataStatusDisplay = (userId: string) => {
+    const summary = userDataSummaries[userId]
+    if (!summary) return 'Loading...'
+    
+    if (summary.applicationCount > 0) {
+      return `${summary.applicationCount} apps`
+    } else if (summary.hasDefaultWorkflow) {
+      return 'Default only'
+    } else {
+      return 'No data'
+    }
   }
 
   if (loading) {
@@ -293,7 +409,8 @@ function AdminUsersPage() {
               <th>Email</th>
               <th>Name</th>
               <th>Password</th>
-              <th>Action</th>
+              <th>Data</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -303,14 +420,35 @@ function AdminUsersPage() {
                 <td>{user.email}</td>
                 <td>{user.name}</td>
                 <td className="password-field">•••••••••</td>
-                <td>
-                  <button
-                    onClick={() => handleDeleteUser(user.id, user.name)}
-                    className="delete-button"
-                    disabled={deletingUser === user.id}
-                  >
-                    {deletingUser === user.id ? 'Deleting...' : 'Delete'}
-                  </button>
+                <td className="data-status">
+                  {getDataStatusDisplay(user.id)}
+                </td>
+                <td className="actions-cell">
+                  <div className="actions-group">
+                    <button
+                      onClick={() => handleResetUser(user.id, user.name, false)}
+                      className="reset-button"
+                      disabled={resettingUser === user.id}
+                      title="Reset to default data only"
+                    >
+                      {resettingUser === user.id ? 'Resetting...' : 'Reset'}
+                    </button>
+                    <button
+                      onClick={() => handleResetUser(user.id, user.name, true)}
+                      className="reset-test-button"
+                      disabled={resettingUser === user.id}
+                      title="Reset and add test applications"
+                    >
+                      {resettingUser === user.id ? 'Resetting...' : 'Reset + Test'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id, user.name)}
+                      className="delete-button"
+                      disabled={deletingUser === user.id || resettingUser === user.id}
+                    >
+                      {deletingUser === user.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -352,6 +490,9 @@ function AdminUsersPage() {
                   disabled={creatingUser}
                   minLength={8}
                 />
+              </td>
+              <td className="data-status">
+                <em>Will be provisioned</em>
               </td>
               <td>
                 <button
@@ -568,6 +709,58 @@ function AdminUsersPage() {
           cursor: not-allowed;
         }
 
+        .data-status {
+          font-size: 12px;
+          color: #666;
+          font-style: italic;
+        }
+
+        .actions-cell {
+          min-width: 200px;
+        }
+
+        .actions-group {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .reset-button {
+          background-color: #ffc107;
+          color: #212529;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .reset-button:hover:not(:disabled) {
+          background-color: #e0a800;
+        }
+
+        .reset-test-button {
+          background-color: #17a2b8;
+          color: white;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .reset-test-button:hover:not(:disabled) {
+          background-color: #138496;
+        }
+
+        .reset-button:disabled,
+        .reset-test-button:disabled {
+          background-color: #ccc;
+          cursor: not-allowed;
+        }
+
         @media (max-width: 768px) {
           .admin-users {
             padding: 10px;
@@ -578,7 +771,12 @@ function AdminUsersPage() {
           }
 
           .users-table {
-            min-width: 700px;
+            min-width: 900px;
+          }
+
+          .actions-group {
+            flex-direction: column;
+            gap: 4px;
           }
 
           .admin-header {

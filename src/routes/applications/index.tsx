@@ -1,8 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { requireUserAuth } from '../utils/route-guards'
-import './applications.css'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { requireUserAuth } from '../../utils/route-guards'
+import './index.css'
 
-export const Route = createFileRoute('/applications')({
+export const Route = createFileRoute('/applications/')({
     beforeLoad: requireUserAuth,
     component: Applications,
 })
@@ -94,9 +94,9 @@ function Applications() {
                 </section>
 
                 <section className="add-application">
-                    <button className="add-button" type="button">
+                    <Link to="/applications/new" className="add-button">
                         + Add New Application
-                    </button>
+                    </Link>
                 </section>
             </main>
         </div>

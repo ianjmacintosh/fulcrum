@@ -5,10 +5,13 @@ export class AnalyticsService {
   
   async getDashboardMetrics(userId: string) {
     // Get all applications for user
+    console.log('Analytics: Fetching dashboard metrics for userId:', userId)
     const applications = await applicationService.getApplications(userId)
+    console.log('Analytics: Found applications:', applications.length)
     const totalApplications = applications.length
 
     if (totalApplications === 0) {
+      console.log('Analytics: No applications found, returning empty metrics')
       return this.getEmptyDashboardMetrics()
     }
 
@@ -16,7 +19,14 @@ export class AnalyticsService {
     const monthlyOverview = this.calculateMonthlyOverview(applications)
     
     // Calculate conversion rates
-    const conversionRates = await this.calculateConversionRates(applications)
+    let conversionRates
+    try {
+      conversionRates = await this.calculateConversionRates(applications)
+      console.log('Analytics: Conversion rates calculated:', conversionRates)
+    } catch (error) {
+      console.error('Analytics: Error calculating conversion rates:', error)
+      conversionRates = [] // Fallback to empty array
+    }
     
     // Calculate pipeline health
     const pipelineHealth = this.calculatePipelineHealth(applications)
@@ -24,7 +34,7 @@ export class AnalyticsService {
     // Find top job board
     const topJobBoard = this.findTopJobBoard(applications)
 
-    return {
+    const result = {
       totalApplications,
       monthlyOverview,
       conversionRates,
@@ -33,6 +43,16 @@ export class AnalyticsService {
         topJobBoard
       }
     }
+    
+    console.log('Analytics: Final dashboard data structure:', {
+      totalApplications: result.totalApplications,
+      hasConversionRates: !!result.conversionRates,
+      conversionRatesLength: result.conversionRates?.length,
+      hasMonthlyOverview: !!result.monthlyOverview,
+      hasPipelineHealth: !!result.pipelineHealth
+    })
+    
+    return result
   }
 
   async getJobProjection(userId: string) {
@@ -95,11 +115,6 @@ export class AnalyticsService {
         ],
         confidenceBuffer: 1.5
       },
-      recommendedActions: [
-        `Your ${Math.round(phoneScreenRate * 1000) / 10}% phone screen rate is ${phoneScreenRate < 0.15 ? 'below' : 'above'} industry average of 15%`,
-        'Focus on improving application quality and targeting',
-        'Consider diversifying job boards and application strategies'
-      ]
     }
   }
 
@@ -125,22 +140,32 @@ export class AnalyticsService {
   }
 
   private async calculateConversionRates(applications: JobApplication[]) {
+    console.log('Analytics: Calculating conversion rates for', applications.length, 'applications')
+    
+    // Debug: Log some event statusIds to see their format
+    if (applications.length > 0) {
+      console.log('Analytics: Sample statusIds from first application:')
+      applications[0].events.forEach(event => {
+        console.log(`  - ${event.statusName}: ${event.statusId}`)
+      })
+    }
+    
     const coldApplications = applications.filter(app => app.applicationType === 'cold')
     
     // Applications that reached phone screen
     const coldPhoneScreens = applications.filter(app => 
       app.applicationType === 'cold' && 
-      app.events.some(event => event.statusId === 'phone_screen')
+      app.events.some(event => event.statusName === 'Phone Screen') // Use statusName instead of statusId
     )
     
     // All applications that had phone screens
     const allPhoneScreens = applications.filter(app => 
-      app.events.some(event => event.statusId === 'phone_screen')
+      app.events.some(event => event.statusName === 'Phone Screen')
     )
     
     // Applications that progressed past phone screen
     const round2Plus = applications.filter(app => 
-      app.events.some(event => ['round_2', 'round_3', 'offer'].includes(event.statusId))
+      app.events.some(event => ['Round 2', 'Offer Letter Received', 'Accepted'].includes(event.statusName))
     )
 
     const coldToPhoneRate = coldApplications.length > 0 ? 
@@ -282,11 +307,6 @@ export class AnalyticsService {
         stepTransitions: [],
         confidenceBuffer: 1.5
       },
-      recommendedActions: [
-        'Start by adding your job applications to build analytics',
-        'Track your application timeline for better projections',
-        'Focus on consistent application volume'
-      ]
     }
   }
 }

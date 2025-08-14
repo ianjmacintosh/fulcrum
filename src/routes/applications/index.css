@@ -115,6 +115,7 @@
 }
 
 .add-button {
+    display: inline-block;
     padding: 1rem 2rem;
     background-color: #f0f0f0;
     border: 2px dashed #ccc;
@@ -123,10 +124,12 @@
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
 }
 
 .add-button:hover {
     background-color: #e8e8e8;
     border-color: #999;
     color: #333;
+    text-decoration: none;
 }
