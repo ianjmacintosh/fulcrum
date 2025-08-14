@@ -1,7 +1,7 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../../db/services/users'
 import { hashPassword } from '../../../../utils/crypto'
-import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/admin-auth-helpers'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/auth-helpers'
 import { z } from 'zod'
 
 // Schema for user creation validation

@@ -1,10 +1,12 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { fetchCSRFTokens, CSRFTokens } from '../../utils/csrf-client'
+import { requireAdminAuth } from '../../utils/route-guards'
 
 // Server functions will be called via fetch, no direct imports needed
 
 export const Route = createFileRoute('/admin/users')({
+  beforeLoad: requireAdminAuth,
   loader: async () => {
     // Load CSRF tokens in the route loader
     try {

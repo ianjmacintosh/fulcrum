@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { requireUserAuth } from '../utils/route-guards'
 import './resumes.css'
 
 export const Route = createFileRoute('/resumes')({
+    beforeLoad: requireUserAuth,
     component: Resumes,
 })
 

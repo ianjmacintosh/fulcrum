@@ -1,7 +1,9 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
+import { requireAdminAuth } from '../../utils/route-guards'
 
 export const Route = createFileRoute('/admin/change-password')({
+  beforeLoad: requireAdminAuth,
   component: AdminChangePasswordPage,
 })
 

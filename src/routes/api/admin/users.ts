@@ -1,6 +1,6 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../db/services/users'
-import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../utils/admin-auth-helpers'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
 
 export const ServerRoute = createServerFileRoute('/api/admin/users').methods({
   GET: async ({ request }) => {

@@ -13,14 +13,19 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResumesRouteImport } from './routes/resumes'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as LogoutRouteImport } from './routes/logout'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as JobBoardsRouteImport } from './routes/job-boards'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 import { Route as AdminChangePasswordRouteImport } from './routes/admin/change-password'
+import { ServerRoute as ApiAuthStatusServerRouteImport } from './routes/api/auth/status'
+import { ServerRoute as ApiAuthLogoutServerRouteImport } from './routes/api/auth/logout'
+import { ServerRoute as ApiAuthLoginServerRouteImport } from './routes/api/auth/login'
 import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admin/users'
 import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
@@ -38,6 +43,21 @@ const SettingsRoute = SettingsRouteImport.update({
 const ResumesRoute = ResumesRouteImport.update({
   id: '/resumes',
   path: '/resumes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JobBoardsRoute = JobBoardsRouteImport.update({
@@ -60,11 +80,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -79,6 +94,21 @@ const AdminChangePasswordRoute = AdminChangePasswordRouteImport.update({
   id: '/admin/change-password',
   path: '/admin/change-password',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthStatusServerRoute = ApiAuthStatusServerRouteImport.update({
+  id: '/api/auth/status',
+  path: '/api/auth/status',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAuthLogoutServerRoute = ApiAuthLogoutServerRouteImport.update({
+  id: '/api/auth/logout',
+  path: '/api/auth/logout',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiAuthLoginServerRoute = ApiAuthLoginServerRouteImport.update({
+  id: '/api/auth/login',
+  path: '/api/auth/login',
+  getParentRoute: () => rootServerRouteImport,
 } as any)
 const ApiAdminUsersServerRoute = ApiAdminUsersServerRouteImport.update({
   id: '/api/admin/users',
@@ -118,24 +148,28 @@ export interface FileRoutesByFullPath {
   '/applications': typeof ApplicationsRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/applications': typeof ApplicationsRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,12 +177,14 @@ export interface FileRoutesById {
   '/applications': typeof ApplicationsRoute
   '/dashboard': typeof DashboardRoute
   '/job-boards': typeof JobBoardsRoute
+  '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/resumes': typeof ResumesRoute
   '/settings': typeof SettingsRoute
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
-  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,36 +193,42 @@ export interface FileRouteTypes {
     | '/applications'
     | '/dashboard'
     | '/job-boards'
+    | '/login'
+    | '/logout'
+    | '/reset-password'
     | '/resumes'
     | '/settings'
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
-    | '/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/applications'
     | '/dashboard'
     | '/job-boards'
+    | '/login'
+    | '/logout'
+    | '/reset-password'
     | '/resumes'
     | '/settings'
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
-    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/applications'
     | '/dashboard'
     | '/job-boards'
+    | '/login'
+    | '/logout'
+    | '/reset-password'
     | '/resumes'
     | '/settings'
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
-    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -194,18 +236,23 @@ export interface RootRouteChildren {
   ApplicationsRoute: typeof ApplicationsRoute
   DashboardRoute: typeof DashboardRoute
   JobBoardsRoute: typeof JobBoardsRoute
+  LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ResumesRoute: typeof ResumesRoute
   SettingsRoute: typeof SettingsRoute
   AdminChangePasswordRoute: typeof AdminChangePasswordRoute
   AdminLogoutRoute: typeof AdminLogoutRoute
   AdminUsersRoute: typeof AdminUsersRoute
-  AdminIndexRoute: typeof AdminIndexRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/admin/change-password': typeof ApiAdminChangePasswordServerRoute
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/auth/login': typeof ApiAuthLoginServerRoute
+  '/api/auth/logout': typeof ApiAuthLogoutServerRoute
+  '/api/auth/status': typeof ApiAuthStatusServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
 }
@@ -214,6 +261,9 @@ export interface FileServerRoutesByTo {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/auth/login': typeof ApiAuthLoginServerRoute
+  '/api/auth/logout': typeof ApiAuthLogoutServerRoute
+  '/api/auth/status': typeof ApiAuthStatusServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
 }
@@ -223,6 +273,9 @@ export interface FileServerRoutesById {
   '/api/admin/login': typeof ApiAdminLoginServerRoute
   '/api/admin/logout': typeof ApiAdminLogoutServerRoute
   '/api/admin/users': typeof ApiAdminUsersServerRouteWithChildren
+  '/api/auth/login': typeof ApiAuthLoginServerRoute
+  '/api/auth/logout': typeof ApiAuthLogoutServerRoute
+  '/api/auth/status': typeof ApiAuthStatusServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRoute
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
 }
@@ -233,6 +286,9 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/status'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
   fileServerRoutesByTo: FileServerRoutesByTo
@@ -241,6 +297,9 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/status'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
   id:
@@ -249,6 +308,9 @@ export interface FileServerRouteTypes {
     | '/api/admin/login'
     | '/api/admin/logout'
     | '/api/admin/users'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/status'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
   fileServerRoutesById: FileServerRoutesById
@@ -258,6 +320,9 @@ export interface RootServerRouteChildren {
   ApiAdminLoginServerRoute: typeof ApiAdminLoginServerRoute
   ApiAdminLogoutServerRoute: typeof ApiAdminLogoutServerRoute
   ApiAdminUsersServerRoute: typeof ApiAdminUsersServerRouteWithChildren
+  ApiAuthLoginServerRoute: typeof ApiAuthLoginServerRoute
+  ApiAuthLogoutServerRoute: typeof ApiAuthLogoutServerRoute
+  ApiAuthStatusServerRoute: typeof ApiAuthStatusServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -274,6 +339,27 @@ declare module '@tanstack/react-router' {
       path: '/resumes'
       fullPath: '/resumes'
       preLoaderRoute: typeof ResumesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/job-boards': {
@@ -304,13 +390,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -336,6 +415,27 @@ declare module '@tanstack/react-router' {
 }
 declare module '@tanstack/react-start/server' {
   interface ServerFileRoutesByPath {
+    '/api/auth/status': {
+      id: '/api/auth/status'
+      path: '/api/auth/status'
+      fullPath: '/api/auth/status'
+      preLoaderRoute: typeof ApiAuthStatusServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/auth/logout': {
+      id: '/api/auth/logout'
+      path: '/api/auth/logout'
+      fullPath: '/api/auth/logout'
+      preLoaderRoute: typeof ApiAuthLogoutServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/auth/login': {
+      id: '/api/auth/login'
+      path: '/api/auth/login'
+      fullPath: '/api/auth/login'
+      preLoaderRoute: typeof ApiAuthLoginServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/admin/users': {
       id: '/api/admin/users'
       path: '/api/admin/users'
@@ -399,12 +499,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApplicationsRoute: ApplicationsRoute,
   DashboardRoute: DashboardRoute,
   JobBoardsRoute: JobBoardsRoute,
+  LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ResumesRoute: ResumesRoute,
   SettingsRoute: SettingsRoute,
   AdminChangePasswordRoute: AdminChangePasswordRoute,
   AdminLogoutRoute: AdminLogoutRoute,
   AdminUsersRoute: AdminUsersRoute,
-  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
@@ -414,6 +516,9 @@ const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAdminLoginServerRoute: ApiAdminLoginServerRoute,
   ApiAdminLogoutServerRoute: ApiAdminLogoutServerRoute,
   ApiAdminUsersServerRoute: ApiAdminUsersServerRouteWithChildren,
+  ApiAuthLoginServerRoute: ApiAuthLoginServerRoute,
+  ApiAuthLogoutServerRoute: ApiAuthLogoutServerRoute,
+  ApiAuthStatusServerRoute: ApiAuthStatusServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

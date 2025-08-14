@@ -1,22 +1,20 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
 
-export const Route = createFileRoute('/admin/')({
-  component: AdminLoginPage,
+export const Route = createFileRoute('/login')({
+  component: LoginPage,
 })
 
-
-function AdminLoginPage() {
+function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
-  // CSRF tokens temporarily disabled for testing
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // TODO: Re-implement CSRF tokens after fixing browser compatibility
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,40 +22,19 @@ function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
-      })
-      
-      const result = await response.json()
+      const result = await login(formData.email, formData.password)
 
-      if (response.ok && result.success) {
-        setFormData({ username: '', password: '' })
-        await router.navigate({ to: '/admin/users' })
+      if (result.success) {
+        setFormData({ email: '', password: '' })
+        // Redirect based on user type
+        const redirectPath = result.redirectUrl || '/dashboard'
+        await router.navigate({ to: redirectPath })
       } else {
-        // Handle rate limiting specially
-        if (response.status === 429) {
-          const retryAfter = result?.retryAfter
-          if (retryAfter) {
-            const minutes = Math.ceil(retryAfter / 60)
-            setError(`Too many failed attempts. Please wait ${minutes} minute${minutes > 1 ? 's' : ''} before trying again.`)
-          } else {
-            setError(result?.error || 'Too many failed attempts. Please try again later.')
-          }
-        } else {
-          setError(result?.error || 'Login failed')
-        }
+        setError(result.error || 'Login failed')
         setLoading(false)
       }
     } catch (err) {
-      setError(`An error occurred. Please try again.`)
+      setError('An error occurred. Please try again.')
       setLoading(false)
     }
   }
@@ -68,25 +45,26 @@ function AdminLoginPage() {
   }
 
   return (
-    <div className="admin-login">
-      <div className="admin-login-container">
-        <div className="admin-login-header">
-          <h1>Admin Login</h1>
-          <p>Sign in to access the admin panel</p>
+    <div className="login">
+      <div className="login-container">
+        <div className="login-header">
+          <h1>Sign In</h1>
+          <p>Welcome back! Please sign in to your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="admin-login-form">
+        <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="email">Email Address</label>
             <input
               type="text"
-              id="username"
-              name="username"
-              value={formData.username}
+              id="email"
+              name="email"
+              value={formData.email}
               onChange={handleInputChange}
               required
               disabled={loading}
-              autoComplete="username"
+              autoComplete="email"
+              placeholder="Enter your email address"
             />
           </div>
 
@@ -101,6 +79,7 @@ function AdminLoginPage() {
               required
               disabled={loading}
               autoComplete="current-password"
+              placeholder="Enter your password"
             />
           </div>
 
@@ -114,45 +93,52 @@ function AdminLoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        <div className="login-footer">
+          <Link to="/reset-password" className="forgot-password-link">
+            Forgot password?
+          </Link>
+        </div>
       </div>
 
       <style>{`
-        .admin-login {
+        .login {
           min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: #f5f5f5;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           padding: 20px;
         }
 
-        .admin-login-container {
+        .login-container {
           background: white;
           padding: 40px;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
           width: 100%;
-          max-width: 400px;
+          max-width: 420px;
         }
 
-        .admin-login-header {
+        .login-header {
           text-align: center;
           margin-bottom: 30px;
         }
 
-        .admin-login-header h1 {
+        .login-header h1 {
           margin: 0 0 8px 0;
           color: #333;
           font-size: 28px;
+          font-weight: 700;
         }
 
-        .admin-login-header p {
+        .login-header p {
           margin: 0;
           color: #666;
           font-size: 16px;
         }
 
-        .admin-login-form {
+        .login-form {
           display: flex;
           flex-direction: column;
           gap: 20px;
@@ -173,14 +159,18 @@ function AdminLoginPage() {
         .form-group input {
           padding: 12px 16px;
           border: 2px solid #e0e0e0;
-          border-radius: 6px;
+          border-radius: 8px;
           font-size: 16px;
           transition: border-color 0.2s ease;
         }
 
+        .form-group input::placeholder {
+          color: #999;
+        }
+
         .form-group input:focus {
           outline: none;
-          border-color: #007bff;
+          border-color: #667eea;
         }
 
         .form-group input:disabled {
@@ -192,40 +182,65 @@ function AdminLoginPage() {
           background-color: #fee;
           color: #c33;
           padding: 12px 16px;
-          border-radius: 6px;
+          border-radius: 8px;
           border: 1px solid #fcc;
           font-size: 14px;
           text-align: center;
         }
 
         .login-button {
-          background-color: #007bff;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border: none;
           padding: 14px 24px;
-          border-radius: 6px;
+          border-radius: 8px;
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
-          transition: background-color 0.2s ease;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .login-button:hover:not(:disabled) {
-          background-color: #0056b3;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
         .login-button:disabled {
-          background-color: #ccc;
+          background: #ccc;
           cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
+        .login-footer {
+          text-align: center;
+          margin-top: 20px;
+        }
+
+        .forgot-password-link {
+          color: #667eea;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 500;
+          transition: color 0.2s ease;
+        }
+
+        .forgot-password-link:hover {
+          color: #764ba2;
+          text-decoration: underline;
         }
 
         @media (max-width: 480px) {
-          .admin-login-container {
+          .login-container {
             padding: 30px 20px;
           }
           
-          .admin-login-header h1 {
+          .login-header h1 {
             font-size: 24px;
+          }
+          
+          .form-group input {
+            font-size: 16px; /* Prevents zoom on iOS */
           }
         }
       `}</style>

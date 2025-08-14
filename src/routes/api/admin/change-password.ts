@@ -1,7 +1,7 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { adminService } from '../../../db/services/admin'
 import { verifyPassword, hashPassword } from '../../../utils/crypto'
-import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../utils/admin-auth-helpers'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
 import { adminRateLimiter, getClientIP } from '../../../utils/rate-limiter'
 import { z } from 'zod'
 

@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getDashboardAnalytics, getJobProjection } from '../server/analytics'
+import { requireUserAuth } from '../utils/route-guards'
 import './dashboard.css'
 
 export const Route = createFileRoute('/dashboard')({
+    beforeLoad: requireUserAuth,
     loader: async () => {
         const [dashboardData, projectionData] = await Promise.all([
             getDashboardAnalytics(),

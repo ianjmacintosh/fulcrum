@@ -1,7 +1,7 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
 import { userService } from '../../../../db/services/users'
 import { applicationService } from '../../../../db/services/applications'
-import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/admin-auth-helpers'
+import { requireAdminAuth, createSuccessResponse, createErrorResponse } from '../../../../utils/auth-helpers'
 
 export const ServerRoute = createServerFileRoute('/api/admin/users/$id').methods({
   DELETE: async ({ request, params }) => {

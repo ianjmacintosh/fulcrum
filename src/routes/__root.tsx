@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router'
 import { Navigation } from '../components/Navigation'
 import { Footer } from '../components/Footer'
+import { AuthProvider } from '../contexts/AuthContext'
 import '../styles/global.css'
 
 export const Route = createRootRoute({
@@ -34,9 +35,11 @@ export const Route = createRootRoute({
 function RootComponent() {
     return (
         <RootDocument>
-            <Navigation />
-            <Outlet />
-            <Footer />
+            <AuthProvider>
+                <Navigation />
+                <Outlet />
+                <Footer />
+            </AuthProvider>
         </RootDocument>
     )
 }
