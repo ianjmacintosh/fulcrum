@@ -1,18 +1,17 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
-import { adminService } from '../../../db/services/admin'
-import { verifyPassword } from '../../../utils/crypto'
-import { createAdminSession, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../utils/session'
-import { adminRateLimiter, getClientIP } from '../../../utils/rate-limiter'
+import { authenticate } from '../../../utils/auth-helpers'
+import { createSession, SESSION_COOKIE, SESSION_MAX_AGE } from '../../../utils/session'
 import { createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { adminRateLimiter, getClientIP } from '../../../utils/rate-limiter'
 import { z } from 'zod'
 
 // Schema for login validation
 const LoginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  email: z.string().min(1, 'Email is required'),
   password: z.string().min(1, 'Password is required')
 })
 
-export const ServerRoute = createServerFileRoute('/api/admin/login').methods({
+export const ServerRoute = createServerFileRoute('/api/auth/login').methods({
   POST: async ({ request }) => {
     const clientIP = getClientIP(request)
     
@@ -35,31 +34,24 @@ export const ServerRoute = createServerFileRoute('/api/admin/login').methods({
       
       // Parse JSON body
       const data = await request.json()
-      const { username, password } = data
+      const { email, password } = data
       
       // Validate input
-      const validation = LoginSchema.safeParse({ username, password })
+      const validation = LoginSchema.safeParse({ email, password })
       if (!validation.success) {
         adminRateLimiter.record(clientIP, false)
-        return createErrorResponse('Invalid username or password.', 400)
+        return createErrorResponse('Email and password are required.', 400)
       }
       
-      // Find admin user
-      const admin = await adminService.getAdminByUsername(username)
-      if (!admin) {
+      // Authenticate user (supports both admin and user credentials)
+      const authResult = await authenticate(email, password)
+      if (!authResult.success) {
         adminRateLimiter.record(clientIP, false)
-        return createErrorResponse('Invalid username or password.', 401)
-      }
-      
-      // Verify password
-      const isValidPassword = await verifyPassword(password, admin.hashedPassword)
-      if (!isValidPassword) {
-        adminRateLimiter.record(clientIP, false)
-        return createErrorResponse('Invalid username or password.', 401)
+        return createErrorResponse(authResult.error, 401)
       }
       
       // Success - create session
-      const sessionId = createAdminSession(admin.username)
+      const sessionId = createSession(authResult.userId, authResult.userType)
       
       // Record successful login (clears rate limit for this IP)
       adminRateLimiter.record(clientIP, true)
@@ -69,9 +61,14 @@ export const ServerRoute = createServerFileRoute('/api/admin/login').methods({
       const secureFlag = isProduction ? 'Secure; ' : ''
       const sessionCookie = `${SESSION_COOKIE}=${sessionId}; Path=/; ${secureFlag}HttpOnly; SameSite=Strict; Max-Age=${SESSION_MAX_AGE / 1000}`
       
+      // Determine redirect URL based on user type
+      const redirectUrl = authResult.userType === 'admin' ? '/admin' : '/dashboard'
+      
       return new Response(JSON.stringify({
         success: true,
-        message: 'Login successful'
+        message: 'Login successful',
+        userType: authResult.userType,
+        redirectUrl
       }), {
         status: 200,
         headers: {

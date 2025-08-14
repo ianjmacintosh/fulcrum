@@ -1,9 +1,9 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
-import { clearAdminSession, SESSION_COOKIE } from '../../../utils/session'
+import { clearSession, SESSION_COOKIE } from '../../../utils/session'
 import { createSuccessResponse } from '../../../utils/auth-helpers'
 
-export const ServerRoute = createServerFileRoute('/api/admin/logout').methods({
-  GET: async ({ request }) => {
+export const ServerRoute = createServerFileRoute('/api/auth/logout').methods({
+  POST: async ({ request }) => {
     const cookieHeader = request.headers.get('cookie')
     if (cookieHeader) {
       const cookies = Object.fromEntries(
@@ -15,7 +15,7 @@ export const ServerRoute = createServerFileRoute('/api/admin/logout').methods({
       
       const sessionId = cookies[SESSION_COOKIE]
       if (sessionId) {
-        clearAdminSession(sessionId)
+        clearSession(sessionId)
       }
     }
     
@@ -25,7 +25,8 @@ export const ServerRoute = createServerFileRoute('/api/admin/logout').methods({
     
     return new Response(JSON.stringify({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
+      redirectUrl: '/'
     }), {
       status: 200,
       headers: {
