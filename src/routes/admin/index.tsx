@@ -1,7 +1,28 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/admin/')({
+  beforeLoad: async () => {
+    // Check if admin is already authenticated
+    try {
+      const response = await fetch('/api/auth/status', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const authData = await response.json()
+        if (authData.success && authData.authenticated && authData.userType === 'admin') {
+          // Admin is already logged in, redirect to users page
+          throw redirect({ to: '/admin/users' })
+        }
+      }
+    } catch (error) {
+      if (error instanceof Response || (error as any)?.to) {
+        throw error // Re-throw redirects
+      }
+      // If there's an error checking auth, just continue to login page
+    }
+  },
   component: AdminLoginPage,
 })
 

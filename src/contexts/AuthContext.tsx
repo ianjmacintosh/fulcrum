@@ -42,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (response.ok) {
         const data = await response.json()
-        if (data.success && data.user) {
+        if (data.success && data.authenticated && data.user) {
           setState({
             user: data.user,
             userType: data.userType,

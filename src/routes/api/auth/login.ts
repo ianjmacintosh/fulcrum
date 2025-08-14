@@ -62,7 +62,7 @@ export const ServerRoute = createServerFileRoute('/api/auth/login').methods({
       const sessionCookie = `${SESSION_COOKIE}=${sessionId}; Path=/; ${secureFlag}HttpOnly; SameSite=Strict; Max-Age=${SESSION_MAX_AGE / 1000}`
       
       // Determine redirect URL based on user type
-      const redirectUrl = authResult.userType === 'admin' ? '/admin' : '/dashboard'
+      const redirectUrl = authResult.userType === 'admin' ? '/admin/users' : '/dashboard'
       
       return new Response(JSON.stringify({
         success: true,
