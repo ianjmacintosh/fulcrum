@@ -15,3 +15,16 @@ test('Homepage has a login button and allows users to log in', async ({ page }) 
   // Expect the login to be successful
   await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 });
+
+test('Homepage has a login button and allows administrators to log in', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.ADMIN_EMAIL ?? '');
+  await page.getByRole('textbox', { name: 'Email Address' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.ADMIN_PASSWORD ?? '');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+
+  // Expect the login to be successful
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+});
