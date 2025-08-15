@@ -9,7 +9,8 @@
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "db:seed": "tsx src/db/seed.ts",
-    "db:test": "tsx test-connection.js"
+    "db:test": "tsx test-connection.js",
+    "test": "playwright test"
   },
   "engines": {
     "node": ">=20.0.0"
