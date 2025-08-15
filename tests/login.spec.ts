@@ -1,18 +1,17 @@
 import { test, expect } from '@playwright/test';
+import dotenv from 'dotenv';
 
-test('has title', async ({ page }) => {
+dotenv.config();
+
+test('Homepage has a login button and allows users to log in', async ({ page }) => {
   await page.goto('/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Fulcrum/);
-});
-
-test('get started link', async ({ page }) => {
-  await page.goto('/');
-
-  // Click the log in link.
   await page.getByRole('link', { name: 'Login' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? '');
+  await page.getByRole('textbox', { name: 'Email Address' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
+  await page.getByRole('button', { name: 'Sign In' }).click();
 
-  // Expects page to have a heading with the name of Sign In.
-  await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+  // Expect the login to be successful
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 });
