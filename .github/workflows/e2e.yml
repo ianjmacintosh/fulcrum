@@ -18,8 +18,8 @@ jobs:
     - name: Run Playwright tests
       env:
         BASE_URL: ${{ github.event.deployment_status.environment_url }}
-        LOGIN_USERNAME: ${{ secrets.TEST_LOGIN_USERNAME }}
-        LOGIN_PASSWORD: ${{ secrets.TEST_LOGIN_PASSWORD }}
+        USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+        ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       run: npm run test:e2e
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
