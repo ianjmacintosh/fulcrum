@@ -1,0 +1,29 @@
+name: Run End-to-End Tests
+on:
+  deployment_status:
+jobs:
+  e2e-test:
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run Playwright tests
+      env:
+        BASE_URL: ${{ github.event.deployment_status.environment_url }}
+        LOGIN_USERNAME: ${{ secrets.TEST_LOGIN_USERNAME }}
+        LOGIN_PASSWORD: ${{ secrets.TEST_LOGIN_PASSWORD }}
+      run: npm run test:e2e
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
