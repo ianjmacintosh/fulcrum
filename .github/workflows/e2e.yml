@@ -18,7 +18,9 @@ jobs:
     - name: Run Playwright tests
       env:
         BASE_URL: ${{ github.event.deployment_status.environment_url }}
+        USER_EMAIL: ${{ vars.USER_EMAIL }}
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+        ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       run: npm run test:e2e
     - uses: actions/upload-artifact@v4
