@@ -13,15 +13,6 @@ The application features:
 - **Resumes**: Track different resume versions and their performance
 - **Settings**: User preferences and auto-complete configuration
 
-## Development Commands
-
-```bash
-# Start development server (runs on port 3000)
-npm run dev
-
-# Build for production
-npm run build
-```
 
 ## Technology Stack
 
@@ -32,8 +23,16 @@ npm run build
 
 ## Code Standards and Conventions
 
-* Modules must always be managed using ES module syntax (`import`) and never using CommonJS (`require`)
-* Presume the dev server is already running locally on port 3000 -- only start the dev server if you've already tried to reach it and believe it's not running
+- Modules must always be managed using ES module syntax (`import`) and never using CommonJS (`require`)
+- Presume the dev server is already running locally on port 3000 -- only start the dev server if you've already tried to reach it and believe it's not running
+
+## Testing
+
+- The dev server is always running at `localhost:3000`
+- Testing should generally happen through automation, manual testing is redundant
+    - Automated tests should be written during feature development; end-to-end tests go in `/e2e-tests`, unit tests go alongside component files (`Footer.tsx` gets tested by `Footer.test.tsx`)
+    - Integrated end-to-end testing happens via Playwright (`npm run test:e2e`)
+    - Unit testing happens via Vitest (`npm run test:unit`)
 
 ## Architecture
 

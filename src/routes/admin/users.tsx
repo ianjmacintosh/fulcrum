@@ -12,7 +12,7 @@ export const Route = createFileRoute('/admin/users')({
     try {
       const { getCSRFTokens } = await import('../../server/admin-auth')
       const csrfResult = await getCSRFTokens()
-      
+
       return {
         csrfTokens: csrfResult.success ? {
           csrfToken: csrfResult.csrfToken!,
@@ -73,7 +73,7 @@ function AdminUsersPage() {
     if (!loaderData.csrfTokens) {
       setError('Failed to load security tokens. Please refresh the page.')
     }
-    
+
     fetchUsers()
   }, [loaderData.csrfTokens])
 
@@ -105,7 +105,7 @@ function AdminUsersPage() {
 
   const fetchUserDataSummaries = async (userList: User[]) => {
     const summaries: Record<string, UserDataSummary> = {}
-    
+
     // Fetch data summary for each user
     for (const user of userList) {
       try {
@@ -113,7 +113,7 @@ function AdminUsersPage() {
           credentials: 'include'
         })
         const result = await response.json()
-        
+
         if (result.success) {
           summaries[user.id] = result.summary
         }
@@ -121,7 +121,7 @@ function AdminUsersPage() {
         console.error(`Failed to fetch data summary for user ${user.id}:`, err)
       }
     }
-    
+
     setUserDataSummaries(summaries)
   }
 
@@ -139,7 +139,7 @@ function AdminUsersPage() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!csrfTokens) {
       setError('Security token not ready. Please refresh the page.')
       return
@@ -352,7 +352,7 @@ function AdminUsersPage() {
   const getDataStatusDisplay = (userId: string) => {
     const summary = userDataSummaries[userId]
     if (!summary) return 'Loading...'
-    
+
     if (summary.applicationCount > 0) {
       return `${summary.applicationCount} apps`
     } else if (summary.hasDefaultWorkflow) {
@@ -374,17 +374,6 @@ function AdminUsersPage() {
     <div className="admin-users">
       <div className="admin-header">
         <h1>User Management</h1>
-        <div className="admin-nav">
-          <button 
-            onClick={() => router.navigate({ to: '/admin/change-password' })}
-            className="nav-button"
-          >
-            Change Password
-          </button>
-          <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
-        </div>
       </div>
 
       {error && (
