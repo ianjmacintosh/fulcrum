@@ -6,105 +6,110 @@ import { hashPassword } from '../utils/crypto'
 
 async function seedAdmin() {
   console.log('🔐 Setting up admin user...')
-  
+
   const defaultUsername = 'admin'
-  
+
   // Check if admin already exists
   const existingAdmin = await adminService.getAdminByUsername(defaultUsername)
   if (existingAdmin) {
     console.log('✅ Admin user already exists')
     return
   }
-  
-  // Generate a secure random password for first-time setup
+
+  // Use environment variable "ADMIN_PASSWORD" if set, otherwise generate a random password
   const generateSecurePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
     return Array.from(crypto.getRandomValues(new Uint8Array(16)))
       .map(x => chars[x % chars.length])
       .join('')
   }
-  
-  const tempPassword = generateSecurePassword()
-  
+
+  const tempPassword = process.env.ADMIN_PASSWORD || generateSecurePassword()
+
   // Hash the temporary password
   const hashedPassword = await hashPassword(tempPassword)
-  
+
   // Create admin user
   await adminService.createAdminUser(defaultUsername, hashedPassword)
-  
+
   console.log('✅ Default admin user created')
   console.log('')
-  console.log('🔐 IMPORTANT: Save this temporary password (will not be shown again):')
-  console.log('   Username:', defaultUsername)
-  console.log('   Password:', tempPassword)
-  console.log('')
-  console.log('⚠️  Please change this password immediately after first login!')
+  if (process.env.ADMIN_PASSWORD) {
+    console.log('🔐 Admin password set from environment variable: ADMIN_PASSWORD')
+    console.log('   Username:', defaultUsername)
+  } else {
+    console.log('🔐 IMPORTANT: Save this temporary password (will not be shown again):')
+    console.log('   Username:', defaultUsername)
+    console.log('   Password:', tempPassword)
+    console.log('')
+    console.log('⚠️  Please change this password immediately after first login!')
+  }
 }
 
 async function seedUser() {
   console.log('👤 Setting up default user...')
-  
+
   const defaultEmail = 'alice@wonderland.dev'
   const defaultName = 'Alice'
   const defaultPassword = 'followthewhiterabbit'
-  
+
   // Check if user already exists
   let existingUser = await userService.getUserByEmail(defaultEmail)
   if (existingUser) {
     console.log('✅ Default user Alice already exists')
     return existingUser.id
   }
-  
+
   // Hash the password
   const hashedPassword = await hashPassword(defaultPassword)
-  
+
   // Create user
   const user = await userService.createUser({
     email: defaultEmail,
     name: defaultName,
     hashedPassword
   })
-  
+
   console.log('✅ Default user Alice created')
   console.log(`   Email: ${defaultEmail}`)
   console.log(`   Password: ${defaultPassword}`)
-  
+
   return user.id
 }
 
 async function migrateTestUserDataToAlice(aliceUserId: string) {
   console.log('🔄 Migrating existing test user data to Alice...')
-  
+
   const db = await connectToDatabase()
   const testUserId = 'test-user-123'
-  
+
   // Update application statuses
   const statusResult = await db.collection('application_statuses').updateMany(
     { userId: testUserId },
     { $set: { userId: aliceUserId } }
   )
-  
+
   // Update workflows
   const workflowResult = await db.collection('workflows').updateMany(
     { userId: testUserId },
     { $set: { userId: aliceUserId } }
   )
-  
+
   // Update job boards
   const jobBoardResult = await db.collection('job_boards').updateMany(
     { userId: testUserId },
     { $set: { userId: aliceUserId } }
   )
-  
+
   // Update applications
   const appResult = await db.collection('applications').updateMany(
     { userId: testUserId },
     { $set: { userId: aliceUserId } }
   )
-  
-  const totalMigrated = statusResult.modifiedCount + workflowResult.modifiedCount + 
-                       jobBoardResult.modifiedCount + appResult.modifiedCount
-  
+
+  const totalMigrated = statusResult.modifiedCount + workflowResult.modifiedCount +
+    jobBoardResult.modifiedCount + appResult.modifiedCount
+
   if (totalMigrated > 0) {
     console.log(`✅ Migrated ${totalMigrated} records from test user to Alice:`)
     console.log(`   - Application statuses: ${statusResult.modifiedCount}`)
@@ -124,13 +129,13 @@ export async function seedDatabase() {
   try {
     // Always ensure admin exists
     await seedAdmin()
-    
+
     // Always ensure default user exists and get their ID
     const aliceUserId = await seedUser()
-    
+
     // Migrate any existing test user data to Alice
     await migrateTestUserDataToAlice(aliceUserId)
-    
+
     // Define sample data using Alice's real user ID
     const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
       { userId: aliceUserId, name: 'Applied', isTerminal: false, createdAt: new Date() },
@@ -264,7 +269,7 @@ export async function seedDatabase() {
         updatedAt: new Date('2025-08-01')
       }
     ]
-    
+
     // Check if data already exists
     const existingStatuses = await db.collection('application_statuses').countDocuments()
     const existingWorkflows = await db.collection('workflows').countDocuments()
