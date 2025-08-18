@@ -2,19 +2,8 @@ name: Run End-to-End Tests
 on:
   deployment_status:
 jobs:
-  debug:
-    if: github.event_name == 'deployment_status'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Debug deployment status
-      run: |
-        echo "Event name: ${{ github.event_name }}"
-        echo "Deployment status state: ${{ github.event.deployment_status.state }}"
-        echo "Environment: ${{ github.event.deployment_status.environment }}"
-        echo "Environment URL: ${{ github.event.deployment_status.environment_url }}"
-        
   e2e-test:
-    if: github.event_name == 'deployment_status'
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -32,8 +21,8 @@ jobs:
         USER_EMAIL: ${{ vars.USER_EMAIL }}
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
         ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
-        ADMIN_PASSWORD: ${{ github.event.deployment_status.environment === 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
-        DEPLOY_LEVEL: ${{ github.event.deployment_status.environment === 'production' && 'Production' || 'Development' }}
+        ADMIN_PASSWORD: ${{ github.event.deployment_status.environment == 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
+        DEPLOY_LEVEL: ${{ github.event.deployment_status.environment == 'production' && 'Production' || 'Development' }}
       run: |
         echo Deploying to: $DEPLOY_LEVEL
         echo Deployment URL: $BASE_URL
