@@ -15,7 +15,14 @@ export function RouterAuthProvider({ children }: { children: React.ReactNode }) 
 
     // Update router context whenever auth state changes
     const newAuthContext: AuthContext = {
-      user: authContext.user,
+      user: authContext.user ? {
+        id: 'id' in authContext.user ? authContext.user.id : authContext.user.username,
+        email: 'email' in authContext.user ? authContext.user.email : undefined,
+        name: 'name' in authContext.user ? authContext.user.name : undefined,
+        username: 'username' in authContext.user ? authContext.user.username : undefined,
+        createdAt: authContext.user.createdAt,
+        updatedAt: 'updatedAt' in authContext.user ? authContext.user.updatedAt : undefined,
+      } : null,
       userType: authContext.userType,
       authenticated: authContext.isLoggedIn,
       session: null, // Client-side doesn't have access to session details

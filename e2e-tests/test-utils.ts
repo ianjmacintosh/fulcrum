@@ -10,6 +10,9 @@ export async function loginAsUser(page: Page) {
   await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
   await page.getByRole('button', { name: 'Sign In' }).click();
 
+  // Wait for navigation to complete after login
+  await page.waitForURL('**/dashboard');
+  
   // Wait for successful login (should show logout button)
   await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 }
@@ -24,6 +27,9 @@ export async function loginAsAdmin(page: Page) {
   await page.getByRole('textbox', { name: 'Password' }).fill(process.env.ADMIN_PASSWORD ?? '');
   await page.getByRole('button', { name: 'Sign In' }).click();
 
+  // Wait for navigation to complete after login (admin goes to admin/users)
+  await page.waitForURL('**/admin/**');
+  
   // Wait for successful login (should show logout button)
   await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 }
