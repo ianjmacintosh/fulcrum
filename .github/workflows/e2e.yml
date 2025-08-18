@@ -2,8 +2,19 @@ name: Run End-to-End Tests
 on:
   deployment_status:
 jobs:
+  debug:
+    if: github.event_name == 'deployment_status'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Debug deployment status
+      run: |
+        echo "Event name: ${{ github.event_name }}"
+        echo "Deployment status state: ${{ github.event.deployment_status.state }}"
+        echo "Environment: ${{ github.event.deployment_status.environment }}"
+        echo "Environment URL: ${{ github.event.deployment_status.environment_url }}"
+        
   e2e-test:
-    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
+    if: github.event_name == 'deployment_status'
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
