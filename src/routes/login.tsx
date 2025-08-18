@@ -26,9 +26,10 @@ function LoginPage() {
 
       if (result.success) {
         setFormData({ email: '', password: '' })
-        // Redirect based on user type
+        // Use window.location for post-login navigation to ensure clean state
         const redirectPath = result.redirectUrl || '/dashboard'
-        await router.navigate({ to: redirectPath })
+        window.location.href = redirectPath
+        return // Don't set loading to false since we're navigating away
       } else {
         setError(result.error || 'Login failed')
         setLoading(false)

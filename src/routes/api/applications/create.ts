@@ -2,7 +2,8 @@ import { createServerFileRoute } from '@tanstack/react-start/server'
 import { applicationService } from '../../../db/services/applications'
 import { workflowService } from '../../../db/services/workflows'
 import { jobBoardService } from '../../../db/services/job-boards'
-import { requireUserAuth, createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { requireUserAuth } from '../../../middleware/auth'
 import { z } from 'zod'
 
 // Schema for application creation validation
@@ -18,15 +19,17 @@ const CreateApplicationSchema = z.object({
   notes: z.string().optional().or(z.literal(''))
 })
 
-export const ServerRoute = createServerFileRoute('/api/applications/create').methods({
-  POST: async ({ request }) => {
-    // Check user authentication
-    const authResult = requireUserAuth(request)
-    if ('response' in authResult) {
-      return authResult.response
-    }
-    
-    const { userId } = authResult
+export const ServerRoute = createServerFileRoute('/api/applications/create')
+  .middleware([requireUserAuth])
+  .methods({
+    POST: async ({ request, context }) => {
+      const { auth } = context
+      
+      if (!auth.authenticated || !auth.user) {
+        return createErrorResponse('Unauthorized', 401)
+      }
+      
+      const userId = auth.user.id
     
     try {
       // Parse form data

@@ -1,13 +1,44 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { requireUserAuth } from '../../utils/route-guards'
+import { JobApplicationCardsList } from '../../components/JobApplicationCardsList'
 import './index.css'
 
 export const Route = createFileRoute('/applications/')({
     beforeLoad: requireUserAuth,
+    loader: async () => {
+        // On server-side, skip loading data if user is not authenticated
+        // Client will reload once auth context is available
+        if (typeof window === 'undefined') {
+            return { applications: [] }
+        }
+        
+        try {
+            const response = await fetch('/api/applications/', { 
+                credentials: 'include' 
+            })
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch applications')
+            }
+            
+            const result = await response.json()
+            
+            if (!result.success) {
+                throw new Error('Applications API returned error')
+            }
+            
+            return { applications: result.applications }
+        } catch (error) {
+            console.error('Applications loader error:', error)
+            throw error
+        }
+    },
     component: Applications,
 })
 
 function Applications() {
+    const { applications } = Route.useLoaderData()
+
     return (
         <div className="page">
             <header className="page-header">
@@ -19,79 +50,29 @@ function Applications() {
                 <section className="applications-summary">
                     <div className="summary-stats">
                         <div className="summary-stat">
-                            <span className="summary-label">Open Applications</span>
-                            <span className="summary-value">18</span>
+                            <span className="summary-label">Total Applications</span>
+                            <span className="summary-value">{applications.length}</span>
                         </div>
                         <div className="summary-stat">
-                            <span className="summary-label">Awaiting Response</span>
-                            <span className="summary-value">12</span>
+                            <span className="summary-label">Open Applications</span>
+                            <span className="summary-value">
+                                {applications.filter((app: any) => 
+                                    !['rejected', 'declined', 'withdrawn'].includes(app.currentStatus.id.toLowerCase())
+                                ).length}
+                            </span>
                         </div>
                         <div className="summary-stat">
                             <span className="summary-label">Closed/Rejected</span>
-                            <span className="summary-value">24</span>
+                            <span className="summary-value">
+                                {applications.filter((app: any) => 
+                                    ['rejected', 'declined', 'withdrawn'].includes(app.currentStatus.id.toLowerCase())
+                                ).length}
+                            </span>
                         </div>
                     </div>
                 </section>
 
-                <section className="applications-table">
-                    <div className="table-header">
-                        <div className="header-cell">Company</div>
-                        <div className="header-cell">Position</div>
-                        <div className="header-cell">Applied Date</div>
-                        <div className="header-cell">Status</div>
-                        <div className="header-cell">Last Activity</div>
-                    </div>
-
-                    <div className="application-row">
-                        <div className="cell">TechCorp Inc.</div>
-                        <div className="cell">Senior Software Engineer</div>
-                        <div className="cell">2025-01-05</div>
-                        <div className="cell">
-                            <span className="status-badge phone-screen">Phone Screen</span>
-                        </div>
-                        <div className="cell">2025-01-08</div>
-                    </div>
-
-                    <div className="application-row">
-                        <div className="cell">StartupXYZ</div>
-                        <div className="cell">Full Stack Developer</div>
-                        <div className="cell">2025-01-03</div>
-                        <div className="cell">
-                            <span className="status-badge applied">Applied</span>
-                        </div>
-                        <div className="cell">2025-01-03</div>
-                    </div>
-
-                    <div className="application-row">
-                        <div className="cell">MegaCorp</div>
-                        <div className="cell">React Developer</div>
-                        <div className="cell">2024-12-28</div>
-                        <div className="cell">
-                            <span className="status-badge interview">On-site Interview</span>
-                        </div>
-                        <div className="cell">2025-01-07</div>
-                    </div>
-
-                    <div className="application-row">
-                        <div className="cell">DevCompany</div>
-                        <div className="cell">Frontend Engineer</div>
-                        <div className="cell">2024-12-20</div>
-                        <div className="cell">
-                            <span className="status-badge rejected">Rejected</span>
-                        </div>
-                        <div className="cell">2025-01-02</div>
-                    </div>
-
-                    <div className="application-row">
-                        <div className="cell">CloudTech</div>
-                        <div className="cell">Software Engineer</div>
-                        <div className="cell">2024-12-15</div>
-                        <div className="cell">
-                            <span className="status-badge applied">Applied</span>
-                        </div>
-                        <div className="cell">2024-12-15</div>
-                    </div>
-                </section>
+                <JobApplicationCardsList applications={applications} />
 
                 <section className="add-application">
                     <Link to="/applications/new" className="add-button">

@@ -25,6 +25,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 import { Route as AdminChangePasswordRouteImport } from './routes/admin/change-password'
 import { ServerRoute as ApiJobBoardsIndexServerRouteImport } from './routes/api/job-boards/index'
+import { ServerRoute as ApiApplicationsIndexServerRouteImport } from './routes/api/applications/index'
 import { ServerRoute as ApiAuthStatusServerRouteImport } from './routes/api/auth/status'
 import { ServerRoute as ApiAuthLogoutServerRouteImport } from './routes/api/auth/logout'
 import { ServerRoute as ApiAuthLoginServerRouteImport } from './routes/api/auth/login'
@@ -112,6 +113,12 @@ const ApiJobBoardsIndexServerRoute = ApiJobBoardsIndexServerRouteImport.update({
   path: '/api/job-boards/',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiApplicationsIndexServerRoute =
+  ApiApplicationsIndexServerRouteImport.update({
+    id: '/api/applications/',
+    path: '/api/applications/',
+    getParentRoute: () => rootServerRouteImport,
+  } as any)
 const ApiAuthStatusServerRoute = ApiAuthStatusServerRouteImport.update({
   id: '/api/auth/status',
   path: '/api/auth/status',
@@ -310,6 +317,7 @@ export interface FileServerRoutesByFullPath {
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
   '/api/auth/status': typeof ApiAuthStatusServerRoute
+  '/api/applications': typeof ApiApplicationsIndexServerRoute
   '/api/job-boards': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
@@ -327,6 +335,7 @@ export interface FileServerRoutesByTo {
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
   '/api/auth/status': typeof ApiAuthStatusServerRoute
+  '/api/applications': typeof ApiApplicationsIndexServerRoute
   '/api/job-boards': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
@@ -345,6 +354,7 @@ export interface FileServerRoutesById {
   '/api/auth/login': typeof ApiAuthLoginServerRoute
   '/api/auth/logout': typeof ApiAuthLogoutServerRoute
   '/api/auth/status': typeof ApiAuthStatusServerRoute
+  '/api/applications/': typeof ApiApplicationsIndexServerRoute
   '/api/job-boards/': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
@@ -364,6 +374,7 @@ export interface FileServerRouteTypes {
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/status'
+    | '/api/applications'
     | '/api/job-boards'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
@@ -381,6 +392,7 @@ export interface FileServerRouteTypes {
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/status'
+    | '/api/applications'
     | '/api/job-boards'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
@@ -398,6 +410,7 @@ export interface FileServerRouteTypes {
     | '/api/auth/login'
     | '/api/auth/logout'
     | '/api/auth/status'
+    | '/api/applications/'
     | '/api/job-boards/'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
@@ -416,6 +429,7 @@ export interface RootServerRouteChildren {
   ApiAuthLoginServerRoute: typeof ApiAuthLoginServerRoute
   ApiAuthLogoutServerRoute: typeof ApiAuthLogoutServerRoute
   ApiAuthStatusServerRoute: typeof ApiAuthStatusServerRoute
+  ApiApplicationsIndexServerRoute: typeof ApiApplicationsIndexServerRoute
   ApiJobBoardsIndexServerRoute: typeof ApiJobBoardsIndexServerRoute
 }
 
@@ -521,6 +535,13 @@ declare module '@tanstack/react-start/server' {
       path: '/api/job-boards'
       fullPath: '/api/job-boards'
       preLoaderRoute: typeof ApiJobBoardsIndexServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/applications/': {
+      id: '/api/applications/'
+      path: '/api/applications'
+      fullPath: '/api/applications'
+      preLoaderRoute: typeof ApiApplicationsIndexServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
     '/api/auth/status': {
@@ -681,6 +702,7 @@ const rootServerRouteChildren: RootServerRouteChildren = {
   ApiAuthLoginServerRoute: ApiAuthLoginServerRoute,
   ApiAuthLogoutServerRoute: ApiAuthLogoutServerRoute,
   ApiAuthStatusServerRoute: ApiAuthStatusServerRoute,
+  ApiApplicationsIndexServerRoute: ApiApplicationsIndexServerRoute,
   ApiJobBoardsIndexServerRoute: ApiJobBoardsIndexServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport

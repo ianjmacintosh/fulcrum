@@ -5,6 +5,23 @@ import './dashboard.css'
 export const Route = createFileRoute('/dashboard')({
     beforeLoad: requireUserAuth,
     loader: async () => {
+        // On server-side, skip loading data if user is not authenticated
+        // Client will reload once auth context is available
+        if (typeof window === 'undefined') {
+            return { 
+                dashboardData: {
+                    totalApplications: 0,
+                    conversionRates: [],
+                    monthlyOverview: { applicationsThisMonth: 0, trendVsPreviousMonth: 0, dailyAverage: 0 },
+                    pipelineHealth: { byStatus: [], daysSinceLastApplication: 0 },
+                    performanceInsights: { topJobBoard: { name: '', responseRate: 0 } }
+                },
+                projectionData: {
+                    projectedTimeToOffer: { targetDate: new Date().toISOString() }
+                }
+            }
+        }
+        
         // Fetch analytics data from API endpoints
         try {
             const [dashboardResponse, projectionResponse] = await Promise.all([
