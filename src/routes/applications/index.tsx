@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { requireUserAuth } from '../../utils/route-guards'
+import { authMiddleware } from '../../middleware/auth'
 import { JobApplicationCardsList } from '../../components/JobApplicationCardsList'
 import './index.css'
 
 export const Route = createFileRoute('/applications/')({
+    middleware: [authMiddleware],
     beforeLoad: requireUserAuth,
     loader: async () => {
         try {

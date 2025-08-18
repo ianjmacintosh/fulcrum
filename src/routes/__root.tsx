@@ -3,16 +3,18 @@
 import type { ReactNode } from 'react'
 import {
     Outlet,
-    createRootRoute,
+    createRootRouteWithContext,
     HeadContent,
     Scripts,
 } from '@tanstack/react-router'
 import { Navigation } from '../components/Navigation'
 import { Footer } from '../components/Footer'
+import { RouterAuthProvider } from '../components/RouterAuthProvider'
 import { AuthProvider } from '../contexts/AuthContext'
+import { AuthContext } from '../router'
 import '../styles/global.css'
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{ auth: AuthContext }>()({
     head: () => ({
         meta: [
             {
@@ -36,9 +38,11 @@ function RootComponent() {
     return (
         <RootDocument>
             <AuthProvider>
-                <Navigation />
-                <Outlet />
-                <Footer />
+                <RouterAuthProvider>
+                    <Navigation />
+                    <Outlet />
+                    <Footer />
+                </RouterAuthProvider>
             </AuthProvider>
         </RootDocument>
     )

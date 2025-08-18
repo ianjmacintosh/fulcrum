@@ -1,41 +1,15 @@
 import { redirect } from '@tanstack/react-router'
+import { AuthContext } from '../router'
 
 /**
- * Authentication guard for user routes
- * Checks if user is authenticated and has 'user' role
+ * Simplified route guard for user routes - now just checks auth context
+ * Heavy lifting is done by TanStack Start middleware
  */
-export async function requireUserAuth({ location }: { location: any }) {
-  try {
-    const response = await fetch('/api/auth/status', {
-      credentials: 'include'
-    })
-    
-    if (!response.ok) {
-      throw redirect({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        }
-      })
-    }
-    
-    const authData = await response.json()
-    if (!authData.success || !authData.authenticated || authData.userType !== 'user') {
-      throw redirect({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        }
-      })
-    }
-    
-    return { user: authData.user }
-  } catch (error) {
-    if (error instanceof Response || (error as any)?.to) {
-      throw error // Re-throw redirects
-    }
-    
-    // For other errors, redirect to login
+export async function requireUserAuth({ location, context }: { location: any; context: { auth: AuthContext } }) {
+  const { auth } = context
+  
+  // If auth context shows we're not authenticated or not a user, redirect to login
+  if (!auth.authenticated || auth.userType !== 'user') {
     throw redirect({
       to: '/login',
       search: {
@@ -43,44 +17,19 @@ export async function requireUserAuth({ location }: { location: any }) {
       }
     })
   }
+  
+  return { user: auth.user }
 }
 
 /**
- * Authentication guard for admin routes
- * Checks if user is authenticated and has 'admin' role
+ * Simplified route guard for admin routes - now just checks auth context  
+ * Heavy lifting is done by TanStack Start middleware
  */
-export async function requireAdminAuth({ location }: { location: any }) {
-  try {
-    const response = await fetch('/api/auth/status', {
-      credentials: 'include'
-    })
-    
-    if (!response.ok) {
-      throw redirect({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        }
-      })
-    }
-    
-    const authData = await response.json()
-    if (!authData.success || !authData.authenticated || authData.userType !== 'admin') {
-      throw redirect({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        }
-      })
-    }
-    
-    return { user: authData.user }
-  } catch (error) {
-    if (error instanceof Response || (error as any)?.to) {
-      throw error // Re-throw redirects
-    }
-    
-    // For other errors, redirect to main login
+export async function requireAdminAuth({ location, context }: { location: any; context: { auth: AuthContext } }) {
+  const { auth } = context
+  
+  // If auth context shows we're not authenticated or not an admin, redirect to login
+  if (!auth.authenticated || auth.userType !== 'admin') {
     throw redirect({
       to: '/login',
       search: {
@@ -88,4 +37,6 @@ export async function requireAdminAuth({ location }: { location: any }) {
       }
     })
   }
+  
+  return { user: auth.user }
 }

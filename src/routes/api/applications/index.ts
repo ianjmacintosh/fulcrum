@@ -1,26 +1,27 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
-import { requireUserAuth, createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { requireUserAuth } from '../../../middleware/auth'
 import { applicationService } from '../../../db/services/applications'
 
-export const ServerRoute = createServerFileRoute('/api/applications/').methods({
-  GET: async ({ request }) => {
-    // Check user authentication
-    const authResult = requireUserAuth(request)
-    if ('response' in authResult) {
-      return authResult.response
-    }
-    
-    const { userId } = authResult
-    
-    try {
-      console.log('Applications API: Fetching applications for userId:', userId)
-      const applications = await applicationService.getApplications(userId)
+export const ServerRoute = createServerFileRoute('/api/applications/')
+  .middleware([requireUserAuth])
+  .methods({
+    GET: async ({ context }) => {
+      const { auth } = context
       
-      return createSuccessResponse({ applications })
+      if (!auth.authenticated || !auth.user) {
+        return createErrorResponse('Unauthorized', 401)
+      }
       
-    } catch (error: any) {
-      console.error('Applications API: Error fetching applications:', error)
-      return createErrorResponse('Failed to load applications')
+      try {
+        console.log('Applications API: Fetching applications for userId:', auth.user.id)
+        const applications = await applicationService.getApplications(auth.user.id)
+        
+        return createSuccessResponse({ applications })
+        
+      } catch (error: any) {
+        console.error('Applications API: Error fetching applications:', error)
+        return createErrorResponse('Failed to load applications')
+      }
     }
-  }
-})
+  })

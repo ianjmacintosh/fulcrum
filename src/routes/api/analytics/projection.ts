@@ -1,16 +1,19 @@
 import { createServerFileRoute } from '@tanstack/react-start/server'
-import { requireUserAuth, createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { createSuccessResponse, createErrorResponse } from '../../../utils/auth-helpers'
+import { requireUserAuth } from '../../../middleware/auth'
 import { analyticsService } from '../../../db/services/analytics'
 
-export const ServerRoute = createServerFileRoute('/api/analytics/projection').methods({
-  GET: async ({ request }) => {
-    // Check user authentication
-    const authResult = requireUserAuth(request)
-    if ('response' in authResult) {
-      return authResult.response
-    }
-    
-    const { userId } = authResult
+export const ServerRoute = createServerFileRoute('/api/analytics/projection')
+  .middleware([requireUserAuth])
+  .methods({
+    GET: async ({ context }) => {
+      const { auth } = context
+      
+      if (!auth.authenticated || !auth.user) {
+        return createErrorResponse('Unauthorized', 401)
+      }
+      
+      const userId = auth.user.id
     
     try {
       console.log('Analytics API: Fetching projection data for userId:', userId)

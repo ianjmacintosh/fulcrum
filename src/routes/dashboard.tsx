@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { requireUserAuth } from '../utils/route-guards'
+import { authMiddleware } from '../middleware/auth'
 import './dashboard.css'
 
 export const Route = createFileRoute('/dashboard')({
+    middleware: [authMiddleware],
     beforeLoad: requireUserAuth,
     loader: async () => {
         // Fetch analytics data from API endpoints
