@@ -1,15 +1,9 @@
 import { test, expect } from '@playwright/test';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { loginAsUser } from './test-utils';
 
 test('Applications page loads and displays job applications', async ({ page }) => {
   // Log in first
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Login' }).click();
-  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? '');
-  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await loginAsUser(page);
 
   // Navigate to applications page
   await page.goto('/applications');
@@ -29,11 +23,7 @@ test('Applications page loads and displays job applications', async ({ page }) =
 
 test('Applications page displays application cards when data exists', async ({ page }) => {
   // Log in first
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Login' }).click();
-  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? '');
-  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await loginAsUser(page);
 
   // Navigate to applications page
   await page.goto('/applications');
@@ -52,7 +42,7 @@ test('Applications page displays application cards when data exists', async ({ p
   if (hasApplicationCards) {
     const firstCard = page.locator('.application-card').first();
     await expect(firstCard).toBeVisible();
-    
+
     // Each card should have a company name and role
     await expect(firstCard.locator('.company-name')).toBeVisible();
     await expect(firstCard.locator('.role-name')).toBeVisible();
@@ -62,11 +52,7 @@ test('Applications page displays application cards when data exists', async ({ p
 
 test('Add New Application button navigates to the correct page', async ({ page }) => {
   // Log in first
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Login' }).click();
-  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? '');
-  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
-  await page.getByRole('button', { name: 'Sign In' }).click();
+  await loginAsUser(page);
 
   // Navigate to applications page
   await page.goto('/applications');
@@ -75,5 +61,5 @@ test('Add New Application button navigates to the correct page', async ({ page }
   await page.getByRole('link', { name: '+ Add New Application' }).click();
 
   // Verify we're on the new application page
-  await expect(page.url()).toContain('/applications/new');
+  expect(page.url()).toContain('/applications/new');
 });
