@@ -8,7 +8,15 @@ import { AuthContext } from '../router'
 export async function requireUserAuth({ location, context }: { location: any; context: { auth: AuthContext } }) {
   const { auth } = context
   
-  // If auth context shows we're not authenticated or not a user, redirect to login
+  // On server-side (SSR), we don't have reliable auth context yet
+  // Let the client-side handle authentication after hydration
+  if (typeof window === 'undefined') {
+    // Server-side: return empty auth but don't redirect
+    // The client will handle auth check after hydration
+    return { user: null }
+  }
+  
+  // Client-side: enforce authentication
   if (!auth.authenticated || auth.userType !== 'user') {
     throw redirect({
       to: '/login',
@@ -28,7 +36,15 @@ export async function requireUserAuth({ location, context }: { location: any; co
 export async function requireAdminAuth({ location, context }: { location: any; context: { auth: AuthContext } }) {
   const { auth } = context
   
-  // If auth context shows we're not authenticated or not an admin, redirect to login
+  // On server-side (SSR), we don't have reliable auth context yet
+  // Let the client-side handle authentication after hydration
+  if (typeof window === 'undefined') {
+    // Server-side: return empty auth but don't redirect
+    // The client will handle auth check after hydration
+    return { user: null }
+  }
+  
+  // Client-side: enforce authentication
   if (!auth.authenticated || auth.userType !== 'admin') {
     throw redirect({
       to: '/login',

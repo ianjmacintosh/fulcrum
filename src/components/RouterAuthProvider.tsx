@@ -27,7 +27,34 @@ export function RouterAuthProvider({ children }: { children: React.ReactNode }) 
         auth: newAuthContext,
       },
     })
-  }, [authContext?.user, authContext?.userType, authContext?.isLoggedIn, router])
+
+    // After auth context is loaded, check if we need to redirect protected routes
+    if (!authContext.isLoading) {
+      const currentLocation = router.state.location
+      const currentRoute = router.state.matches[router.state.matches.length - 1]
+      
+      // If we're on a protected route and not authenticated, redirect to login
+      if (currentRoute && currentLocation.pathname !== '/login') {
+        const isProtectedRoute = currentLocation.pathname.startsWith('/dashboard') || 
+                                currentLocation.pathname.startsWith('/applications') ||
+                                currentLocation.pathname.startsWith('/admin')
+        
+        if (isProtectedRoute && !authContext.isLoggedIn) {
+          router.navigate({
+            to: '/login',
+            search: {
+              redirect: currentLocation.href,
+            }
+          })
+        }
+        // If we're authenticated and on a protected route, reload the route to get fresh data
+        else if (isProtectedRoute && authContext.isLoggedIn) {
+          // Force reload the current route to fetch data with authentication
+          router.invalidate()
+        }
+      }
+    }
+  }, [authContext?.user, authContext?.userType, authContext?.isLoggedIn, authContext?.isLoading, router])
 
   // Don't render children until auth context is available
   if (!authContext) {

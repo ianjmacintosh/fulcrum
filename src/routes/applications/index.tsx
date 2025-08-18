@@ -1,13 +1,17 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { requireUserAuth } from '../../utils/route-guards'
-import { authMiddleware } from '../../middleware/auth'
 import { JobApplicationCardsList } from '../../components/JobApplicationCardsList'
 import './index.css'
 
 export const Route = createFileRoute('/applications/')({
-    middleware: [authMiddleware],
     beforeLoad: requireUserAuth,
     loader: async () => {
+        // On server-side, skip loading data if user is not authenticated
+        // Client will reload once auth context is available
+        if (typeof window === 'undefined') {
+            return { applications: [] }
+        }
+        
         try {
             const response = await fetch('/api/applications/', { 
                 credentials: 'include' 

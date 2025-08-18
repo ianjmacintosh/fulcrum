@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { authMiddleware } from '../middleware/auth'
 import './index.css'
 
 export const Route = createFileRoute('/')({
-    middleware: [authMiddleware],
     component: Home,
 })
 
