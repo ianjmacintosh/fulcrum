@@ -21,7 +21,7 @@ jobs:
         USER_EMAIL: ${{ vars.USER_EMAIL }}
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
         ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
-        ADMIN_PASSWORD: ${{ contains(github.event.deployment_status.environment_url, 'fulcrum-production') || contains(github.event.deployment_status.environment_url, 'fulcrum.ianjmacintosh.com') && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
+        ADMIN_PASSWORD: ${{ github.event.deployment_status.environment === 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
       run: |
         echo DEPLOYMENT ENVIRONMENT!!
         echo * Deployment URL: $BASE_URL
