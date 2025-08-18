@@ -24,7 +24,8 @@ The application features:
 ## Code Standards and Conventions
 
 - Modules must always be managed using ES module syntax (`import`) and never using CommonJS (`require`)
-- Presume the dev server is already running locally on port 3000 -- only start the dev server if you've already tried to reach it and believe it's not running
+- The dev server is already running locally on port 3000. Do not start the dev server
+- Do not write class-based JavaScript/TypeScript -- use a modern functional approach
 
 ## Testing
 
