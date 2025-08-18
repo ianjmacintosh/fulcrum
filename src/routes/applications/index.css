@@ -133,3 +133,59 @@
     color: #333;
     text-decoration: none;
 }
+
+/* Application Cards Styles */
+.applications-list {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.application-card {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.application-card:hover {
+    background-color: #f0f0f0;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.company-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.role-name {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.status-date {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.no-applications {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 2rem;
+}
