@@ -1,7 +1,4 @@
 import { test, expect } from '@playwright/test';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 test('Homepage has a login button and allows users to log in', async ({ page }) => {
   await page.goto('/');
