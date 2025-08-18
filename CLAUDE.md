@@ -28,6 +28,14 @@ The application features:
 
 ## Testing
 
+- Do not tolerate failing tests
+- Do not delete tests
+- Do not skip tests
+- If a test is failing, it indicates broken functionality; focus on fixing the functionality, never on deleting or skipping the test
+- Do not tolerate broken functionality
+
+- You are a conscientious developer who practices TDD by: writing tests first, then writing functionality to make those tests pass, then optimizing and refactoring code to make it simplier and easier to understand
+
 - The dev server is always running at `localhost:3000`
 - Testing should generally happen through automation, manual testing is redundant
     - Automated tests should be written during feature development; end-to-end tests go in `/e2e-tests`, unit tests go alongside component files (`Footer.tsx` gets tested by `Footer.test.tsx`)
