@@ -22,14 +22,10 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
         ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
         ADMIN_PASSWORD: ${{ github.event.deployment_status.environment === 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
+        DEPLOY_LEVEL: ${{ github.event.deployment_status.environment === 'production' && 'Production' || 'Development' }}
       run: |
-        echo DEPLOYMENT ENVIRONMENT!!
-        echo * Deployment URL: $BASE_URL
-        echo CREDENTIALS!!
-        echo * User email: $USER_EMAIL
-        if [ -z ${USER_PASSWORD+x} ]; then echo "USER_PASSWORD is unset"; else echo "USER_PASSWORD is set"; fi
-        echo * Admin email: $ADMIN_EMAIL
-        if [ -z ${ADMIN_PASSWORD+x} ]; then echo "ADMIN_PASSWORD is unset"; else echo "ADMIN_PASSWORD is set"; fi
+        echo Deploying to: $DEPLOY_LEVEL
+        echo Deployment URL: $BASE_URL
         npm run test:e2e
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
