@@ -46,37 +46,55 @@ export class ApplicationService {
 
   async getApplicationById(userId: string, id: string | ObjectId): Promise<JobApplication | null> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    return await collection.findOne({ _id: objectId, userId })
+    
+    try {
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      return await collection.findOne({ _id: objectId, userId })
+    } catch (error) {
+      // Invalid ObjectId format
+      return null
+    }
   }
 
   async updateApplication(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
-    const updateDoc = {
-      ...updates,
-      updatedAt: new Date()
+    try {
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      
+      const updateDoc = {
+        ...updates,
+        updatedAt: new Date()
+      }
+      
+      delete updateDoc._id // Don't update the _id field
+      delete updateDoc.userId // Don't allow userId to be changed
+
+      const result = await collection.findOneAndUpdate(
+        { _id: objectId, userId },
+        { $set: updateDoc },
+        { returnDocument: 'after' }
+      )
+
+      return result || null
+    } catch (error) {
+      // Invalid ObjectId format
+      return null
     }
-    
-    delete updateDoc._id // Don't update the _id field
-    delete updateDoc.userId // Don't allow userId to be changed
-
-    const result = await collection.findOneAndUpdate(
-      { _id: objectId, userId },
-      { $set: updateDoc },
-      { returnDocument: 'after' }
-    )
-
-    return result || null
   }
 
   async deleteApplication(userId: string, id: string | ObjectId): Promise<boolean> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
-    const result = await collection.deleteOne({ _id: objectId, userId })
-    return result.deletedCount === 1
+    try {
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      
+      const result = await collection.deleteOne({ _id: objectId, userId })
+      return result.deletedCount === 1
+    } catch (error) {
+      // Invalid ObjectId format
+      return false
+    }
   }
 
   async getApplicationCount(userId: string, filter: any = {}): Promise<number> {

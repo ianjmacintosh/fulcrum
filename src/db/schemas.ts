@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb'
 
 // Zod schemas for validation
 export const ApplicationEventSchema = z.object({
+  id: z.string(),
   statusId: z.string(),
   statusName: z.string(),
   date: z.string(), // ISO date string
@@ -21,7 +22,8 @@ export const WorkflowRefSchema = z.object({
 
 export const CurrentStatusSchema = z.object({
   id: z.string(),
-  name: z.string()
+  name: z.string(),
+  eventId: z.string().optional()
 })
 
 export const JobApplicationSchema = z.object({
@@ -88,6 +90,7 @@ export const AdminUserSchema = z.object({
 
 // TypeScript interfaces (for use in application code)
 export interface ApplicationEvent {
+  id: string
   statusId: string
   statusName: string
   date: string
@@ -107,6 +110,7 @@ export interface WorkflowRef {
 export interface CurrentStatus {
   id: string
   name: string
+  eventId?: string
 }
 
 export interface JobApplication {

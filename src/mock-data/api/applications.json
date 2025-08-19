@@ -5,17 +5,45 @@
       "companyName": "TechCorp Alpha",
       "roleName": "Senior Frontend Manager",
       "jobPostingUrl": "",
-      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
-      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "jobBoard": {
+        "id": "linkedin",
+        "name": "LinkedIn"
+      },
+      "workflow": {
+        "id": "cold_apply",
+        "name": "Cold Apply Process"
+      },
       "applicationType": "cold",
       "roleType": "manager",
       "locationType": "on-site",
       "events": [
-        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-06-17", "notes": "Applied through LinkedIn" },
-        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen completed" },
-        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-07-29", "notes": "Technical interview" }
+        {
+          "id": "event_8b4af358-d164-42e7-ab43-fddf17bdee11",
+          "statusId": "round_2",
+          "statusName": "Interview Completed",
+          "date": "2025-07-29",
+          "notes": "Technical interview"
+        },
+        {
+          "id": "event_9cdf272d-fbfe-4808-bc67-44b39d280bd5",
+          "statusId": "phone_screen",
+          "statusName": "Phone Screen Completed",
+          "date": "2025-07-24",
+          "notes": "Phone screen completed"
+        },
+        {
+          "id": "event_9280d56b-76a3-452b-a263-20ba7e5a2459",
+          "statusId": "applied",
+          "statusName": "Applied",
+          "date": "2025-06-17",
+          "notes": "Applied through LinkedIn"
+        }
       ],
-      "currentStatus": { "id": "round_2", "name": "Round 2" },
+      "currentStatus": {
+        "id": "round_2",
+        "name": "Interview Completed",
+        "eventId": "event_8b4af358-d164-42e7-ab43-fddf17bdee11"
+      },
       "createdAt": "2025-06-17T00:00:00.000Z",
       "updatedAt": "2025-07-29T00:00:00.000Z"
     },
@@ -24,18 +52,52 @@
       "companyName": "StartupBeta",
       "roleName": "Frontend Engineer - Platform",
       "jobPostingUrl": "",
-      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
-      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "jobBoard": {
+        "id": "linkedin",
+        "name": "LinkedIn"
+      },
+      "workflow": {
+        "id": "cold_apply",
+        "name": "Cold Apply Process"
+      },
       "applicationType": "cold",
       "roleType": "engineer",
       "locationType": "remote",
       "events": [
-        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-13", "notes": "Applied through LinkedIn" },
-        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-07-24", "notes": "Phone screen with hiring manager" },
-        { "statusId": "round_2", "statusName": "Round 2", "date": "2025-08-06", "notes": "Technical coding challenge" },
-        { "statusId": "round_3", "statusName": "Round 3", "date": "2025-08-13", "notes": "Final round interview" }
+        {
+          "id": "event_e9f966a7-66ac-4c6c-826f-bcd2d339c704",
+          "statusId": "round_3",
+          "statusName": "Interview Completed",
+          "date": "2025-08-13",
+          "notes": "Final round interview"
+        },
+        {
+          "id": "event_126e1fa5-72a7-4911-a1ec-a6588ae7a739",
+          "statusId": "round_2",
+          "statusName": "Interview Completed",
+          "date": "2025-08-06",
+          "notes": "Technical coding challenge"
+        },
+        {
+          "id": "event_4407aadb-3649-4385-b81b-4075682c9884",
+          "statusId": "phone_screen",
+          "statusName": "Phone Screen Completed",
+          "date": "2025-07-24",
+          "notes": "Phone screen with hiring manager"
+        },
+        {
+          "id": "event_e6722c07-a3d9-4ffe-8550-57c6a44535de",
+          "statusId": "applied",
+          "statusName": "Applied",
+          "date": "2025-07-13",
+          "notes": "Applied through LinkedIn"
+        }
       ],
-      "currentStatus": { "id": "round_3", "name": "Round 3" },
+      "currentStatus": {
+        "id": "round_3",
+        "name": "Interview Completed",
+        "eventId": "event_e9f966a7-66ac-4c6c-826f-bcd2d339c704"
+      },
       "createdAt": "2025-07-13T00:00:00.000Z",
       "updatedAt": "2025-08-13T00:00:00.000Z"
     },
@@ -44,17 +106,45 @@
       "companyName": "ScaleTech",
       "roleName": "Engineering Manager - Web",
       "jobPostingUrl": "",
-      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
-      "workflow": { "id": "warm_apply", "name": "Warm Apply Process" },
+      "jobBoard": {
+        "id": "linkedin",
+        "name": "LinkedIn"
+      },
+      "workflow": {
+        "id": "warm_apply",
+        "name": "Warm Apply Process"
+      },
       "applicationType": "warm",
       "roleType": "manager",
       "locationType": "on-site",
       "events": [
-        { "statusId": "warm_apply", "statusName": "Warm Apply", "date": "2025-05-28", "notes": "Referral from former colleague" },
-        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-06-10", "notes": "Phone screen completed" },
-        { "statusId": "declined", "statusName": "Declined", "date": "2025-06-20", "notes": "Position filled internally" }
+        {
+          "id": "event_53f1af05-c755-4c4c-bb84-00b53c4784e5",
+          "statusId": "rejected_by_employer",
+          "statusName": "Rejected by Employer",
+          "date": "2025-06-20",
+          "notes": "Position filled internally"
+        },
+        {
+          "id": "event_1ecd3ba0-1896-41c1-a5ce-70a824d9d0df",
+          "statusId": "phone_screen",
+          "statusName": "Phone Screen Completed",
+          "date": "2025-06-10",
+          "notes": "Phone screen completed"
+        },
+        {
+          "id": "event_0bdf0ec1-e8fa-4583-ab32-50e362c2f242",
+          "statusId": "applied",
+          "statusName": "Applied",
+          "date": "2025-05-28",
+          "notes": "Referral from former colleague"
+        }
       ],
-      "currentStatus": { "id": "declined", "name": "Declined" },
+      "currentStatus": {
+        "id": "rejected_by_employer",
+        "name": "Rejected by Employer",
+        "eventId": "event_53f1af05-c755-4c4c-bb84-00b53c4784e5"
+      },
       "createdAt": "2025-05-28T00:00:00.000Z",
       "updatedAt": "2025-06-20T00:00:00.000Z"
     },
@@ -63,16 +153,38 @@
       "companyName": "GrowthCo",
       "roleName": "Engineering Manager - Growth",
       "jobPostingUrl": "",
-      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
-      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "jobBoard": {
+        "id": "linkedin",
+        "name": "LinkedIn"
+      },
+      "workflow": {
+        "id": "cold_apply",
+        "name": "Cold Apply Process"
+      },
       "applicationType": "cold",
       "roleType": "manager",
       "locationType": "on-site",
       "events": [
-        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-07-31", "notes": "Applied through LinkedIn" },
-        { "statusId": "phone_screen", "statusName": "Phone Screen", "date": "2025-08-14", "notes": "Phone screen scheduled" }
+        {
+          "id": "event_38a3f23f-e928-4e04-8fe3-74f805f9d773",
+          "statusId": "phone_screen",
+          "statusName": "Phone Screen Completed",
+          "date": "2025-08-14",
+          "notes": "Phone screen scheduled"
+        },
+        {
+          "id": "event_a6d0cf2c-268b-421b-aafd-cc91d7a12be2",
+          "statusId": "applied",
+          "statusName": "Applied",
+          "date": "2025-07-31",
+          "notes": "Applied through LinkedIn"
+        }
       ],
-      "currentStatus": { "id": "phone_screen", "name": "Phone Screen" },
+      "currentStatus": {
+        "id": "phone_screen",
+        "name": "Phone Screen Completed",
+        "eventId": "event_38a3f23f-e928-4e04-8fe3-74f805f9d773"
+      },
       "createdAt": "2025-07-31T00:00:00.000Z",
       "updatedAt": "2025-08-14T00:00:00.000Z"
     },
@@ -81,15 +193,31 @@
       "companyName": "InnovateLabs",
       "roleName": "Principal Software Engineer",
       "jobPostingUrl": "",
-      "jobBoard": { "id": "linkedin", "name": "LinkedIn" },
-      "workflow": { "id": "cold_apply", "name": "Cold Apply Process" },
+      "jobBoard": {
+        "id": "linkedin",
+        "name": "LinkedIn"
+      },
+      "workflow": {
+        "id": "cold_apply",
+        "name": "Cold Apply Process"
+      },
       "applicationType": "cold",
       "roleType": "engineer",
       "locationType": "hybrid",
       "events": [
-        { "statusId": "cold_apply", "statusName": "Cold Apply", "date": "2025-08-01", "notes": "Applied through LinkedIn" }
+        {
+          "id": "event_8ff49d2d-f2b5-4bb2-ac6f-fef3286322ec",
+          "statusId": "applied",
+          "statusName": "Applied",
+          "date": "2025-08-01",
+          "notes": "Applied through LinkedIn"
+        }
       ],
-      "currentStatus": { "id": "cold_apply", "name": "Cold Apply" },
+      "currentStatus": {
+        "id": "applied",
+        "name": "Applied",
+        "eventId": "event_8ff49d2d-f2b5-4bb2-ac6f-fef3286322ec"
+      },
       "createdAt": "2025-08-01T00:00:00.000Z",
       "updatedAt": "2025-08-01T00:00:00.000Z"
     }
