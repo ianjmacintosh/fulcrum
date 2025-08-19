@@ -29,6 +29,7 @@ describe('GET /api/applications/:id', () => {
       locationType: 'remote',
       events: [{
         id: 'event_test-123',
+        eventType: 'application_submitted',
         statusId: 'applied',
         statusName: 'Applied',
         date: '2025-01-15',
@@ -76,6 +77,7 @@ describe('GET /api/applications/:id', () => {
       events: [
         {
           id: 'event_test-1',
+          eventType: 'application_submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15',
@@ -83,20 +85,22 @@ describe('GET /api/applications/:id', () => {
         },
         {
           id: 'event_test-3',
-          statusId: 'phone_screen',
-          statusName: 'Phone Screen Completed',
+          eventType: 'phone_screen_completed',
+          statusId: 'in_progress',
+          statusName: 'In Progress',
           date: '2025-01-25',
           notes: 'Third event'
         },
         {
           id: 'event_test-2',
-          statusId: 'interview_scheduled',
-          statusName: 'Interview Scheduled',
+          eventType: 'interview_scheduled',
+          statusId: 'in_progress',
+          statusName: 'In Progress',
           date: '2025-01-20',
           notes: 'Second event'
         }
       ],
-      currentStatus: { id: 'phone_screen', name: 'Phone Screen Completed', eventId: 'event_test-3' }
+      currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event_test-3' }
     })
     
     const application = await applicationService.getApplicationById(testUserId, testApplication._id!.toString())

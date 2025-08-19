@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ApplicationStatus } from '../db/schemas'
+import { EventType } from '../db/services/event-types'
 import './EventRecordingForm.css'
 
 interface EventRecordingFormProps {
@@ -8,6 +9,7 @@ interface EventRecordingFormProps {
 }
 
 interface FormData {
+  eventType: string
   statusId: string
   date: string
   notes: string
@@ -20,8 +22,10 @@ interface FormState {
 
 export function EventRecordingForm({ applicationId, onEventCreated }: EventRecordingFormProps) {
   const [statuses, setStatuses] = useState<ApplicationStatus[]>([])
+  const [eventTypes, setEventTypes] = useState<EventType[]>([])
   const [formData, setFormData] = useState<FormData>({
-    statusId: '', // Start empty as per requirement #5
+    eventType: '', // Start empty - required field
+    statusId: '', // Start empty - optional field
     date: new Date().toISOString().split('T')[0], // Default to today
     notes: ''
   })
@@ -30,9 +34,10 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
     error: null
   })
 
-  // Load application statuses on component mount
+  // Load application statuses and event types on component mount
   useEffect(() => {
     loadStatuses()
+    loadEventTypes()
   }, [])
 
   const loadStatuses = async () => {
@@ -55,12 +60,32 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
     }
   }
 
+  const loadEventTypes = async () => {
+    try {
+      const response = await fetch('/api/event-types', {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load event types')
+      }
+
+      const result = await response.json()
+      if (result.success && result.eventTypes) {
+        setEventTypes(result.eventTypes)
+      }
+    } catch (error) {
+      console.error('Error loading event types:', error)
+      setFormState(prev => ({ ...prev, error: 'Failed to load available event types' }))
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Client-side validation
-    if (!formData.statusId) {
-      setFormState(prev => ({ ...prev, error: 'Please select a status' }))
+    if (!formData.eventType) {
+      setFormState(prev => ({ ...prev, error: 'Please select an event type' }))
       return
     }
     
@@ -84,7 +109,8 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
         },
         credentials: 'include',
         body: JSON.stringify({
-          statusId: formData.statusId,
+          eventType: formData.eventType,
+          statusId: formData.statusId || undefined,
           date: formData.date,
           notes: formData.notes || undefined
         })
@@ -102,6 +128,7 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
 
       // Reset form after successful submission
       setFormData({
+        eventType: '',
         statusId: '',
         date: new Date().toISOString().split('T')[0],
         notes: ''
@@ -133,21 +160,21 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
     <form onSubmit={handleSubmit} className="event-form">
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="statusId" className="form-label">
-            Event Status *
+          <label htmlFor="eventType" className="form-label">
+            What happened? *
           </label>
           <select
-            id="statusId"
-            value={formData.statusId}
-            onChange={(e) => handleInputChange('statusId', e.target.value)}
+            id="eventType"
+            value={formData.eventType}
+            onChange={(e) => handleInputChange('eventType', e.target.value)}
             className="form-select"
             disabled={formState.loading}
             required
           >
-            <option value="">Select a status...</option>
-            {statuses.map((status) => (
-              <option key={status._id?.toString()} value={status._id?.toString()}>
-                {status.name}
+            <option value="">Select an event type...</option>
+            {eventTypes.map((eventType) => (
+              <option key={eventType.id} value={eventType.id}>
+                {eventType.name}
               </option>
             ))}
           </select>
@@ -166,6 +193,28 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
             disabled={formState.loading}
             required
           />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="statusId" className="form-label">
+            Update application status? (optional)
+          </label>
+          <select
+            id="statusId"
+            value={formData.statusId}
+            onChange={(e) => handleInputChange('statusId', e.target.value)}
+            className="form-select"
+            disabled={formState.loading}
+          >
+            <option value="">No status change</option>
+            {statuses.map((status) => (
+              <option key={status._id?.toString()} value={status._id?.toString()}>
+                {status.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -194,7 +243,7 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={formState.loading || !formData.statusId || !formData.date}
+          disabled={formState.loading || !formData.eventType || !formData.date}
         >
           {formState.loading ? 'Adding Event...' : 'Add Event'}
         </button>

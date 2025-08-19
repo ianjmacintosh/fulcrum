@@ -21,6 +21,7 @@ describe('Application Details API Integration', () => {
       events: [
         {
           id: 'event_integration-1',
+          eventType: 'application_submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15',
@@ -28,13 +29,14 @@ describe('Application Details API Integration', () => {
         },
         {
           id: 'event_integration-2',
-          statusId: 'phone_screen',
-          statusName: 'Phone Screen Completed',
+          eventType: 'phone_screen_completed',
+          statusId: 'in_progress',
+          statusName: 'In Progress',
           date: '2025-01-25',
           notes: 'Phone screen completed'
         }
       ],
-      currentStatus: { id: 'phone_screen', name: 'Phone Screen Completed', eventId: 'event_integration-2' }
+      currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event_integration-2' }
     })
   })
 
@@ -59,7 +61,7 @@ describe('Application Details API Integration', () => {
     )
     
     expect(sortedEvents[0].statusName).toBe('Applied')
-    expect(sortedEvents[1].statusName).toBe('Phone Screen Completed')
+    expect(sortedEvents[1].statusName).toBe('In Progress')
   })
 
   it('should handle invalid application IDs', async () => {

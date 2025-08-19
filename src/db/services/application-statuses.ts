@@ -37,69 +37,33 @@ export class ApplicationStatusService {
     const defaultStatuses = [
       {
         userId,
+        name: 'Not Started',
+        description: 'Application not yet submitted',
+        isTerminal: false
+      },
+      {
+        userId,
         name: 'Applied',
         description: 'Application has been submitted',
         isTerminal: false
       },
       {
         userId,
-        name: 'Rejected by Employer',
-        description: 'Application was rejected by the company',
+        name: 'In Progress',
+        description: 'Application is being processed (interviews, assessments, etc.)',
+        isTerminal: false
+      },
+      {
+        userId,
+        name: 'Accepted',
+        description: 'Job offer accepted',
         isTerminal: true
       },
       {
         userId,
-        name: 'Rejected by Job Seeker',
-        description: 'Job seeker declined or withdrew from the process',
+        name: 'Declined',
+        description: 'Application was declined or withdrawn',
         isTerminal: true
-      },
-      {
-        userId,
-        name: 'Phone Screen Scheduled',
-        description: 'Phone screen has been scheduled',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Phone Screen Completed',
-        description: 'Phone screen has been completed',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Interview Scheduled',
-        description: 'Interview has been scheduled',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Interview Completed',
-        description: 'Interview has been completed',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Job Offer Received',
-        description: 'Job offer has been received',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Job Offer Accepted',
-        description: 'Job offer has been accepted',
-        isTerminal: true
-      },
-      {
-        userId,
-        name: 'Counteroffer by Employer',
-        description: 'Employer made a counteroffer',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Counteroffer by Job Seeker',
-        description: 'Job seeker made a counteroffer',
-        isTerminal: false
       }
     ]
 

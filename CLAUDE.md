@@ -45,6 +45,18 @@ The application features:
 
 ## Architecture
 
+### Events vs Application Status Model
+
+**Important Conceptual Distinction:**
+- **Events** represent timeline activities - what happened when (e.g., "Phone screen scheduled", "Interview completed", "Offer received")
+- **Application Status** represents current workflow position - where the application stands (e.g., "Not Started", "Applied", "In Progress", "Accepted", "Declined")
+
+**Implementation:**
+- Events are recorded with an `eventType` (required) and optional `statusId` for status transitions
+- Application statuses use a simple 5-state workflow: `Not Started → Applied → In Progress → Accepted/Declined`
+- EventRecordingForm has two dropdowns: "What happened?" (event type) and "Update status?" (optional workflow transition)
+- Event types are defined in `src/db/services/event-types.ts` as a simple flat list of available events
+
 ### Routing Structure
 - File-based routing using TanStack Router
 - Routes are defined in `src/routes/` directory

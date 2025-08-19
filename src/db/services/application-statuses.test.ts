@@ -18,40 +18,34 @@ describe('ApplicationStatusService', () => {
   })
 
   describe('createDefaultStatuses', () => {
-    it('should create predefined application statuses for timeline events', async () => {
+    it('should create generic workflow statuses', async () => {
       const statuses = await service.createDefaultStatuses(testUserId)
       
-      expect(statuses).toHaveLength(11)
+      expect(statuses).toHaveLength(5)
       
-      // Check for key timeline event statuses
+      // Check for workflow statuses
       const statusNames = statuses.map(s => s.name)
+      expect(statusNames).toContain('Not Started')
       expect(statusNames).toContain('Applied')
-      expect(statusNames).toContain('Rejected by Employer')
-      expect(statusNames).toContain('Rejected by Job Seeker') 
-      expect(statusNames).toContain('Phone Screen Scheduled')
-      expect(statusNames).toContain('Phone Screen Completed')
-      expect(statusNames).toContain('Interview Scheduled')
-      expect(statusNames).toContain('Interview Completed')
-      expect(statusNames).toContain('Job Offer Received')
-      expect(statusNames).toContain('Job Offer Accepted')
-      expect(statusNames).toContain('Counteroffer by Employer')
-      expect(statusNames).toContain('Counteroffer by Job Seeker')
+      expect(statusNames).toContain('In Progress')
+      expect(statusNames).toContain('Accepted')
+      expect(statusNames).toContain('Declined')
 
       // Verify terminal statuses
-      const rejectedByEmployer = statuses.find(s => s.name === 'Rejected by Employer')
-      const rejectedByJobSeeker = statuses.find(s => s.name === 'Rejected by Job Seeker')
-      const offerAccepted = statuses.find(s => s.name === 'Job Offer Accepted')
+      const accepted = statuses.find(s => s.name === 'Accepted')
+      const declined = statuses.find(s => s.name === 'Declined')
       
-      expect(rejectedByEmployer?.isTerminal).toBe(true)
-      expect(rejectedByJobSeeker?.isTerminal).toBe(true)
-      expect(offerAccepted?.isTerminal).toBe(true)
+      expect(accepted?.isTerminal).toBe(true)
+      expect(declined?.isTerminal).toBe(true)
 
       // Verify non-terminal statuses
+      const notStarted = statuses.find(s => s.name === 'Not Started')
       const applied = statuses.find(s => s.name === 'Applied')
-      const phoneScreenScheduled = statuses.find(s => s.name === 'Phone Screen Scheduled')
+      const inProgress = statuses.find(s => s.name === 'In Progress')
       
+      expect(notStarted?.isTerminal).toBe(false)
       expect(applied?.isTerminal).toBe(false)
-      expect(phoneScreenScheduled?.isTerminal).toBe(false)
+      expect(inProgress?.isTerminal).toBe(false)
     })
 
     it('should not create cold_apply or warm_apply statuses', async () => {
@@ -84,7 +78,7 @@ describe('ApplicationStatusService', () => {
       
       const allStatuses = await service.getAllStatuses(testUserId)
       
-      expect(allStatuses).toHaveLength(11)
+      expect(allStatuses).toHaveLength(5)
       expect(allStatuses.every(s => s.userId === testUserId)).toBe(true)
     })
   })

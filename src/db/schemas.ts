@@ -4,8 +4,9 @@ import { ObjectId } from 'mongodb'
 // Zod schemas for validation
 export const ApplicationEventSchema = z.object({
   id: z.string(),
-  statusId: z.string(),
-  statusName: z.string(),
+  eventType: z.string(), // What happened (e.g., "Phone screen scheduled", "Interview completed")
+  statusId: z.string().optional(), // Optional: New status if this event changes status
+  statusName: z.string().optional(), // Optional: For display when status changes
   date: z.string(), // ISO date string
   notes: z.string().optional()
 })
@@ -91,8 +92,9 @@ export const AdminUserSchema = z.object({
 // TypeScript interfaces (for use in application code)
 export interface ApplicationEvent {
   id: string
-  statusId: string
-  statusName: string
+  eventType: string // What happened (e.g., "Phone screen scheduled", "Interview completed")
+  statusId?: string // Optional: New status if this event changes status
+  statusName?: string // Optional: For display when status changes
   date: string
   notes?: string
 }
