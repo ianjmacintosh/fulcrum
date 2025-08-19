@@ -61,7 +61,7 @@
   color: #4a5568;
 }
 
-/* Timeline Styles */
+/* Timeline Table Styles */
 
 .events-timeline {
   margin-bottom: 2rem;
@@ -74,68 +74,64 @@
   font-weight: 600;
 }
 
-.timeline {
-  position: relative;
-  padding-left: 2rem;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 0.5rem;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background-color: #e2e8f0;
-}
-
-.timeline-event {
-  position: relative;
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+.timeline-table-container {
   background: white;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.timeline-event::before {
-  content: '';
-  position: absolute;
-  left: -1.75rem;
-  top: 1.75rem;
-  width: 12px;
-  height: 12px;
-  background-color: #4299e1;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 0 0 2px #4299e1;
+.timeline-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.event-date {
-  flex-shrink: 0;
-  width: 100px;
+.timeline-table th {
+  background-color: #f8f9fa;
+  color: #374151;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.timeline-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.timeline-table tbody tr:hover {
+  background-color: #fafbfc;
+}
+
+.timeline-table .event-date {
+  width: 120px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #718096;
+  color: #6b7280;
+  white-space: nowrap;
 }
 
-.event-content {
-  flex-grow: 1;
-}
-
-.event-status {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-}
-
-.event-notes {
+.timeline-table .event-status {
   font-size: 0.875rem;
-  color: #4a5568;
+  font-weight: 500;
+  color: #374151;
+  min-width: 180px;
+}
+
+.timeline-table .event-notes {
+  font-size: 0.875rem;
+  color: #6b7280;
   line-height: 1.5;
+  max-width: 400px;
 }
 
 /* Event Actions Section */

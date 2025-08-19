@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { requireUserAuth } from '../../../utils/route-guards'
+import { EventRecordingForm } from '../../../components/EventRecordingForm'
 import './details.css'
 
 export const Route = createFileRoute('/applications/[id]/details')({
@@ -56,6 +57,11 @@ function ApplicationDetails() {
     return new Date(dateString).toLocaleDateString()
   }
 
+  const handleEventCreated = () => {
+    // Refresh the page to show the new event
+    window.location.reload()
+  }
+
   return (
     <div className="page">
       <header className="page-header">
@@ -98,24 +104,40 @@ function ApplicationDetails() {
 
         <section className="events-timeline">
           <h2>Application Timeline</h2>
-          <div className="timeline">
-            {application.events.map((event: any) => (
-              <div key={event.id} className="timeline-event">
-                <div className="event-date">
-                  {formatDate(event.date)}
-                </div>
-                <div className="event-content">
-                  <div className="event-status">{event.statusName}</div>
-                  {event.notes && <div className="event-notes">{event.notes}</div>}
-                </div>
-              </div>
-            ))}
+          <div className="timeline-table-container">
+            <table className="timeline-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {application.events.map((event: any) => (
+                  <tr key={event.id}>
+                    <td className="event-date">
+                      {formatDate(event.date)}
+                    </td>
+                    <td className="event-status">
+                      {event.statusName}
+                    </td>
+                    <td className="event-notes">
+                      {event.notes || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
 
         <section className="event-actions">
           <h2>Add Event</h2>
-          <p>Event recording form will go here</p>
+          <EventRecordingForm 
+            applicationId={application._id} 
+            onEventCreated={handleEventCreated}
+          />
         </section>
       </main>
     </div>

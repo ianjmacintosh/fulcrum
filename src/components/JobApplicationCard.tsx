@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { JobApplication } from "../db/schemas";
 
 interface JobApplicationCardProps {
@@ -33,19 +34,25 @@ export function JobApplicationCard({ application }: JobApplicationCardProps) {
     };
 
     return (
-        <div className="application-card">
-            <div className="card-content">
-                <div className="card-header">
-                    <h3 className="company-name">{application.companyName}</h3>
-                    <span className={getStatusBadgeClass(application.currentStatus.id)}>
-                        {application.currentStatus.name}
-                    </span>
-                </div>
-                <div className="role-name">{application.roleName}</div>
-                <div className="status-date">
-                    {getMostRecentEventDate(application.events)}
+        <Link 
+            to="/applications/$id/details" 
+            params={{ id: application._id?.toString() || '' }}
+            className="application-card-link"
+        >
+            <div className="application-card">
+                <div className="card-content">
+                    <div className="card-header">
+                        <h3 className="company-name">{application.companyName}</h3>
+                        <span className={getStatusBadgeClass(application.currentStatus.id)}>
+                            {application.currentStatus.name}
+                        </span>
+                    </div>
+                    <div className="role-name">{application.roleName}</div>
+                    <div className="status-date">
+                        {getMostRecentEventDate(application.events)}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }

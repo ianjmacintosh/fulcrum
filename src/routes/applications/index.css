@@ -141,16 +141,27 @@
     margin-bottom: 2rem;
 }
 
+.application-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+}
+
 .application-card {
     background-color: #f8f8f8;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 1rem;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-.application-card:hover {
+.application-card:hover,
+.application-card-link:hover .application-card {
     background-color: #f0f0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card-content {
