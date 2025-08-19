@@ -13,7 +13,7 @@ const CreateEventSchema = z.object({
   notes: z.string().optional()
 })
 
-export const ServerRoute = createServerFileRoute('/api/applications/[id]/events')
+export const ServerRoute = createServerFileRoute('/api/applications/$id/events')
   .middleware([requireUserAuth])
   .methods({
     POST: async ({ context, params, request }) => {

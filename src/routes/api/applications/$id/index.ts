@@ -3,7 +3,7 @@ import { createSuccessResponse, createErrorResponse } from '../../../../utils/au
 import { requireUserAuth } from '../../../../middleware/auth'
 import { applicationService } from '../../../../db/services/applications'
 
-export const ServerRoute = createServerFileRoute('/api/applications/[id]/')
+export const ServerRoute = createServerFileRoute('/api/applications/$id/')
   .middleware([requireUserAuth])
   .methods({
     GET: async ({ context, params }) => {

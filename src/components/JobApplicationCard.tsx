@@ -33,10 +33,33 @@ export function JobApplicationCard({ application }: JobApplicationCardProps) {
         }
     };
 
+    // Don't render link if _id is missing
+    if (!application._id) {
+        return (
+            <div className="application-card">
+                <div className="card-content">
+                    <div className="card-header">
+                        <h3 className="company-name">{application.companyName}</h3>
+                        <span className={getStatusBadgeClass(application.currentStatus.id)}>
+                            {application.currentStatus.name}
+                        </span>
+                    </div>
+                    <div className="role-name">{application.roleName}</div>
+                    <div className="status-date">
+                        {getMostRecentEventDate(application.events)}
+                    </div>
+                    <div className="error-message">
+                        Application ID missing - cannot view details
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <Link 
             to="/applications/$id/details" 
-            params={{ id: application._id?.toString() || '' }}
+            params={{ id: application._id.toString() }}
             className="application-card-link"
         >
             <div className="application-card">

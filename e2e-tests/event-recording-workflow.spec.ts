@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { loginAsUser } from './test-utils'
 
 test.describe('Event Recording Workflow', () => {
   test.beforeEach(async ({ page }) => {
+    // Login as user first
+    await loginAsUser(page)
+    
     // Navigate to applications page
     await page.goto('/applications')
     
@@ -17,8 +21,21 @@ test.describe('Event Recording Workflow', () => {
     // Click the entire card (which should now be clickable)
     await firstApplicationCard.click()
     
-    // Verify we're on the application details page
-    await expect(page.locator('h1')).toContainText('Application Details')
+    // Wait for navigation to complete
+    await page.waitForLoadState('networkidle')
+    
+    // Check if we got a 404 or error page instead of the expected details page
+    const pageTitle = await page.title()
+    const url = page.url()
+    const h1Text = await page.locator('h1').textContent()
+    
+    // Log current state for debugging
+    console.log(`Page title: ${pageTitle}`)
+    console.log(`Current URL: ${url}`)
+    console.log(`H1 content: ${h1Text}`)
+    
+    // Verify we're on the application details page (this should fail with 404)
+    await expect(page.locator('h1')).toContainText('Application Details', { timeout: 5000 })
     
     // Step 2: Verify timeline table is present and has existing events
     const timelineTable = page.locator('.timeline-table')
@@ -87,7 +104,13 @@ test.describe('Event Recording Workflow', () => {
     // Navigate to first application details
     const firstApplicationCard = page.locator('.application-card').first()
     await firstApplicationCard.click()
-    await expect(page.locator('h1')).toContainText('Application Details')
+    
+    // Wait for navigation and log current state
+    await page.waitForLoadState('networkidle')
+    console.log(`Form validation test - Current URL: ${page.url()}`)
+    console.log(`Form validation test - H1 content: ${await page.locator('h1').textContent()}`)
+    
+    await expect(page.locator('h1')).toContainText('Application Details', { timeout: 5000 })
     
     // Try to submit empty form
     const submitButton = page.locator('button[type="submit"]')
@@ -115,7 +138,13 @@ test.describe('Event Recording Workflow', () => {
     // Navigate to application details
     const firstApplicationCard = page.locator('.application-card').first()
     await firstApplicationCard.click()
-    await expect(page.locator('h1')).toContainText('Application Details')
+    
+    // Wait for navigation and log current state
+    await page.waitForLoadState('networkidle')
+    console.log(`Navigation test - Current URL: ${page.url()}`)
+    console.log(`Navigation test - H1 content: ${await page.locator('h1').textContent()}`)
+    
+    await expect(page.locator('h1')).toContainText('Application Details', { timeout: 5000 })
     
     // Navigate back using browser back button
     await page.goBack()
@@ -129,7 +158,13 @@ test.describe('Event Recording Workflow', () => {
     // Navigate to application details
     const firstApplicationCard = page.locator('.application-card').first()
     await firstApplicationCard.click()
-    await expect(page.locator('h1')).toContainText('Application Details')
+    
+    // Wait for navigation and log current state
+    await page.waitForLoadState('networkidle')
+    console.log(`Metadata test - Current URL: ${page.url()}`)
+    console.log(`Metadata test - H1 content: ${await page.locator('h1').textContent()}`)
+    
+    await expect(page.locator('h1')).toContainText('Application Details', { timeout: 5000 })
     
     // Verify application info section is present
     const applicationInfo = page.locator('.application-info')
@@ -150,7 +185,13 @@ test.describe('Event Recording Workflow', () => {
     // Navigate to application details
     const firstApplicationCard = page.locator('.application-card').first()
     await firstApplicationCard.click()
-    await expect(page.locator('h1')).toContainText('Application Details')
+    
+    // Wait for navigation and log current state
+    await page.waitForLoadState('networkidle')
+    console.log(`Timeline test - Current URL: ${page.url()}`)
+    console.log(`Timeline test - H1 content: ${await page.locator('h1').textContent()}`)
+    
+    await expect(page.locator('h1')).toContainText('Application Details', { timeout: 5000 })
     
     // Verify timeline table structure
     const timelineTable = page.locator('.timeline-table')

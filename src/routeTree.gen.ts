@@ -24,7 +24,7 @@ import { Route as ApplicationsNewRouteImport } from './routes/applications/new'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 import { Route as AdminChangePasswordRouteImport } from './routes/admin/change-password'
-import { Route as ApplicationsChar91idChar93DetailsRouteImport } from './routes/applications/[id]/details'
+import { Route as ApplicationsIdDetailsRouteImport } from './routes/applications/$id/details'
 import { ServerRoute as ApiJobBoardsIndexServerRouteImport } from './routes/api/job-boards/index'
 import { ServerRoute as ApiApplicationsIndexServerRouteImport } from './routes/api/applications/index'
 import { ServerRoute as ApiApplicationStatusesIndexServerRouteImport } from './routes/api/application-statuses/index'
@@ -38,8 +38,8 @@ import { ServerRoute as ApiAdminUsersServerRouteImport } from './routes/api/admi
 import { ServerRoute as ApiAdminLogoutServerRouteImport } from './routes/api/admin/logout'
 import { ServerRoute as ApiAdminLoginServerRouteImport } from './routes/api/admin/login'
 import { ServerRoute as ApiAdminChangePasswordServerRouteImport } from './routes/api/admin/change-password'
-import { ServerRoute as ApiApplicationsChar91idChar93IndexServerRouteImport } from './routes/api/applications/[id]/index'
-import { ServerRoute as ApiApplicationsChar91idChar93EventsServerRouteImport } from './routes/api/applications/[id]/events'
+import { ServerRoute as ApiApplicationsIdIndexServerRouteImport } from './routes/api/applications/$id/index'
+import { ServerRoute as ApiApplicationsIdEventsServerRouteImport } from './routes/api/applications/$id/events'
 import { ServerRoute as ApiAdminUsersCreateServerRouteImport } from './routes/api/admin/users/create'
 import { ServerRoute as ApiAdminUsersIdServerRouteImport } from './routes/api/admin/users/$id'
 import { ServerRoute as ApiAdminUsersIdResetServerRouteImport } from './routes/api/admin/users/$id/reset'
@@ -112,12 +112,11 @@ const AdminChangePasswordRoute = AdminChangePasswordRouteImport.update({
   path: '/admin/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApplicationsChar91idChar93DetailsRoute =
-  ApplicationsChar91idChar93DetailsRouteImport.update({
-    id: '/applications/[id]/details',
-    path: '/applications/[id]/details',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApplicationsIdDetailsRoute = ApplicationsIdDetailsRouteImport.update({
+  id: '/applications/$id/details',
+  path: '/applications/$id/details',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiJobBoardsIndexServerRoute = ApiJobBoardsIndexServerRouteImport.update({
   id: '/api/job-boards/',
   path: '/api/job-boards/',
@@ -189,16 +188,16 @@ const ApiAdminChangePasswordServerRoute =
     path: '/api/admin/change-password',
     getParentRoute: () => rootServerRouteImport,
   } as any)
-const ApiApplicationsChar91idChar93IndexServerRoute =
-  ApiApplicationsChar91idChar93IndexServerRouteImport.update({
-    id: '/api/applications/[id]/',
-    path: '/api/applications/[id]/',
+const ApiApplicationsIdIndexServerRoute =
+  ApiApplicationsIdIndexServerRouteImport.update({
+    id: '/api/applications/$id/',
+    path: '/api/applications/$id/',
     getParentRoute: () => rootServerRouteImport,
   } as any)
-const ApiApplicationsChar91idChar93EventsServerRoute =
-  ApiApplicationsChar91idChar93EventsServerRouteImport.update({
-    id: '/api/applications/[id]/events',
-    path: '/api/applications/[id]/events',
+const ApiApplicationsIdEventsServerRoute =
+  ApiApplicationsIdEventsServerRouteImport.update({
+    id: '/api/applications/$id/events',
+    path: '/api/applications/$id/events',
     getParentRoute: () => rootServerRouteImport,
   } as any)
 const ApiAdminUsersCreateServerRoute =
@@ -239,7 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/applications/new': typeof ApplicationsNewRoute
   '/applications': typeof ApplicationsIndexRoute
-  '/applications/[id]/details': typeof ApplicationsChar91idChar93DetailsRoute
+  '/applications/$id/details': typeof ApplicationsIdDetailsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -255,7 +254,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/applications/new': typeof ApplicationsNewRoute
   '/applications': typeof ApplicationsIndexRoute
-  '/applications/[id]/details': typeof ApplicationsChar91idChar93DetailsRoute
+  '/applications/$id/details': typeof ApplicationsIdDetailsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -272,7 +271,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/applications/new': typeof ApplicationsNewRoute
   '/applications/': typeof ApplicationsIndexRoute
-  '/applications/[id]/details': typeof ApplicationsChar91idChar93DetailsRoute
+  '/applications/$id/details': typeof ApplicationsIdDetailsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -290,7 +289,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/applications/new'
     | '/applications'
-    | '/applications/[id]/details'
+    | '/applications/$id/details'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -306,7 +305,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/applications/new'
     | '/applications'
-    | '/applications/[id]/details'
+    | '/applications/$id/details'
   id:
     | '__root__'
     | '/'
@@ -322,7 +321,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/applications/new'
     | '/applications/'
-    | '/applications/[id]/details'
+    | '/applications/$id/details'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -339,7 +338,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   ApplicationsNewRoute: typeof ApplicationsNewRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
-  ApplicationsChar91idChar93DetailsRoute: typeof ApplicationsChar91idChar93DetailsRoute
+  ApplicationsIdDetailsRoute: typeof ApplicationsIdDetailsRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/admin/change-password': typeof ApiAdminChangePasswordServerRoute
@@ -357,8 +356,8 @@ export interface FileServerRoutesByFullPath {
   '/api/job-boards': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/applications/[id]/events': typeof ApiApplicationsChar91idChar93EventsServerRoute
-  '/api/applications/[id]': typeof ApiApplicationsChar91idChar93IndexServerRoute
+  '/api/applications/$id/events': typeof ApiApplicationsIdEventsServerRoute
+  '/api/applications/$id': typeof ApiApplicationsIdIndexServerRoute
   '/api/admin/users/$id/data-summary': typeof ApiAdminUsersIdDataSummaryServerRoute
   '/api/admin/users/$id/reset': typeof ApiAdminUsersIdResetServerRoute
 }
@@ -378,8 +377,8 @@ export interface FileServerRoutesByTo {
   '/api/job-boards': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/applications/[id]/events': typeof ApiApplicationsChar91idChar93EventsServerRoute
-  '/api/applications/[id]': typeof ApiApplicationsChar91idChar93IndexServerRoute
+  '/api/applications/$id/events': typeof ApiApplicationsIdEventsServerRoute
+  '/api/applications/$id': typeof ApiApplicationsIdIndexServerRoute
   '/api/admin/users/$id/data-summary': typeof ApiAdminUsersIdDataSummaryServerRoute
   '/api/admin/users/$id/reset': typeof ApiAdminUsersIdResetServerRoute
 }
@@ -400,8 +399,8 @@ export interface FileServerRoutesById {
   '/api/job-boards/': typeof ApiJobBoardsIndexServerRoute
   '/api/admin/users/$id': typeof ApiAdminUsersIdServerRouteWithChildren
   '/api/admin/users/create': typeof ApiAdminUsersCreateServerRoute
-  '/api/applications/[id]/events': typeof ApiApplicationsChar91idChar93EventsServerRoute
-  '/api/applications/[id]/': typeof ApiApplicationsChar91idChar93IndexServerRoute
+  '/api/applications/$id/events': typeof ApiApplicationsIdEventsServerRoute
+  '/api/applications/$id/': typeof ApiApplicationsIdIndexServerRoute
   '/api/admin/users/$id/data-summary': typeof ApiAdminUsersIdDataSummaryServerRoute
   '/api/admin/users/$id/reset': typeof ApiAdminUsersIdResetServerRoute
 }
@@ -423,8 +422,8 @@ export interface FileServerRouteTypes {
     | '/api/job-boards'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/applications/[id]/events'
-    | '/api/applications/[id]'
+    | '/api/applications/$id/events'
+    | '/api/applications/$id'
     | '/api/admin/users/$id/data-summary'
     | '/api/admin/users/$id/reset'
   fileServerRoutesByTo: FileServerRoutesByTo
@@ -444,8 +443,8 @@ export interface FileServerRouteTypes {
     | '/api/job-boards'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/applications/[id]/events'
-    | '/api/applications/[id]'
+    | '/api/applications/$id/events'
+    | '/api/applications/$id'
     | '/api/admin/users/$id/data-summary'
     | '/api/admin/users/$id/reset'
   id:
@@ -465,8 +464,8 @@ export interface FileServerRouteTypes {
     | '/api/job-boards/'
     | '/api/admin/users/$id'
     | '/api/admin/users/create'
-    | '/api/applications/[id]/events'
-    | '/api/applications/[id]/'
+    | '/api/applications/$id/events'
+    | '/api/applications/$id/'
     | '/api/admin/users/$id/data-summary'
     | '/api/admin/users/$id/reset'
   fileServerRoutesById: FileServerRoutesById
@@ -485,8 +484,8 @@ export interface RootServerRouteChildren {
   ApiApplicationStatusesIndexServerRoute: typeof ApiApplicationStatusesIndexServerRoute
   ApiApplicationsIndexServerRoute: typeof ApiApplicationsIndexServerRoute
   ApiJobBoardsIndexServerRoute: typeof ApiJobBoardsIndexServerRoute
-  ApiApplicationsChar91idChar93EventsServerRoute: typeof ApiApplicationsChar91idChar93EventsServerRoute
-  ApiApplicationsChar91idChar93IndexServerRoute: typeof ApiApplicationsChar91idChar93IndexServerRoute
+  ApiApplicationsIdEventsServerRoute: typeof ApiApplicationsIdEventsServerRoute
+  ApiApplicationsIdIndexServerRoute: typeof ApiApplicationsIdIndexServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -582,11 +581,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/applications/[id]/details': {
-      id: '/applications/[id]/details'
-      path: '/applications/[id]/details'
-      fullPath: '/applications/[id]/details'
-      preLoaderRoute: typeof ApplicationsChar91idChar93DetailsRouteImport
+    '/applications/$id/details': {
+      id: '/applications/$id/details'
+      path: '/applications/$id/details'
+      fullPath: '/applications/$id/details'
+      preLoaderRoute: typeof ApplicationsIdDetailsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -684,18 +683,18 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiAdminChangePasswordServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
-    '/api/applications/[id]/': {
-      id: '/api/applications/[id]/'
-      path: '/api/applications/[id]'
-      fullPath: '/api/applications/[id]'
-      preLoaderRoute: typeof ApiApplicationsChar91idChar93IndexServerRouteImport
+    '/api/applications/$id/': {
+      id: '/api/applications/$id/'
+      path: '/api/applications/$id'
+      fullPath: '/api/applications/$id'
+      preLoaderRoute: typeof ApiApplicationsIdIndexServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
-    '/api/applications/[id]/events': {
-      id: '/api/applications/[id]/events'
-      path: '/api/applications/[id]/events'
-      fullPath: '/api/applications/[id]/events'
-      preLoaderRoute: typeof ApiApplicationsChar91idChar93EventsServerRouteImport
+    '/api/applications/$id/events': {
+      id: '/api/applications/$id/events'
+      path: '/api/applications/$id/events'
+      fullPath: '/api/applications/$id/events'
+      preLoaderRoute: typeof ApiApplicationsIdEventsServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
     '/api/admin/users/create': {
@@ -771,8 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   ApplicationsNewRoute: ApplicationsNewRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
-  ApplicationsChar91idChar93DetailsRoute:
-    ApplicationsChar91idChar93DetailsRoute,
+  ApplicationsIdDetailsRoute: ApplicationsIdDetailsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
@@ -792,10 +790,8 @@ const rootServerRouteChildren: RootServerRouteChildren = {
     ApiApplicationStatusesIndexServerRoute,
   ApiApplicationsIndexServerRoute: ApiApplicationsIndexServerRoute,
   ApiJobBoardsIndexServerRoute: ApiJobBoardsIndexServerRoute,
-  ApiApplicationsChar91idChar93EventsServerRoute:
-    ApiApplicationsChar91idChar93EventsServerRoute,
-  ApiApplicationsChar91idChar93IndexServerRoute:
-    ApiApplicationsChar91idChar93IndexServerRoute,
+  ApiApplicationsIdEventsServerRoute: ApiApplicationsIdEventsServerRoute,
+  ApiApplicationsIdIndexServerRoute: ApiApplicationsIdIndexServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

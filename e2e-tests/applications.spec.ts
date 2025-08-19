@@ -63,3 +63,48 @@ test('Add New Application button navigates to the correct page', async ({ page }
   // Verify we're on the new application page
   expect(page.url()).toContain('/applications/new');
 });
+
+test('Application cards navigate to details page correctly', async ({ page }) => {
+  // Log in first
+  await loginAsUser(page);
+
+  // Navigate to applications page
+  await page.goto('/applications');
+
+  // Wait for the page to load
+  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
+
+  // Check if there are application cards
+  const applicationCards = page.locator('.application-card-link');
+  const cardCount = await applicationCards.count();
+
+  if (cardCount > 0) {
+    // Get the first application card
+    const firstCard = applicationCards.first();
+    
+    // Verify the card has required elements
+    await expect(firstCard.locator('.company-name')).toBeVisible();
+    await expect(firstCard.locator('.role-name')).toBeVisible();
+    
+    // Click on the first application card
+    await firstCard.click();
+
+    // Wait for navigation (should be fast - 5 seconds max)
+    await page.waitForURL(/\/applications\/[a-f0-9]{24}\/details/, { timeout: 5000 });
+
+    // Verify we're on the details page
+    await expect(page.getByRole('heading', { name: 'Application Details' })).toBeVisible({ timeout: 5000 });
+    
+    // Verify the page shows application content, not an error
+    await expect(page.getByText('Application not found')).not.toBeVisible();
+    
+    // Verify key sections are present
+    await expect(page.getByText('Application Timeline')).toBeVisible();
+    await expect(page.getByText('Add Event')).toBeVisible();
+    
+  } else {
+    console.log('No application cards found - test requires existing application data');
+    // Skip this test if no applications exist
+    test.skip();
+  }
+});
