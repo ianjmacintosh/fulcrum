@@ -3,7 +3,7 @@ import { requireUserAuth } from '../../../utils/route-guards'
 import { EventRecordingForm } from '../../../components/EventRecordingForm'
 import './details.css'
 
-export const Route = createFileRoute('/applications/[id]/details')({
+export const Route = createFileRoute('/applications/$id/details')({
   beforeLoad: requireUserAuth,
   loader: async ({ params }) => {
     // On server-side, skip loading data if user is not authenticated
