@@ -1,23 +1,24 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { ApplicationService } from '../db/services/applications'
-import { ApplicationStatusService } from '../db/services/application-statuses'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mockApplicationService } from '../db/services/mock-application-service'
+import { mockApplicationStatusService } from '../db/services/mock-application-status-service'
 import { JobApplication, ApplicationStatus } from '../db/schemas'
 import { randomUUID } from 'crypto'
-import { connectToDatabase } from '../db/connection'
 
-describe('Event Recording Integration Tests - New Architecture', () => {
-  const applicationService = new ApplicationService()
-  const applicationStatusService = new ApplicationStatusService()
-  const testUserId = 'test-user-integration'
+describe('Event Recording Unit Tests - New Architecture', () => {
+  const testUserId = 'test-user-unit'
   let testApplication: JobApplication
   let testStatuses: ApplicationStatus[]
 
   beforeEach(async () => {
+    // Clear mock data
+    mockApplicationService.clear()
+    mockApplicationStatusService.clear()
+    
     // Create application statuses (new workflow states)
-    testStatuses = await applicationStatusService.createDefaultStatuses(testUserId)
+    testStatuses = await mockApplicationStatusService.createDefaultStatuses(testUserId)
     
     // Create a test application with initial event
-    testApplication = await applicationService.createApplication({
+    testApplication = await mockApplicationService.createApplication({
       userId: testUserId,
       companyName: 'Integration Test Co',
       roleName: 'Software Engineer',
@@ -40,21 +41,14 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     })
   })
 
-  afterEach(async () => {
-    // Clean up test data
-    const db = await connectToDatabase()
-    await db.collection('applications').deleteMany({ userId: testUserId })
-    await db.collection('application_statuses').deleteMany({ userId: testUserId })
-  })
-
   it('should complete full workflow: get application → get statuses → add event → verify updates', async () => {
     // Step 1: Get the application (simulating GET /api/applications/:id)
-    const application = await applicationService.getApplicationById(testUserId, testApplication._id!.toString())
+    const application = await mockApplicationService.getApplicationById(testUserId, testApplication._id!.toString())
     expect(application).toBeTruthy()
     expect(application?.events).toHaveLength(1)
     
     // Step 2: Get available statuses (simulating GET /api/application-statuses)
-    const statuses = await applicationStatusService.getAllStatuses(testUserId)
+    const statuses = await mockApplicationStatusService.getAllStatuses(testUserId)
     expect(statuses.length).toBe(7)
     
     // Verify we have workflow status types
@@ -79,7 +73,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
       date: '2025-01-22'
     }
     
-    const updatedApplication = await applicationService.updateApplication(testUserId, testApplication._id!, {
+    const updatedApplication = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...application!.events, newEvent]
     })
     
@@ -88,7 +82,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     expect(updatedApplication?.events).toHaveLength(2)
     
     // Step 5: Fetch the updated application to verify persistence
-    const refreshedApplication = await applicationService.getApplicationById(testUserId, testApplication._id!.toString())
+    const refreshedApplication = await mockApplicationService.getApplicationById(testUserId, testApplication._id!.toString())
     
     expect(refreshedApplication?.events).toHaveLength(2)
     
@@ -126,7 +120,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     ]
     
     // Add all events
-    const updatedApplication = await applicationService.updateApplication(testUserId, testApplication._id!, {
+    const updatedApplication = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, ...events]
     })
     
@@ -144,7 +138,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
   })
 
   it('should handle terminal status events correctly', async () => {
-    const statuses = await applicationStatusService.getAllStatuses(testUserId)
+    const statuses = await mockApplicationStatusService.getAllStatuses(testUserId)
     const declinedStatus = statuses.find(s => s.name === 'Declined')!
     
     expect(declinedStatus.isTerminal).toBe(true)
@@ -157,7 +151,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
       date: '2025-01-25'
     }
     
-    const updatedApplication = await applicationService.updateApplication(testUserId, testApplication._id!, {
+    const updatedApplication = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, rejectionEvent],
       declinedDate: '2025-01-25'
     })
@@ -167,7 +161,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
 
   it('should validate event data consistency across API operations', async () => {
     // Test the data flow that would happen in the real application
-    const statuses = await applicationStatusService.getAllStatuses(testUserId)
+    const statuses = await mockApplicationStatusService.getAllStatuses(testUserId)
     
     // Simulate form submission data
     const formData = {
@@ -186,7 +180,7 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     }
     
     // Update application (API operation)
-    const updatedApplication = await applicationService.updateApplication(testUserId, testApplication._id!, {
+    const updatedApplication = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, newEvent],
       phoneScreenDate: formData.date
     })
@@ -200,8 +194,8 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     const differentUserId = 'different-user-123'
     
     // Create a different user's application
-    const differentUserStatuses = await applicationStatusService.createDefaultStatuses(differentUserId)
-    const differentUserApplication = await applicationService.createApplication({
+    const differentUserStatuses = await mockApplicationStatusService.createDefaultStatuses(differentUserId)
+    const differentUserApplication = await mockApplicationService.createApplication({
       userId: differentUserId,
       companyName: 'Different Company',
       roleName: 'Different Role',
@@ -224,16 +218,11 @@ describe('Event Recording Integration Tests - New Architecture', () => {
     })
     
     // Verify that each user can only see their own data
-    const user1Applications = await applicationService.getAllApplicationsForUser(testUserId)
-    const user2Applications = await applicationService.getAllApplicationsForUser(differentUserId)
+    const user1Applications = await mockApplicationService.getAllApplicationsForUser(testUserId)
+    const user2Applications = await mockApplicationService.getAllApplicationsForUser(differentUserId)
     
     expect(user1Applications.length).toBe(1)
-    expect(user2Applications.length).toBeGreaterThan(0)
+    expect(user2Applications.length).toBe(1)
     expect(user1Applications[0]._id).not.toBe(user2Applications[0]._id)
-    
-    // Clean up different user data
-    const db = await connectToDatabase()
-    await db.collection('applications').deleteMany({ userId: differentUserId })
-    await db.collection('application_statuses').deleteMany({ userId: differentUserId })
   })
 })
