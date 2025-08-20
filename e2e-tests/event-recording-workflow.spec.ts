@@ -50,38 +50,31 @@ test.describe('Event Recording Workflow', () => {
     await expect(eventForm).toBeVisible()
     
     // Step 4: Fill out the event form
-    const eventTypeSelect = page.locator('#eventType')
-    const statusSelect = page.locator('#statusId')
+    const titleInput = page.locator('#title')
     const dateInput = page.locator('#eventDate')
-    const notesTextarea = page.locator('#notes')
+    const descriptionTextarea = page.locator('#description')
     const submitButton = page.locator('button[type="submit"]')
     
-    await expect(eventTypeSelect).toBeVisible()
-    await expect(statusSelect).toBeVisible()
+    await expect(titleInput).toBeVisible()
     await expect(dateInput).toBeVisible()
-    await expect(notesTextarea).toBeVisible()
+    await expect(descriptionTextarea).toBeVisible()
     await expect(submitButton).toBeVisible()
     
     // Initially submit button should be disabled (form starts empty)
     await expect(submitButton).toBeDisabled()
     
-    // Select an event type from dropdown (now required)
-    await eventTypeSelect.selectOption({ index: 1 }) // Select first non-empty option
-    const selectedEventType = await eventTypeSelect.inputValue()
-    console.log(`Selected event type: ${selectedEventType}`)
-    
-    // Optionally select a status update
-    await statusSelect.selectOption({ index: 1 }) // Select first non-empty option
-    const selectedStatus = await statusSelect.inputValue()
-    console.log(`Selected status: ${selectedStatus}`)
+    // Fill in the event title (required)
+    const testEventTitle = 'E2E Test Interview Completed'
+    await titleInput.fill(testEventTitle)
+    console.log(`Filled event title: ${testEventTitle}`)
     
     // Set date to today (should already be default)
     const today = new Date().toISOString().split('T')[0]
     await dateInput.fill(today)
     
-    // Add notes
-    const testNotes = 'End-to-end test event recording'
-    await notesTextarea.fill(testNotes)
+    // Add description
+    const testDescription = 'End-to-end test event recording'
+    await descriptionTextarea.fill(testDescription)
     
     // Submit button should now be enabled
     await expect(submitButton).toBeEnabled()
@@ -114,16 +107,16 @@ test.describe('Event Recording Workflow', () => {
     // The important thing is that the form is functional and doesn't show errors
     console.log(`Event submission test completed. Form appears functional.`)
     
-    // If a new event was created, verify it contains our test notes
+    // If a new event was created, verify it contains our test data
     if (finalEventCount > initialEventCount) {
       const newEventRow = updatedTimelineRows.last()
-      await expect(newEventRow).toContainText(testNotes)
+      await expect(newEventRow).toContainText(testEventTitle)
+      await expect(newEventRow).toContainText(testDescription)
     }
     
     // Step 7: Verify form was reset after successful submission
-    await expect(eventTypeSelect).toHaveValue('')
-    await expect(statusSelect).toHaveValue('')
-    await expect(notesTextarea).toHaveValue('')
+    await expect(titleInput).toHaveValue('')
+    await expect(descriptionTextarea).toHaveValue('')
     await expect(submitButton).toBeDisabled()
   })
 
@@ -143,17 +136,17 @@ test.describe('Event Recording Workflow', () => {
     const submitButton = page.locator('button[type="submit"]')
     await expect(submitButton).toBeDisabled()
     
-    // Fill only date, leave event type empty
+    // Fill only date, leave title empty
     const dateInput = page.locator('#eventDate')
     const today = new Date().toISOString().split('T')[0]
     await dateInput.fill(today)
     
-    // Submit button should still be disabled without event type
+    // Submit button should still be disabled without title
     await expect(submitButton).toBeDisabled()
     
-    // Select event type to enable form
-    const eventTypeSelect = page.locator('#eventType')
-    await eventTypeSelect.selectOption({ index: 1 })
+    // Fill title to enable form
+    const titleInput = page.locator('#title')
+    await titleInput.fill('Test Event')
     await expect(submitButton).toBeEnabled()
     
     // Clear date to test date validation
@@ -227,8 +220,8 @@ test.describe('Event Recording Workflow', () => {
     // Check table headers
     const headers = page.locator('.timeline-table th')
     await expect(headers.nth(0)).toContainText('Date')
-    await expect(headers.nth(1)).toContainText('Status')
-    await expect(headers.nth(2)).toContainText('Notes')
+    await expect(headers.nth(1)).toContainText('Event')
+    await expect(headers.nth(2)).toContainText('Description')
     
     // Verify rows have hover effects (CSS should add background color on hover)
     const firstRow = page.locator('.timeline-table tbody tr').first()
@@ -242,20 +235,20 @@ test.describe('Event Recording Workflow', () => {
       const row = timelineRows.nth(i)
       const cells = row.locator('td')
       
-      // Each row should have 3 cells: date, status, notes
+      // Each row should have 3 cells: date, event, description
       await expect(cells).toHaveCount(3)
       
       // Date cell should not be empty
       const dateCell = cells.nth(0)
       await expect(dateCell).not.toBeEmpty()
       
-      // Status cell should not be empty
-      const statusCell = cells.nth(1)
-      await expect(statusCell).not.toBeEmpty()
+      // Event cell should not be empty
+      const eventCell = cells.nth(1)
+      await expect(eventCell).not.toBeEmpty()
       
-      // Notes cell may be empty (shows '-' for empty notes)
-      const notesCell = cells.nth(2)
-      await expect(notesCell).toBeVisible()
+      // Description cell may be empty (shows '-' for empty description)
+      const descriptionCell = cells.nth(2)
+      await expect(descriptionCell).toBeVisible()
     }
   })
 })

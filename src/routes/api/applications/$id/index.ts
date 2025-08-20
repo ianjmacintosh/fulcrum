@@ -67,7 +67,7 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/')
           return createErrorResponse('Invalid update fields. Only status dates can be updated via this endpoint.', 400)
         }
 
-        const updatedApplication = await applicationService.updateApplication(auth.user.id, id, body)
+        const updatedApplication = await applicationService.updateApplicationWithStatusCalculation(auth.user.id, id, body)
         
         if (!updatedApplication) {
           return createErrorResponse('Application not found', 404)

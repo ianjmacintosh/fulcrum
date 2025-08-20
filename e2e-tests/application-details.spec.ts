@@ -74,8 +74,8 @@ test.describe('Application Details Page', () => {
     const timelineTable = page.locator('.timeline-table');
     await expect(timelineTable).toBeVisible();
     await expect(timelineTable.locator('thead th').first()).toContainText('Date');
-    await expect(timelineTable.locator('thead th').nth(1)).toContainText('Status');
-    await expect(timelineTable.locator('thead th').nth(2)).toContainText('Notes');
+    await expect(timelineTable.locator('thead th').nth(1)).toContainText('Event');
+    await expect(timelineTable.locator('thead th').nth(2)).toContainText('Description');
     
     // Verify there's at least one event in the timeline
     const timelineRows = timelineTable.locator('tbody tr');
@@ -102,8 +102,8 @@ test.describe('Application Details Page', () => {
     await expect(page.getByText('Application not found')).not.toBeVisible();
     
     // Verify essential page elements
-    await expect(page.getByText('Application Timeline')).toBeVisible();
-    await expect(page.getByText('Add Event')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Application Timeline' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Add Event' })).toBeVisible();
   });
 
   test('should show error for invalid application ID', async ({ page }) => {
@@ -135,6 +135,6 @@ test.describe('Application Details Page', () => {
     
     // Should be back on applications list
     await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible({ timeout: 2000 });
-    await expect(page.locator('.application-card')).toBeVisible();
+    await expect(page.locator('.application-card').first()).toBeVisible();
   });
 });

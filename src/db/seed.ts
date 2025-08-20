@@ -3,6 +3,7 @@ import { JobApplication, ApplicationStatus, Workflow, JobBoard } from './schemas
 import { adminService } from './services/admin'
 import { userService } from './services/users'
 import { applicationStatusService } from './services/application-statuses'
+import { applicationService } from './services/applications'
 import { hashPassword } from '../utils/crypto'
 
 async function seedAdmin() {
@@ -309,9 +310,14 @@ export async function seedDatabase(forceReseed: boolean = false) {
     const jobBoardResult = await db.collection('job_boards').insertMany(defaultJobBoards)
     console.log(`✅ Inserted ${jobBoardResult.insertedCount} job boards`)
 
-    // Insert sample applications
-    const appResult = await db.collection('applications').insertMany(sampleApplications)
-    console.log(`✅ Inserted ${appResult.insertedCount} sample applications`)
+    // Insert sample applications with correct currentStatus calculation
+    const applicationsWithCorrectStatus = sampleApplications.map(app => ({
+      ...app,
+      currentStatus: applicationService.calculateCurrentStatus(app)
+    }))
+    
+    const appResult = await db.collection('applications').insertMany(applicationsWithCorrectStatus)
+    console.log(`✅ Inserted ${appResult.insertedCount} sample applications with calculated status`)
 
     console.log('🎉 Database seeded successfully!')
 

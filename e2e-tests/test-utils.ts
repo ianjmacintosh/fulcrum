@@ -6,15 +6,22 @@ import { Page, expect } from '@playwright/test';
 export async function loginAsUser(page: Page) {
   await page.goto('/');
   await page.getByRole('link', { name: 'Login' }).click();
-  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? '');
-  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? '');
+  
+  // Wait for the login form to load
+  await expect(page.getByRole('textbox', { name: 'Email Address' })).toBeVisible();
+  
+  await page.getByRole('textbox', { name: 'Email Address' }).fill(process.env.USER_EMAIL ?? 'alice@wonderland.dev');
+  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.USER_PASSWORD ?? 'followthewhiterabbit');
   await page.getByRole('button', { name: 'Sign In' }).click();
 
-  // Wait for navigation to complete after login
-  await page.waitForURL('**/dashboard');
+  // Wait for successful login by checking for logout button (more reliable than URL)
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible({ timeout: 15000 });
   
-  // Wait for successful login (should show logout button)
-  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+  // If we're not on dashboard, navigate there
+  if (!page.url().includes('/dashboard')) {
+    await page.goto('/dashboard');
+    await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+  }
 }
 
 /**
