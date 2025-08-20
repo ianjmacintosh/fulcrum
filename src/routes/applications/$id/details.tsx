@@ -17,6 +17,11 @@ export const Route = createFileRoute('/applications/$id/details')({
         credentials: 'include' 
       })
       
+      if (response.status === 404) {
+        // Application not found - return null to show "Application not found" message
+        return { application: null }
+      }
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch application: ${response.status}`)
       }
