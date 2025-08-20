@@ -44,10 +44,6 @@ export const mockApplicationStatusService = {
       .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
   },
 
-  async getStatusByName(userId: string, name: string): Promise<ApplicationStatus | null> {
-    const status = statuses.find(s => s.userId === userId && s.name === name)
-    return status || null
-  },
 
   // Test utility
   clear(): void {

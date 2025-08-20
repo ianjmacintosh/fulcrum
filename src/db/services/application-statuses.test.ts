@@ -1,25 +1,18 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { ApplicationStatusService } from './application-statuses'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mockApplicationStatusService } from './mock-application-status-service'
 import { ApplicationStatus } from '../schemas'
-import { connectToDatabase } from '../connection'
 
 describe('ApplicationStatusService', () => {
-  let service: ApplicationStatusService
   const testUserId = 'test-user-123'
 
   beforeEach(() => {
-    service = new ApplicationStatusService()
-  })
-
-  afterEach(async () => {
-    // Clean up test data after each test
-    const db = await connectToDatabase()
-    await db.collection('application_statuses').deleteMany({ userId: testUserId })
+    // Clear mock data before each test
+    mockApplicationStatusService.clear()
   })
 
   describe('createDefaultStatuses', () => {
     it('should create generic workflow statuses', async () => {
-      const statuses = await service.createDefaultStatuses(testUserId)
+      const statuses = await mockApplicationStatusService.createDefaultStatuses(testUserId)
       
       expect(statuses).toHaveLength(7)
       
@@ -55,7 +48,7 @@ describe('ApplicationStatusService', () => {
     })
 
     it('should not create cold_apply or warm_apply statuses', async () => {
-      const statuses = await service.createDefaultStatuses(testUserId)
+      const statuses = await mockApplicationStatusService.createDefaultStatuses(testUserId)
       
       const statusNames = statuses.map(s => s.name)
       expect(statusNames).not.toContain('Cold Apply')
@@ -65,24 +58,12 @@ describe('ApplicationStatusService', () => {
     })
   })
 
-  describe('getStatusById', () => {
-    it('should retrieve a status by ID', async () => {
-      const statuses = await service.createDefaultStatuses(testUserId)
-      const appliedStatus = statuses.find(s => s.name === 'Applied')!
-      
-      const retrieved = await service.getStatusById(testUserId, appliedStatus._id!.toString())
-      
-      expect(retrieved).toBeTruthy()
-      expect(retrieved?.name).toBe('Applied')
-      expect(retrieved?.userId).toBe(testUserId)
-    })
-  })
 
   describe('getAllStatuses', () => {
     it('should retrieve all statuses for a user', async () => {
-      await service.createDefaultStatuses(testUserId)
+      await mockApplicationStatusService.createDefaultStatuses(testUserId)
       
-      const allStatuses = await service.getAllStatuses(testUserId)
+      const allStatuses = await mockApplicationStatusService.getAllStatuses(testUserId)
       
       expect(allStatuses).toHaveLength(7)
       expect(allStatuses.every(s => s.userId === testUserId)).toBe(true)

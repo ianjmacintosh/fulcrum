@@ -71,12 +71,12 @@ describe('POST /api/applications/:id/events', () => {
     expect(lastEvent?.description).toBe('Phone screen scheduled for next week')
   })
 
-  it('should validate event data against ApplicationStatus collection', async () => {
-    // Test with invalid status ID
-    const invalidStatusId = '000000000000000000000000'
-    
-    const status = await mockApplicationStatusService.getStatusByName(testUserId, 'NonExistentStatus')
-    expect(status).toBeNull() // Should not exist
+  it('should validate that statuses exist for the user', async () => {
+    // Test that we have the expected statuses available
+    const statuses = await mockApplicationStatusService.getAllStatuses(testUserId)
+    expect(statuses.length).toBe(7) // Should have 7 default statuses
+    expect(statuses.some(s => s.name === 'Applied')).toBe(true)
+    expect(statuses.some(s => s.name === 'Declined')).toBe(true)
   })
 
   it('should generate unique UUID for new events', async () => {

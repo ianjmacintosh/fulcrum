@@ -59,16 +59,6 @@ export class ApplicationStatusService {
     return await collection.find({ userId }).sort({ createdAt: 1 }).toArray()
   }
 
-  async getStatusById(userId: string, id: string | ObjectId): Promise<ApplicationStatus | null> {
-    const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    return await collection.findOne({ _id: objectId, userId })
-  }
-
-  async getStatusByName(userId: string, name: string): Promise<ApplicationStatus | null> {
-    const collection = await this.getCollection()
-    return await collection.findOne({ userId, name })
-  }
 
   async updateStatus(userId: string, id: string | ObjectId, updates: Partial<ApplicationStatus>): Promise<ApplicationStatus | null> {
     const collection = await this.getCollection()
