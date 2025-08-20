@@ -19,7 +19,6 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/')
       }
       
       try {
-        console.log(`Applications API: Fetching application ${id} for userId:`, auth.user.id)
         const application = await applicationService.getApplicationById(auth.user.id, id)
         
         if (!application) {
@@ -57,7 +56,6 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/')
       
       try {
         const body = await request.json()
-        console.log(`Applications API: Updating application ${id} for userId:`, auth.user.id, 'with:', body)
         
         // Validate that we're only updating status date fields
         const allowedFields = ['appliedDate', 'phoneScreenDate', 'round1Date', 'round2Date', 'acceptedDate', 'declinedDate']

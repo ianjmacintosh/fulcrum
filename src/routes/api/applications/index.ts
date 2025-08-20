@@ -14,7 +14,6 @@ export const ServerRoute = createServerFileRoute('/api/applications/')
       }
       
       try {
-        console.log('Applications API: Fetching applications for userId:', auth.user.id)
         const applications = await applicationService.getApplications(auth.user.id)
         
         return createSuccessResponse({ applications })
