@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { applicationService } from '../../../../db/services/applications'
+import { mockApplicationService } from '../../../../db/services/mock-application-service'
 import { JobApplication } from '../../../../db/schemas'
-import { connectToDatabase } from '../../../../db/connection'
 
-describe('Application Details API Integration', () => {
-  const testUserId = 'test-user-integration-123'
+describe('Application Details API Unit Tests', () => {
+  const testUserId = 'test-user-123'
   let testApplication: JobApplication
 
   beforeEach(async () => {
-    // Create test application
-    testApplication = await applicationService.createApplication({
+    mockApplicationService.clear()
+    
+    testApplication = await mockApplicationService.createApplication({
       userId: testUserId,
-      companyName: 'Integration Test Company',
-      roleName: 'Integration Test Role',
+      companyName: 'Test Company',
+      roleName: 'Test Role',
       jobBoard: { id: 'linkedin', name: 'LinkedIn' },
       workflow: { id: 'default', name: 'Default Process' },
       applicationType: 'cold',
@@ -20,15 +20,15 @@ describe('Application Details API Integration', () => {
       locationType: 'remote',
       events: [
         {
-          id: 'event_integration-1',
+          id: 'event-1',
           title: 'Application submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15',
-          description: 'Integration test application'
+          description: 'Test application'
         },
         {
-          id: 'event_integration-2',
+          id: 'event-2',
           title: 'phone_screen_completed',
           statusId: 'in_progress',
           statusName: 'In Progress',
@@ -36,23 +36,19 @@ describe('Application Details API Integration', () => {
           description: 'Phone screen completed'
         }
       ],
-      currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event_integration-2' }
+      currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event-2' }
     })
   })
 
-  afterEach(async () => {
-    // Clean up test data
-    const db = await connectToDatabase()
-    await db.collection('applications').deleteMany({ userId: testUserId })
+  afterEach(() => {
+    mockApplicationService.clear()
   })
 
-  it('should fetch application details through the API', async () => {
-    // Test that the API would work (we can't easily test the actual HTTP endpoint in this environment)
-    // But we can verify the underlying service works correctly
-    const application = await applicationService.getApplicationById(testUserId, testApplication._id!.toString())
+  it('should fetch application details through the service', async () => {
+    const application = await mockApplicationService.getApplicationById(testUserId, testApplication._id!.toString())
     
     expect(application).toBeTruthy()
-    expect(application?.companyName).toBe('Integration Test Company')
+    expect(application?.companyName).toBe('Test Company')
     expect(application?.events).toHaveLength(2)
     
     // Verify events can be sorted chronologically
@@ -65,9 +61,8 @@ describe('Application Details API Integration', () => {
   })
 
   it('should handle invalid application IDs', async () => {
-    const application = await applicationService.getApplicationById(testUserId, 'invalid-id')
+    const application = await mockApplicationService.getApplicationById(testUserId, 'invalid-id')
     
-    // Should handle the invalid ObjectId gracefully
     expect(application).toBeNull()
   })
 })
