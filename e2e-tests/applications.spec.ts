@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { loginAsUser } from './test-utils';
 
+test.describe.serial('Applications', () => {
+
 test('Applications page loads and displays job applications', async ({ page }) => {
   // Log in first
   await loginAsUser(page);
@@ -53,9 +55,18 @@ test('Applications page displays application cards when data exists', async ({ p
 test('Add New Application button navigates to the correct page', async ({ page }) => {
   // Log in first
   await loginAsUser(page);
+  
+  // Verify we're logged in by checking for the logout button
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 
   // Navigate to applications page
   await page.goto('/applications');
+
+  // Wait for the page to be fully loaded before clicking the button
+  await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
+  
+  // Wait for the Add New Application button to be visible
+  await expect(page.getByRole('link', { name: '+ Add New Application' })).toBeVisible();
 
   // Click on Add New Application
   await page.getByRole('link', { name: '+ Add New Application' }).click();
@@ -74,37 +85,34 @@ test('Application cards navigate to details page correctly', async ({ page }) =>
   // Wait for the page to load
   await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
 
-  // Check if there are application cards
-  const applicationCards = page.locator('.application-card-link');
-  const cardCount = await applicationCards.count();
+  // Wait for application cards to load - they should be there since seed data exists
+  await expect(page.locator('.application-card-link').first()).toBeVisible({ timeout: 10000 });
+  
+  // Verify we don't see "No applications" message since seed data should exist
+  await expect(page.locator('.no-applications')).not.toBeVisible();
+  
+  // Get the first application card
+  const firstCard = page.locator('.application-card-link').first();
+  
+  // Verify the card has required elements
+  await expect(firstCard.locator('.company-name')).toBeVisible();
+  await expect(firstCard.locator('.role-name')).toBeVisible();
+  
+  // Click on the first application card
+  await firstCard.click();
 
-  if (cardCount > 0) {
-    // Get the first application card
-    const firstCard = applicationCards.first();
-    
-    // Verify the card has required elements
-    await expect(firstCard.locator('.company-name')).toBeVisible();
-    await expect(firstCard.locator('.role-name')).toBeVisible();
-    
-    // Click on the first application card
-    await firstCard.click();
+  // Wait for navigation (should be fast - 5 seconds max)
+  await page.waitForURL(/\/applications\/[a-f0-9]{24}\/details/, { timeout: 5000 });
 
-    // Wait for navigation (should be fast - 5 seconds max)
-    await page.waitForURL(/\/applications\/[a-f0-9]{24}\/details/, { timeout: 5000 });
-
-    // Verify we're on the details page
-    await expect(page.getByRole('heading', { name: 'Application Details' })).toBeVisible({ timeout: 5000 });
-    
-    // Verify the page shows application content, not an error
-    await expect(page.getByText('Application not found')).not.toBeVisible();
-    
-    // Verify key sections are present
-    await expect(page.getByText('Application Timeline')).toBeVisible();
-    await expect(page.getByText('Add Event')).toBeVisible();
-    
-  } else {
-    console.log('No application cards found - test requires existing application data');
-    // Skip this test if no applications exist
-    test.skip();
-  }
+  // Verify we're on the details page
+  await expect(page.getByRole('heading', { name: 'Application Details' })).toBeVisible({ timeout: 5000 });
+  
+  // Verify the page shows application content, not an error
+  await expect(page.getByText('Application not found')).not.toBeVisible();
+  
+  // Verify key sections are present
+  await expect(page.getByRole('heading', { name: 'Application Timeline' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add Event' })).toBeVisible();
 });
+
+}); // Close test.describe.serial
