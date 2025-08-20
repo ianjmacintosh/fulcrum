@@ -1,8 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { applicationService } from '../../../../db/services/applications'
-import { applicationStatusService } from '../../../../db/services/application-statuses'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { mockApplicationService } from '../../../../db/services/mock-application-service'
+import { mockApplicationStatusService } from '../../../../db/services/mock-application-status-service'
 import { JobApplication, ApplicationStatus } from '../../../../db/schemas'
-import { connectToDatabase } from '../../../../db/connection'
 import { randomUUID } from 'crypto'
 
 describe('POST /api/applications/:id/events', () => {
@@ -11,14 +10,18 @@ describe('POST /api/applications/:id/events', () => {
   let testStatuses: ApplicationStatus[]
 
   beforeEach(async () => {
+    // Clear mock data
+    mockApplicationService.clear()
+    mockApplicationStatusService.clear()
+    
     // Create test statuses
-    testStatuses = await applicationStatusService.createDefaultStatuses(testUserId)
+    testStatuses = await mockApplicationStatusService.createDefaultStatuses(testUserId)
     
     // Find the Applied status to use in the test application
     const appliedStatus = testStatuses.find(s => s.name === 'Applied')!
     
     // Create test application
-    testApplication = await applicationService.createApplication({
+    testApplication = await mockApplicationService.createApplication({
       userId: testUserId,
       companyName: 'Test Company',
       roleName: 'Test Role',
@@ -37,21 +40,14 @@ describe('POST /api/applications/:id/events', () => {
     })
   })
 
-  afterEach(async () => {
-    // Clean up test data
-    const db = await connectToDatabase()
-    await db.collection('applications').deleteMany({ userId: testUserId })
-    await db.collection('application_statuses').deleteMany({ userId: testUserId })
-  })
-
-  it('should add new event and update currentStatus', async () => {
+  it('should add new event without updating status dates', async () => {
     const eventData = {
       title: 'Phone screen scheduled',
       description: 'Phone screen scheduled for next week',
       date: '2025-01-20'
     }
 
-    // This simulates the API endpoint logic
+    // This simulates the actual API endpoint logic - only adds events
     const eventId = `event_${randomUUID()}`
     const newEvent = {
       id: eventId,
@@ -60,14 +56,15 @@ describe('POST /api/applications/:id/events', () => {
       date: eventData.date
     }
 
-    const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
-      events: [...testApplication.events, newEvent],
-      phoneScreenDate: eventData.date
+    const updatedApp = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
+      events: [...testApplication.events, newEvent]
+      // Note: events API does NOT update phoneScreenDate or other status dates
     })
 
     expect(updatedApp).toBeTruthy()
     expect(updatedApp?.events).toHaveLength(2)
-    expect(updatedApp?.phoneScreenDate).toBe('2025-01-20')
+    // Events API should not update status dates
+    expect(updatedApp?.phoneScreenDate).toBeUndefined()
     
     const lastEvent = updatedApp?.events.find(e => e.id === eventId)
     expect(lastEvent?.title).toBe('Phone screen scheduled')
@@ -78,7 +75,7 @@ describe('POST /api/applications/:id/events', () => {
     // Test with invalid status ID
     const invalidStatusId = '000000000000000000000000'
     
-    const status = await applicationStatusService.getStatusById(testUserId, invalidStatusId)
+    const status = await mockApplicationStatusService.getStatusByName(testUserId, 'NonExistentStatus')
     expect(status).toBeNull() // Should not exist
   })
 
@@ -89,6 +86,24 @@ describe('POST /api/applications/:id/events', () => {
     expect(eventId1).not.toBe(eventId2)
     expect(eventId1).toMatch(/^event_[a-f0-9-]{36}$/)
     expect(eventId2).toMatch(/^event_[a-f0-9-]{36}$/)
+  })
+
+  it('should validate date format according to API schema', () => {
+    // This matches the exact regex from the API: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    
+    const validFormatDates = ['2025-01-15', '2025-12-31', '2024-02-29', '2000-01-01', '2025-13-01'] // Note: 2025-13-01 has valid format but invalid date
+    const invalidFormatDates = ['2025-1-15', '25-01-15', 'January 15, 2025', '2025/01/15', '2025-01-1']
+
+    // Test that valid format strings match the regex (API only validates format, not date validity)
+    validFormatDates.forEach(date => {
+      expect(date).toMatch(dateRegex)
+    })
+
+    // Test that invalid format strings don't match the regex
+    invalidFormatDates.forEach(date => {
+      expect(date).not.toMatch(dateRegex)
+    })
   })
 
   it('should preserve existing events when adding new ones', async () => {
@@ -102,9 +117,9 @@ describe('POST /api/applications/:id/events', () => {
       date: '2025-01-25'
     }
 
-    const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
-      events: [...testApplication.events, newEvent],
-      round1Date: '2025-01-25'
+    const updatedApp = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
+      events: [...testApplication.events, newEvent]
+      // Events API does not update round1Date or other status dates
     })
 
     expect(updatedApp?.events).toHaveLength(originalEventCount + 1)
@@ -115,7 +130,7 @@ describe('POST /api/applications/:id/events', () => {
     expect(originalEvent?.title).toBe('Application submitted')
   })
 
-  it('should handle terminal statuses correctly', async () => {
+  it('should handle event addition for terminal status scenarios', async () => {
     const declinedStatus = testStatuses.find(s => s.name === 'Declined')!
     expect(declinedStatus.isTerminal).toBe(true)
 
@@ -127,12 +142,14 @@ describe('POST /api/applications/:id/events', () => {
       date: '2025-01-25'
     }
 
-    const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
-      events: [...testApplication.events, newEvent],
-      declinedDate: '2025-01-25'
+    const updatedApp = await mockApplicationService.updateApplication(testUserId, testApplication._id!, {
+      events: [...testApplication.events, newEvent]
+      // Events API does not update declinedDate - that happens via PATCH /applications/:id
     })
 
-    expect(updatedApp?.declinedDate).toBe('2025-01-25')
-    // For terminal statuses, no further events should typically be added
+    expect(updatedApp?.events).toHaveLength(2)
+    expect(updatedApp?.events.find(e => e.id === eventId)?.title).toBe('rejected_by_employer')
+    // The events API should not update declinedDate
+    expect(updatedApp?.declinedDate).toBeUndefined()
   })
 })

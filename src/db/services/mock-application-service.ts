@@ -93,6 +93,41 @@ export const mockApplicationService = {
     return latestStatus
   },
 
+  async updateApplicationWithStatusCalculation(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
+    const searchId = typeof id === 'string' ? id : id.toString()
+    const applicationIndex = applications.findIndex(
+      app => app._id?.toString() === searchId && app.userId === userId
+    )
+
+    if (applicationIndex === -1) {
+      return null
+    }
+
+    // First get the current application to merge with updates
+    const currentApplication = applications[applicationIndex]
+    
+    // Merge current application with updates to get complete date fields
+    const mergedApplication = { ...currentApplication, ...updates }
+    
+    // Calculate the new current status
+    const newCurrentStatus = this.calculateCurrentStatus(mergedApplication)
+    
+    // Update the application with new status calculation
+    const updatedApplication = {
+      ...currentApplication,
+      ...updates,
+      currentStatus: newCurrentStatus,
+      updatedAt: new Date(),
+      // Preserve immutable fields
+      _id: currentApplication._id,
+      userId: currentApplication.userId,
+      createdAt: currentApplication.createdAt
+    }
+
+    applications[applicationIndex] = updatedApplication
+    return updatedApplication
+  },
+
   // Test utility
   clear(): void {
     applications = []
