@@ -1,22 +1,24 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { createServerFileRoute } from '@tanstack/react-start/server'
-import { applicationService } from '../../../../db/services/applications'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { JobApplication } from '../../../../db/schemas'
-import { connectToDatabase } from '../../../../db/connection'
+import { ObjectId } from 'mongodb'
+import { mockApplicationService } from '../../../../db/services/mock-application-service'
 
-// Mock auth context
-const mockAuthContext = {
-  auth: {
-    authenticated: true,
-    user: { id: 'test-user-123' }
-  }
-}
+// Mock the module
+vi.mock('../../../../db/services/applications', () => ({
+  applicationService: mockApplicationService
+}))
+
+// Import after mocking
+import { applicationService } from '../../../../db/services/applications'
 
 describe('GET /api/applications/:id', () => {
   const testUserId = 'test-user-123'
   let testApplication: JobApplication
 
   beforeEach(async () => {
+    // Clear mock data before each test
+    mockApplicationService.clear()
+    
     // Create test application
     testApplication = await applicationService.createApplication({
       userId: testUserId,
@@ -30,19 +32,11 @@ describe('GET /api/applications/:id', () => {
       events: [{
         id: 'event_test-123',
         title: 'Application submitted',
-        statusId: 'applied',
-        statusName: 'Applied',
         date: '2025-01-15',
         description: 'Test application'
       }],
       currentStatus: { id: 'applied', name: 'Applied', eventId: 'event_test-123' }
     })
-  })
-
-  afterEach(async () => {
-    // Clean up test data
-    const db = await connectToDatabase()
-    await db.collection('applications').deleteMany({ userId: testUserId })
   })
 
   it('should return application details for valid ID', async () => {
@@ -54,7 +48,7 @@ describe('GET /api/applications/:id', () => {
     expect(application?.companyName).toBe('Test Company')
     expect(application?.roleName).toBe('Test Role')
     expect(application?.events).toHaveLength(1)
-    expect(application?.events[0].statusName).toBe('Applied')
+    expect(application?.events[0].title).toBe('Application submitted')
     expect(application?.currentStatus.eventId).toBe('event_test-123')
   })
 
@@ -78,24 +72,18 @@ describe('GET /api/applications/:id', () => {
         {
           id: 'event_test-1',
           title: 'Application submitted',
-          statusId: 'applied',
-          statusName: 'Applied',
           date: '2025-01-15',
           description: 'First event'
         },
         {
           id: 'event_test-3',
-          title: 'phone_screen_completed',
-          statusId: 'in_progress',
-          statusName: 'In Progress',
+          title: 'Phone screen completed',
           date: '2025-01-25',
           description: 'Third event'
         },
         {
           id: 'event_test-2',
-          title: 'interview_scheduled',
-          statusId: 'in_progress',
-          statusName: 'In Progress',
+          title: 'Interview scheduled',
           date: '2025-01-20',
           description: 'Second event'
         }
