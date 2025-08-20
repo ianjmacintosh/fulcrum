@@ -15,20 +15,23 @@ describe('Applications Mock Data', () => {
       )
       
       const firstEvent = sortedEvents[0]
-      expect(firstEvent.statusName).toBe('Applied')
-      expect(firstEvent.statusId).toBe('applied')
+      expect(firstEvent.title).toBe('Applied')
     }
   })
 
-  it('should not contain cold_apply or warm_apply events', () => {
+  it('should have events with title and description fields', () => {
     const applications = applicationsData.data as JobApplication[]
     
     for (const app of applications) {
       for (const event of app.events) {
-        expect(event.statusId).not.toBe('cold_apply')
-        expect(event.statusId).not.toBe('warm_apply')
-        expect(event.statusName).not.toBe('Cold Apply')
-        expect(event.statusName).not.toBe('Warm Apply')
+        expect(event.title).toBeDefined()
+        expect(typeof event.title).toBe('string')
+        expect(event.title.length).toBeGreaterThan(0)
+        
+        // description is optional but if present should be a string
+        if (event.description) {
+          expect(typeof event.description).toBe('string')
+        }
       }
     }
   })
@@ -52,6 +55,28 @@ describe('Applications Mock Data', () => {
       
       for (const eventId of eventIds) {
         expect(eventId).toMatch(/^event_[a-f0-9-]{36}$/) // UUID format
+      }
+    }
+  })
+
+  it('should have status dates that match application timeline', () => {
+    const applications = applicationsData.data as JobApplication[]
+    
+    for (const app of applications) {
+      // Check that appliedDate is present for all applications that have applied
+      const hasAppliedEvent = app.events.some(e => e.title === 'Applied')
+      if (hasAppliedEvent) {
+        expect(app.appliedDate).toBeDefined()
+        expect(app.appliedDate).toMatch(/^\d{4}-\d{2}-\d{2}$/) // YYYY-MM-DD format
+      }
+      
+      // Check that status dates are in valid format if present
+      const statusDateFields = ['appliedDate', 'phoneScreenDate', 'round1Date', 'round2Date', 'acceptedDate', 'declinedDate']
+      for (const field of statusDateFields) {
+        const value = (app as any)[field]
+        if (value) {
+          expect(value).toMatch(/^\d{4}-\d{2}-\d{2}$/) // YYYY-MM-DD format
+        }
       }
     }
   })
