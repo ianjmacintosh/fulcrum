@@ -52,10 +52,12 @@ The application features:
 - **Application Status** represents current workflow position - where the application stands (e.g., "Not Started", "Applied", "In Progress", "Accepted", "Declined")
 
 **Implementation:**
-- Events are recorded with an `eventType` (required) and optional `statusId` for status transitions
-- Application statuses use a simple 5-state workflow: `Not Started → Applied → In Progress → Accepted/Declined`
-- EventRecordingForm has two dropdowns: "What happened?" (event type) and "Update status?" (optional workflow transition)
-- Event types are defined in `src/db/services/event-types.ts` as a simple flat list of available events
+- Events are recorded with a `title` (required) and optional `description` - completely independent of status tracking
+- Application statuses use a 6-state workflow: `Not Applied → Applied → Phone Screen → Round 1 → Round 2 → Accepted/Declined`
+- Status progression is tracked via date fields (`appliedDate`, `phoneScreenDate`, etc.) with date pickers in the UI
+- EventRecordingForm has simplified fields: title, description, and date (no status integration)
+- Current status is computed from the latest status date that has been set
+- Default workflow configurations are managed in `src/db/services/default-workflow.ts` as the single source of truth
 
 ### Routing Structure
 - File-based routing using TanStack Router

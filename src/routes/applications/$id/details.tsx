@@ -62,6 +62,31 @@ function ApplicationDetails() {
     window.location.reload()
   }
 
+  const handleStatusDateChange = async (dateField: string, value: string) => {
+    try {
+      const response = await fetch(`/api/applications/${application._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          [dateField]: value || null
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to update ${dateField}`)
+      }
+
+      // Refresh the page to show the updated status
+      window.location.reload()
+    } catch (error) {
+      console.error(`Error updating ${dateField}:`, error)
+      // Could add a toast notification here
+    }
+  }
+
   return (
     <div className="page">
       <header className="page-header">
@@ -102,6 +127,66 @@ function ApplicationDetails() {
           </div>
         </section>
 
+        <section className="status-progression">
+          <h2>Status Progression</h2>
+          <div className="status-dates">
+            <div className="status-date-group">
+              <label htmlFor="appliedDate">Applied Date:</label>
+              <input 
+                type="date" 
+                id="appliedDate" 
+                value={application.appliedDate || ''} 
+                onChange={(e) => handleStatusDateChange('appliedDate', e.target.value)}
+              />
+            </div>
+            <div className="status-date-group">
+              <label htmlFor="phoneScreenDate">Phone Screen Date:</label>
+              <input 
+                type="date" 
+                id="phoneScreenDate" 
+                value={application.phoneScreenDate || ''} 
+                onChange={(e) => handleStatusDateChange('phoneScreenDate', e.target.value)}
+              />
+            </div>
+            <div className="status-date-group">
+              <label htmlFor="round1Date">Round 1 Date:</label>
+              <input 
+                type="date" 
+                id="round1Date" 
+                value={application.round1Date || ''} 
+                onChange={(e) => handleStatusDateChange('round1Date', e.target.value)}
+              />
+            </div>
+            <div className="status-date-group">
+              <label htmlFor="round2Date">Round 2 Date:</label>
+              <input 
+                type="date" 
+                id="round2Date" 
+                value={application.round2Date || ''} 
+                onChange={(e) => handleStatusDateChange('round2Date', e.target.value)}
+              />
+            </div>
+            <div className="status-date-group">
+              <label htmlFor="acceptedDate">Accepted Date:</label>
+              <input 
+                type="date" 
+                id="acceptedDate" 
+                value={application.acceptedDate || ''} 
+                onChange={(e) => handleStatusDateChange('acceptedDate', e.target.value)}
+              />
+            </div>
+            <div className="status-date-group">
+              <label htmlFor="declinedDate">Declined Date:</label>
+              <input 
+                type="date" 
+                id="declinedDate" 
+                value={application.declinedDate || ''} 
+                onChange={(e) => handleStatusDateChange('declinedDate', e.target.value)}
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="events-timeline">
           <h2>Application Timeline</h2>
           <div className="timeline-table-container">
@@ -109,8 +194,8 @@ function ApplicationDetails() {
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Status</th>
-                  <th>Notes</th>
+                  <th>Event</th>
+                  <th>Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,11 +204,11 @@ function ApplicationDetails() {
                     <td className="event-date">
                       {formatDate(event.date)}
                     </td>
-                    <td className="event-status">
-                      {event.statusName}
+                    <td className="event-title">
+                      {event.title}
                     </td>
-                    <td className="event-notes">
-                      {event.notes || '-'}
+                    <td className="event-description">
+                      {event.description || '-'}
                     </td>
                   </tr>
                 ))}

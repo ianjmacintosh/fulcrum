@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { ApplicationStatus } from '../db/schemas'
-import { EventType } from '../db/services/event-types'
 import './EventRecordingForm.css'
 
 interface EventRecordingFormProps {
@@ -9,10 +8,9 @@ interface EventRecordingFormProps {
 }
 
 interface FormData {
-  eventType: string
-  statusId: string
+  title: string
+  description: string
   date: string
-  notes: string
 }
 
 interface FormState {
@@ -21,71 +19,22 @@ interface FormState {
 }
 
 export function EventRecordingForm({ applicationId, onEventCreated }: EventRecordingFormProps) {
-  const [statuses, setStatuses] = useState<ApplicationStatus[]>([])
-  const [eventTypes, setEventTypes] = useState<EventType[]>([])
   const [formData, setFormData] = useState<FormData>({
-    eventType: '', // Start empty - required field
-    statusId: '', // Start empty - optional field
-    date: new Date().toISOString().split('T')[0], // Default to today
-    notes: ''
+    title: '', // Start empty - required field
+    description: '', // Start empty - optional field
+    date: new Date().toISOString().split('T')[0] // Default to today
   })
   const [formState, setFormState] = useState<FormState>({
     loading: false,
     error: null
   })
 
-  // Load application statuses and event types on component mount
-  useEffect(() => {
-    loadStatuses()
-    loadEventTypes()
-  }, [])
-
-  const loadStatuses = async () => {
-    try {
-      const response = await fetch('/api/application-statuses', {
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to load statuses')
-      }
-
-      const result = await response.json()
-      if (result.success && result.statuses) {
-        setStatuses(result.statuses)
-      }
-    } catch (error) {
-      console.error('Error loading statuses:', error)
-      setFormState(prev => ({ ...prev, error: 'Failed to load available statuses' }))
-    }
-  }
-
-  const loadEventTypes = async () => {
-    try {
-      const response = await fetch('/api/event-types', {
-        credentials: 'include'
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to load event types')
-      }
-
-      const result = await response.json()
-      if (result.success && result.eventTypes) {
-        setEventTypes(result.eventTypes)
-      }
-    } catch (error) {
-      console.error('Error loading event types:', error)
-      setFormState(prev => ({ ...prev, error: 'Failed to load available event types' }))
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     // Client-side validation
-    if (!formData.eventType) {
-      setFormState(prev => ({ ...prev, error: 'Please select an event type' }))
+    if (!formData.title.trim()) {
+      setFormState(prev => ({ ...prev, error: 'Please enter an event title' }))
       return
     }
     
@@ -109,10 +58,9 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
         },
         credentials: 'include',
         body: JSON.stringify({
-          eventType: formData.eventType,
-          statusId: formData.statusId || undefined,
-          date: formData.date,
-          notes: formData.notes || undefined
+          title: formData.title,
+          description: formData.description || undefined,
+          date: formData.date
         })
       })
 
@@ -128,10 +76,9 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
 
       // Reset form after successful submission
       setFormData({
-        eventType: '',
-        statusId: '',
-        date: new Date().toISOString().split('T')[0],
-        notes: ''
+        title: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
       })
       
       setFormState({ loading: false, error: null })
@@ -160,24 +107,19 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
     <form onSubmit={handleSubmit} className="event-form">
       <div className="form-row">
         <div className="form-group">
-          <label htmlFor="eventType" className="form-label">
-            What happened? *
+          <label htmlFor="title" className="form-label">
+            Event Title *
           </label>
-          <select
-            id="eventType"
-            value={formData.eventType}
-            onChange={(e) => handleInputChange('eventType', e.target.value)}
-            className="form-select"
+          <input
+            type="text"
+            id="title"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            className="form-input"
+            placeholder="e.g., Phone screen scheduled, Interview completed, Offer received"
             disabled={formState.loading}
             required
-          >
-            <option value="">Select an event type...</option>
-            {eventTypes.map((eventType) => (
-              <option key={eventType.id} value={eventType.id}>
-                {eventType.name}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div className="form-group">
@@ -196,38 +138,16 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
         </div>
       </div>
 
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="statusId" className="form-label">
-            Update application status? (optional)
-          </label>
-          <select
-            id="statusId"
-            value={formData.statusId}
-            onChange={(e) => handleInputChange('statusId', e.target.value)}
-            className="form-select"
-            disabled={formState.loading}
-          >
-            <option value="">No status change</option>
-            {statuses.map((status) => (
-              <option key={status._id?.toString()} value={status._id?.toString()}>
-                {status.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       <div className="form-group">
-        <label htmlFor="notes" className="form-label">
-          Notes (optional)
+        <label htmlFor="description" className="form-label">
+          Description (optional)
         </label>
         <textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => handleInputChange('notes', e.target.value)}
+          id="description"
+          value={formData.description}
+          onChange={(e) => handleInputChange('description', e.target.value)}
           className="form-textarea"
-          placeholder="Add any relevant notes about this event..."
+          placeholder="Additional details about this event..."
           rows={3}
           disabled={formState.loading}
         />
@@ -243,7 +163,7 @@ export function EventRecordingForm({ applicationId, onEventCreated }: EventRecor
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={formState.loading || !formData.eventType || !formData.date}
+          disabled={formState.loading || !formData.title || !formData.date}
         >
           {formState.loading ? 'Adding Event...' : 'Add Event'}
         </button>

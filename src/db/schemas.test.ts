@@ -5,11 +5,9 @@ describe('ApplicationEvent Schema', () => {
   it('should require an id field', () => {
     const validEvent: ApplicationEvent = {
       id: 'event_123e4567-e89b-12d3-a456-426614174000',
-      eventType: 'application_submitted',
-      statusId: 'applied',
-      statusName: 'Applied',
-      date: '2025-01-15',
-      notes: 'Applied through LinkedIn'
+      title: 'Application submitted',
+      description: 'Applied through LinkedIn',
+      date: '2025-01-15'
     }
 
     const result = ApplicationEventSchema.safeParse(validEvent)
@@ -18,9 +16,8 @@ describe('ApplicationEvent Schema', () => {
 
   it('should reject ApplicationEvent without id field', () => {
     const invalidEvent = {
-      eventType: 'application_submitted',
-      statusId: 'applied',
-      statusName: 'Applied',
+      title: 'Application submitted',
+      description: 'Applied through LinkedIn',
       date: '2025-01-15'
     }
 
@@ -31,16 +28,14 @@ describe('ApplicationEvent Schema', () => {
     }
   })
 
-  it('should allow optional notes field', () => {
-    const eventWithoutNotes: ApplicationEvent = {
+  it('should allow optional description field', () => {
+    const eventWithoutDescription: ApplicationEvent = {
       id: 'event_123e4567-e89b-12d3-a456-426614174000',
-      eventType: 'application_submitted',
-      statusId: 'applied',
-      statusName: 'Applied',
+      title: 'Application submitted',
       date: '2025-01-15'
     }
 
-    const result = ApplicationEventSchema.safeParse(eventWithoutNotes)
+    const result = ApplicationEventSchema.safeParse(eventWithoutDescription)
     expect(result.success).toBe(true)
   })
 })
@@ -59,7 +54,7 @@ describe('JobApplication Schema with event IDs', () => {
       events: [
         {
           id: 'event_123e4567-e89b-12d3-a456-426614174000',
-          eventType: 'application_submitted',
+          eventType: 'Application submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15'

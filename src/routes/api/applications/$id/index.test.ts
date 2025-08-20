@@ -29,11 +29,11 @@ describe('GET /api/applications/:id', () => {
       locationType: 'remote',
       events: [{
         id: 'event_test-123',
-        eventType: 'application_submitted',
+        title: 'Application submitted',
         statusId: 'applied',
         statusName: 'Applied',
         date: '2025-01-15',
-        notes: 'Test application'
+        description: 'Test application'
       }],
       currentStatus: { id: 'applied', name: 'Applied', eventId: 'event_test-123' }
     })
@@ -77,27 +77,27 @@ describe('GET /api/applications/:id', () => {
       events: [
         {
           id: 'event_test-1',
-          eventType: 'application_submitted',
+          title: 'Application submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15',
-          notes: 'First event'
+          description: 'First event'
         },
         {
           id: 'event_test-3',
-          eventType: 'phone_screen_completed',
+          title: 'phone_screen_completed',
           statusId: 'in_progress',
           statusName: 'In Progress',
           date: '2025-01-25',
-          notes: 'Third event'
+          description: 'Third event'
         },
         {
           id: 'event_test-2',
-          eventType: 'interview_scheduled',
+          title: 'interview_scheduled',
           statusId: 'in_progress',
           statusName: 'In Progress',
           date: '2025-01-20',
-          notes: 'Second event'
+          description: 'Second event'
         }
       ],
       currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event_test-3' }
@@ -112,8 +112,8 @@ describe('GET /api/applications/:id', () => {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
     
-    expect(sortedEvents[0].notes).toBe('First event')
-    expect(sortedEvents[1].notes).toBe('Second event')
-    expect(sortedEvents[2].notes).toBe('Third event')
+    expect(sortedEvents[0].description).toBe('First event')
+    expect(sortedEvents[1].description).toBe('Second event')
+    expect(sortedEvents[2].description).toBe('Third event')
   })
 })

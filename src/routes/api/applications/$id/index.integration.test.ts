@@ -21,19 +21,19 @@ describe('Application Details API Integration', () => {
       events: [
         {
           id: 'event_integration-1',
-          eventType: 'application_submitted',
+          title: 'Application submitted',
           statusId: 'applied',
           statusName: 'Applied',
           date: '2025-01-15',
-          notes: 'Integration test application'
+          description: 'Integration test application'
         },
         {
           id: 'event_integration-2',
-          eventType: 'phone_screen_completed',
+          title: 'phone_screen_completed',
           statusId: 'in_progress',
           statusName: 'In Progress',
           date: '2025-01-25',
-          notes: 'Phone screen completed'
+          description: 'Phone screen completed'
         }
       ],
       currentStatus: { id: 'in_progress', name: 'In Progress', eventId: 'event_integration-2' }

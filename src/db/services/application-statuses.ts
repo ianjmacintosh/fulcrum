@@ -1,6 +1,7 @@
 import { Db, Collection, ObjectId } from 'mongodb'
 import { connectToDatabase } from '../connection'
 import { ApplicationStatus, ApplicationStatusSchema } from '../schemas'
+import { defaultWorkflowService } from './default-workflow'
 
 export class ApplicationStatusService {
   private db: Db | null = null
@@ -34,38 +35,14 @@ export class ApplicationStatusService {
   }
 
   async createDefaultStatuses(userId: string): Promise<ApplicationStatus[]> {
-    const defaultStatuses = [
-      {
-        userId,
-        name: 'Not Started',
-        description: 'Application not yet submitted',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Applied',
-        description: 'Application has been submitted',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'In Progress',
-        description: 'Application is being processed (interviews, assessments, etc.)',
-        isTerminal: false
-      },
-      {
-        userId,
-        name: 'Accepted',
-        description: 'Job offer accepted',
-        isTerminal: true
-      },
-      {
-        userId,
-        name: 'Declined',
-        description: 'Application was declined or withdrawn',
-        isTerminal: true
-      }
-    ]
+    const basicStatuses = defaultWorkflowService.getDefaultStatuses()
+    
+    const defaultStatuses = basicStatuses.map(statusDef => ({
+      userId,
+      name: statusDef.name,
+      description: statusDef.description,
+      isTerminal: statusDef.isTerminal
+    }))
 
     const createdStatuses: ApplicationStatus[] = []
     

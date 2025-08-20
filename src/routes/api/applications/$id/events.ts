@@ -2,16 +2,14 @@ import { createServerFileRoute } from '@tanstack/react-start/server'
 import { createSuccessResponse, createErrorResponse } from '../../../../utils/auth-helpers'
 import { requireUserAuth } from '../../../../middleware/auth'
 import { applicationService } from '../../../../db/services/applications'
-import { applicationStatusService } from '../../../../db/services/application-statuses'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 
 // Validation schema for event creation
 const CreateEventSchema = z.object({
-  eventType: z.string().min(1, 'Event type is required'),
-  statusId: z.string().optional(), // Optional status update
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-  notes: z.string().optional()
+  title: z.string().min(1, 'Event title is required'),
+  description: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
 })
 
 export const ServerRoute = createServerFileRoute('/api/applications/$id/events')
@@ -37,7 +35,7 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/events')
           return createErrorResponse(`Validation error: ${validationResult.error.message}`, 400)
         }
 
-        const { eventType, statusId, date, notes } = validationResult.data
+        const { title, description, date } = validationResult.data
 
         // Get the application
         const application = await applicationService.getApplicationById(auth.user.id, id)
@@ -45,40 +43,22 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/events')
           return createErrorResponse('Application not found', 404)
         }
 
-        // If statusId is provided, validate it exists for this user
-        let status = null
-        if (statusId) {
-          status = await applicationStatusService.getStatusById(auth.user.id, statusId)
-          if (!status) {
-            return createErrorResponse('Invalid status ID', 400)
-          }
-        }
-
         // Generate unique ID for the new event
         const eventId = `event_${randomUUID()}`
 
-        // Create the new event
+        // Create the new event (simplified structure)
         const newEvent = {
           id: eventId,
-          eventType: eventType,
-          statusId: statusId || undefined,
-          statusName: status?.name || undefined,
-          date: date,
-          notes: notes
+          title: title,
+          description: description || undefined,
+          date: date
         }
 
         // Add the event to existing events
         const updatedEvents = [...application.events, newEvent]
         
-        // Only update current status if statusId was provided
-        const updateData: any = { events: updatedEvents }
-        if (statusId && status) {
-          updateData.currentStatus = {
-            id: statusId,
-            name: status.name,
-            eventId: eventId
-          }
-        }
+        // Update the application with new event (no status change logic here)
+        const updateData = { events: updatedEvents }
 
         // Update the application atomically
         const updatedApplication = await applicationService.updateApplication(auth.user.id, id, updateData)

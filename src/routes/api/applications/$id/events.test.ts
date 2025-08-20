@@ -29,11 +29,9 @@ describe('POST /api/applications/:id/events', () => {
       locationType: 'remote',
       events: [{
         id: 'event_test-initial',
-        eventType: 'application_submitted',
-        statusId: appliedStatus._id!.toString(),
-        statusName: 'Applied',
-        date: '2025-01-15',
-        notes: 'Initial application'
+        title: 'Application submitted',
+        description: 'Initial application',
+        date: '2025-01-15'
       }],
       currentStatus: { id: appliedStatus._id!.toString(), name: 'Applied', eventId: 'event_test-initial' }
     })
@@ -47,43 +45,33 @@ describe('POST /api/applications/:id/events', () => {
   })
 
   it('should add new event and update currentStatus', async () => {
-    const inProgressStatus = testStatuses.find(s => s.name === 'In Progress')!
     const eventData = {
-      eventType: 'phone_screen_scheduled',
-      statusId: inProgressStatus._id!.toString(),
-      date: '2025-01-20',
-      notes: 'Phone screen scheduled for next week'
+      title: 'Phone screen scheduled',
+      description: 'Phone screen scheduled for next week',
+      date: '2025-01-20'
     }
 
     // This simulates the API endpoint logic
     const eventId = `event_${randomUUID()}`
     const newEvent = {
       id: eventId,
-      eventType: eventData.eventType,
-      statusId: inProgressStatus._id!.toString(),
-      statusName: inProgressStatus.name,
-      date: eventData.date,
-      notes: eventData.notes
+      title: eventData.title,
+      description: eventData.description,
+      date: eventData.date
     }
 
     const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, newEvent],
-      currentStatus: {
-        id: inProgressStatus._id!.toString(),
-        name: inProgressStatus.name,
-        eventId: eventId
-      }
+      phoneScreenDate: eventData.date
     })
 
     expect(updatedApp).toBeTruthy()
     expect(updatedApp?.events).toHaveLength(2)
-    expect(updatedApp?.currentStatus.name).toBe('In Progress')
-    expect(updatedApp?.currentStatus.eventId).toBe(eventId)
+    expect(updatedApp?.phoneScreenDate).toBe('2025-01-20')
     
     const lastEvent = updatedApp?.events.find(e => e.id === eventId)
-    expect(lastEvent?.eventType).toBe('phone_screen_scheduled')
-    expect(lastEvent?.statusName).toBe('In Progress')
-    expect(lastEvent?.notes).toBe('Phone screen scheduled for next week')
+    expect(lastEvent?.title).toBe('Phone screen scheduled')
+    expect(lastEvent?.description).toBe('Phone screen scheduled for next week')
   })
 
   it('should validate event data against ApplicationStatus collection', async () => {
@@ -104,27 +92,19 @@ describe('POST /api/applications/:id/events', () => {
   })
 
   it('should preserve existing events when adding new ones', async () => {
-    const inProgressStatus = testStatuses.find(s => s.name === 'In Progress')!
-    
     const originalEventCount = testApplication.events.length
     
     const eventId = `event_${randomUUID()}`
     const newEvent = {
       id: eventId,
-      eventType: 'interview_scheduled',
-      statusId: inProgressStatus._id!.toString(),
-      statusName: inProgressStatus.name,
-      date: '2025-01-25',
-      notes: 'Technical interview scheduled'
+      title: 'interview_scheduled',
+      description: 'Technical interview scheduled',
+      date: '2025-01-25'
     }
 
     const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, newEvent],
-      currentStatus: {
-        id: inProgressStatus._id!.toString(),
-        name: inProgressStatus.name,
-        eventId: eventId
-      }
+      round1Date: '2025-01-25'
     })
 
     expect(updatedApp?.events).toHaveLength(originalEventCount + 1)
@@ -132,7 +112,7 @@ describe('POST /api/applications/:id/events', () => {
     // Original event should still exist
     const originalEvent = updatedApp?.events.find(e => e.id === 'event_test-initial')
     expect(originalEvent).toBeTruthy()
-    expect(originalEvent?.statusName).toBe('Applied')
+    expect(originalEvent?.title).toBe('Application submitted')
   })
 
   it('should handle terminal statuses correctly', async () => {
@@ -142,23 +122,17 @@ describe('POST /api/applications/:id/events', () => {
     const eventId = `event_${randomUUID()}`
     const newEvent = {
       id: eventId,
-      eventType: 'rejected_by_employer',
-      statusId: declinedStatus._id!.toString(),
-      statusName: declinedStatus.name,
-      date: '2025-01-25',
-      notes: 'Position was filled internally'
+      title: 'rejected_by_employer',
+      description: 'Position was filled internally',
+      date: '2025-01-25'
     }
 
     const updatedApp = await applicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...testApplication.events, newEvent],
-      currentStatus: {
-        id: declinedStatus._id!.toString(),
-        name: declinedStatus.name,
-        eventId: eventId
-      }
+      declinedDate: '2025-01-25'
     })
 
-    expect(updatedApp?.currentStatus.name).toBe('Declined')
+    expect(updatedApp?.declinedDate).toBe('2025-01-25')
     // For terminal statuses, no further events should typically be added
   })
 })

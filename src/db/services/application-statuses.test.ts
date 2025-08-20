@@ -21,13 +21,15 @@ describe('ApplicationStatusService', () => {
     it('should create generic workflow statuses', async () => {
       const statuses = await service.createDefaultStatuses(testUserId)
       
-      expect(statuses).toHaveLength(5)
+      expect(statuses).toHaveLength(7)
       
       // Check for workflow statuses
       const statusNames = statuses.map(s => s.name)
-      expect(statusNames).toContain('Not Started')
+      expect(statusNames).toContain('Not Applied')
       expect(statusNames).toContain('Applied')
-      expect(statusNames).toContain('In Progress')
+      expect(statusNames).toContain('Phone Screen')
+      expect(statusNames).toContain('Round 1')
+      expect(statusNames).toContain('Round 2')
       expect(statusNames).toContain('Accepted')
       expect(statusNames).toContain('Declined')
 
@@ -39,13 +41,17 @@ describe('ApplicationStatusService', () => {
       expect(declined?.isTerminal).toBe(true)
 
       // Verify non-terminal statuses
-      const notStarted = statuses.find(s => s.name === 'Not Started')
+      const notApplied = statuses.find(s => s.name === 'Not Applied')
       const applied = statuses.find(s => s.name === 'Applied')
-      const inProgress = statuses.find(s => s.name === 'In Progress')
+      const phoneScreen = statuses.find(s => s.name === 'Phone Screen')
+      const round1 = statuses.find(s => s.name === 'Round 1')
+      const round2 = statuses.find(s => s.name === 'Round 2')
       
-      expect(notStarted?.isTerminal).toBe(false)
+      expect(notApplied?.isTerminal).toBe(false)
       expect(applied?.isTerminal).toBe(false)
-      expect(inProgress?.isTerminal).toBe(false)
+      expect(phoneScreen?.isTerminal).toBe(false)
+      expect(round1?.isTerminal).toBe(false)
+      expect(round2?.isTerminal).toBe(false)
     })
 
     it('should not create cold_apply or warm_apply statuses', async () => {
@@ -78,7 +84,7 @@ describe('ApplicationStatusService', () => {
       
       const allStatuses = await service.getAllStatuses(testUserId)
       
-      expect(allStatuses).toHaveLength(5)
+      expect(allStatuses).toHaveLength(7)
       expect(allStatuses.every(s => s.userId === testUserId)).toBe(true)
     })
   })

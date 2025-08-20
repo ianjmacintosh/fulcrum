@@ -28,11 +28,9 @@ describe('Event Recording API Integration', () => {
       locationType: 'remote',
       events: [{
         id: 'event_integration-initial',
-        eventType: 'application_submitted',
-        statusId: appliedStatus._id!.toString(),
-        statusName: 'Applied',
-        date: '2025-01-15',
-        notes: 'Integration test application'
+        title: 'Application submitted',
+        description: 'Integration test application',
+        date: '2025-01-15'
       }],
       currentStatus: { id: appliedStatus._id!.toString(), name: 'Applied', eventId: 'event_integration-initial' }
     })
@@ -46,20 +44,12 @@ describe('Event Recording API Integration', () => {
   })
 
   it('should successfully add events through the service layer', async () => {
-    const inProgressStatus = testStatuses.find(s => s.name === 'In Progress')!
-    
     // This simulates what the API endpoint would do
     const eventData = {
-      eventType: 'phone_screen_scheduled',
-      statusId: inProgressStatus._id!.toString(),
-      date: '2025-01-20',
-      notes: 'Phone screen scheduled'
+      title: 'Phone screen scheduled',
+      description: 'Phone screen scheduled',
+      date: '2025-01-20'
     }
-
-    // Validate status exists (API validation step)
-    const status = await applicationStatusService.getStatusById(testUserId, eventData.statusId)
-    expect(status).toBeTruthy()
-    expect(status?.name).toBe('In Progress')
 
     // Get application (API step)
     const application = await applicationService.getApplicationById(testUserId, testApplication._id!.toString())
@@ -69,26 +59,19 @@ describe('Event Recording API Integration', () => {
     const eventId = `event_integration_${Date.now()}`
     const newEvent = {
       id: eventId,
-      eventType: eventData.eventType,
-      statusId: status!._id!.toString(),
-      statusName: status!.name,
-      date: eventData.date,
-      notes: eventData.notes
+      title: eventData.title,
+      description: eventData.description,
+      date: eventData.date
     }
 
     const updatedApplication = await applicationService.updateApplication(testUserId, testApplication._id!, {
       events: [...application!.events, newEvent],
-      currentStatus: {
-        id: status!._id!.toString(),
-        name: status!.name,
-        eventId: eventId
-      }
+      phoneScreenDate: eventData.date
     })
 
     expect(updatedApplication).toBeTruthy()
     expect(updatedApplication?.events).toHaveLength(2)
-    expect(updatedApplication?.currentStatus.name).toBe('In Progress')
-    expect(updatedApplication?.currentStatus.eventId).toBe(eventId)
+    expect(updatedApplication?.phoneScreenDate).toBe('2025-01-20')
   })
 
   it('should handle invalid status IDs gracefully', async () => {
@@ -116,26 +99,17 @@ describe('Event Recording API Integration', () => {
   })
 
   it('should maintain event chronological order', async () => {
-    const inProgressStatus = testStatuses.find(s => s.name === 'In Progress')!
-    
     // Add an event with earlier date
     const eventId1 = `event_integration_early_${Date.now()}`
     const earlyEvent = {
       id: eventId1,
-      eventType: 'interview_scheduled',
-      statusId: inProgressStatus._id!.toString(),
-      statusName: inProgressStatus.name,
-      date: '2025-01-10', // Earlier than initial event
-      notes: 'Interview scheduled early'
+      title: 'interview_scheduled',
+      description: 'Interview scheduled early',
+      date: '2025-01-10' // Earlier than initial event
     }
 
     const updatedApp1 = await applicationService.updateApplication(testUserId, testApplication._id!, {
-      events: [...testApplication.events, earlyEvent],
-      currentStatus: {
-        id: inProgressStatus._id!.toString(),
-        name: inProgressStatus.name,
-        eventId: eventId1
-      }
+      events: [...testApplication.events, earlyEvent]
     })
 
     // Events should be sortable chronologically

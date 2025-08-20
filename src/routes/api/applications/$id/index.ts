@@ -42,5 +42,42 @@ export const ServerRoute = createServerFileRoute('/api/applications/$id/')
         console.error('Applications API: Error fetching application:', error)
         return createErrorResponse('Failed to load application')
       }
+    },
+    PATCH: async ({ context, params, request }) => {
+      const { auth } = context
+      const { id } = params
+      
+      if (!auth.authenticated || !auth.user) {
+        return createErrorResponse('Unauthorized', 401)
+      }
+      
+      if (!id) {
+        return createErrorResponse('Application ID is required', 400)
+      }
+      
+      try {
+        const body = await request.json()
+        console.log(`Applications API: Updating application ${id} for userId:`, auth.user.id, 'with:', body)
+        
+        // Validate that we're only updating status date fields
+        const allowedFields = ['appliedDate', 'phoneScreenDate', 'round1Date', 'round2Date', 'acceptedDate', 'declinedDate']
+        const updateFields = Object.keys(body)
+        
+        if (!updateFields.every(field => allowedFields.includes(field))) {
+          return createErrorResponse('Invalid update fields. Only status dates can be updated via this endpoint.', 400)
+        }
+
+        const updatedApplication = await applicationService.updateApplication(auth.user.id, id, body)
+        
+        if (!updatedApplication) {
+          return createErrorResponse('Application not found', 404)
+        }
+
+        return createSuccessResponse({ application: updatedApplication })
+        
+      } catch (error: any) {
+        console.error('Applications API: Error updating application:', error)
+        return createErrorResponse('Failed to update application')
+      }
     }
   })
