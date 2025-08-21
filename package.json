@@ -10,7 +10,6 @@
     "start": "node .output/server/index.mjs",
     "db:seed": "tsx src/db/seed.ts",
     "db:migrate": "tsx src/db/migrations/migration-runner.ts",
-    "db:fix-statuses": "tsx src/db/fix-current-statuses.ts",
     "db:backup": "node scripts/backup-db.js",
     "db:restore": "node scripts/restore-db.js",
     "db:test": "tsx test-connection.js",
