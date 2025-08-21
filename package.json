@@ -9,7 +9,6 @@
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "db:seed": "tsx src/db/seed.ts",
-    "db:reseed": "tsx src/db/reseed.ts",
     "db:migrate": "tsx src/db/migrations/migration-runner.ts",
     "db:fix-statuses": "tsx src/db/fix-current-statuses.ts",
     "db:backup": "node scripts/backup-db.js",
