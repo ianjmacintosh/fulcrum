@@ -20,7 +20,7 @@ test.describe.serial('Application Details Page', () => {
     // Get the application card details before navigation
     const companyName = await applicationCards.first().locator('.company-name').textContent();
     const roleName = await applicationCards.first().locator('.role-name').textContent();
-    const href = await applicationCards.first().getAttribute('href');
+    await applicationCards.first().getAttribute('href');
 
     // Click on the first application card
     await applicationCards.first().click();
@@ -28,12 +28,7 @@ test.describe.serial('Application Details Page', () => {
     // Fast navigation check - should complete within 3 seconds
     await page.waitForURL(/\/applications\/[a-f0-9]{24}\/details/, { timeout: 3000 });
 
-    // Debug current state
-    const currentUrl = page.url();
-    const pageTitle = await page.title();
-    const h1Content = await page.locator('h1').textContent();
-    const notFoundVisible = await page.locator('text=Application not found').isVisible();
-    const detailsVisible = await page.locator('text=Application Details').isVisible();
+    // Debug current state (variables removed to fix diagnostics)
 
     // Verify the details page loads correctly within 2 seconds
     await expect(page.getByRole('heading', { name: 'Application Details' })).toBeVisible({ timeout: 2000 });
