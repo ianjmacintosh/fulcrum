@@ -1,27 +1,31 @@
 #!/usr/bin/env node
 
 /**
- * Database backup script for production deployments
- * Uses MONGO_URL_PROD environment variable for production connection
+ * Database backup script for all environments
+ * Uses MONGO_URL environment variable for database connection
  */
 
-import { execSync } from 'child_process';
+import { MongoClient } from 'mongodb';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function createBackup() {
+async function createBackup() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   const backupDir = `backup_${timestamp}`;
   const fullBackupPath = path.join(__dirname, '..', 'backups', backupDir);
 
-  // Check if production URL is set
-  const mongoUrl = process.env.MONGO_URL_PROD;
+  // Check if database URL is set
+  const mongoUrl = process.env.MONGO_URL;
   if (!mongoUrl) {
-    console.error('❌ MONGO_URL_PROD environment variable not set');
-    console.log('   Please set MONGO_URL_PROD to your production database connection string');
+    console.error('❌ MONGO_URL environment variable not set');
+    console.log('   Please set MONGO_URL to your database connection string');
     process.exit(1);
   }
 
@@ -33,33 +37,63 @@ function createBackup() {
 
   console.log(`🔄 Creating database backup...`);
   console.log(`   Backup location: ${fullBackupPath}`);
+  
+  fs.mkdirSync(fullBackupPath, { recursive: true });
 
+  let client;
   try {
-    // Run mongodump
-    execSync(`mongodump --uri "${mongoUrl}" --out "${fullBackupPath}"`, {
-      stdio: 'inherit'
-    });
+    // Connect to MongoDB
+    client = new MongoClient(mongoUrl);
+    await client.connect();
+    
+    const db = client.db('fulcrum');
+    
+    // Get all collections
+    const collections = await db.listCollections().toArray();
+    console.log(`   Found ${collections.length} collections`);
+
+    // Backup each collection
+    for (const collection of collections) {
+      const collectionName = collection.name;
+      console.log(`   📁 Backing up collection: ${collectionName}`);
+      
+      const coll = db.collection(collectionName);
+      const documents = await coll.find({}).toArray();
+      
+      const backupFile = path.join(fullBackupPath, `${collectionName}.json`);
+      fs.writeFileSync(backupFile, JSON.stringify(documents, null, 2));
+      
+      console.log(`      ✅ ${documents.length} documents saved`);
+    }
+
+    // Create metadata file
+    const metadata = {
+      timestamp: new Date().toISOString(),
+      database: 'fulcrum',
+      collections: collections.map(c => c.name),
+      totalCollections: collections.length,
+      mongoUrl: mongoUrl.replace(/:([^:@]+)@/, ':***@') // Hide password
+    };
+    
+    fs.writeFileSync(
+      path.join(fullBackupPath, 'backup-metadata.json'), 
+      JSON.stringify(metadata, null, 2)
+    );
 
     console.log(`✅ Backup completed successfully!`);
     console.log(`   Backup stored at: ${fullBackupPath}`);
     console.log(`\n📋 To restore from this backup:`);
-    console.log(`   mongorestore --uri "YOUR_MONGO_URL" --drop "${fullBackupPath}"`);
+    console.log(`   Use MongoDB Compass or manually import each JSON file`);
 
     return fullBackupPath;
   } catch (error) {
     console.error(`❌ Backup failed: ${error.message}`);
     process.exit(1);
+  } finally {
+    if (client) {
+      await client.close();
+    }
   }
-}
-
-// Check if mongodump is available
-try {
-  execSync('mongodump --version', { stdio: 'ignore' });
-} catch (error) {
-  console.error('❌ mongodump not found. Please install MongoDB tools:');
-  console.log('   brew install mongodb/brew/mongodb-database-tools');
-  console.log('   or visit: https://www.mongodb.com/try/download/database-tools');
-  process.exit(1);
 }
 
 createBackup();

@@ -51,6 +51,20 @@ Typical user settings (like change email address, password, time zone, etc), and
 
 ## Setup Instructions
 
+### Database Tools
+
+If you'd like to make a database backup, you'll need MongoDB Database Tools.
+
+As of **21 Aug 2025**, I could install on a dev container by running:
+
+```
+wget https://fastdl.mongodb.org/tools/db/mongodb-database-tools-debian12-x86_64-100.13.0.deb
+sudo apt install ./mongodb-database-tools-debian12-x86_64-100.13.0.deb
+```
+
+
+Up-to-date instructions may be found here: https://www.mongodb.com/docs/database-tools/installation/installation-linux/
+
 ### Development
 
 To run the app in dev mode:

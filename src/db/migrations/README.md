@@ -152,13 +152,106 @@ The migration system includes comprehensive validation:
 2. **Manual fixes**: Use MongoDB shell to correct specific data issues
 3. **Forward migration**: Create additional migrations to fix issues
 
-### Support
+## Database Backup and Restore
 
-For migration issues:
-1. Check the migration logs for detailed error messages
-2. Use `npm run db:migrate validate` to identify data issues
-3. Review the migration source code for specific transformation logic
-4. Create additional migrations for edge cases not covered
+The application includes native JavaScript backup/restore scripts that work without external MongoDB tools.
+
+### Backup Script (`scripts/backup-db.js`)
+
+**Usage:**
+```bash
+npm run db:backup
+```
+
+**Environment Variables:**
+- `MONGO_URL`: Connection string for the database to backup
+
+**How it works:**
+1. Connects to MongoDB using the `MONGO_URL` environment variable
+2. Discovers all collections in the 'fulcrum' database
+3. Exports each collection to a separate JSON file (e.g., `applications.json`, `users.json`)
+4. Creates a `backup-metadata.json` file with backup information
+5. Stores backup in `backups/backup_TIMESTAMP/` directory
+
+**Output Structure:**
+```
+backups/backup_2025-08-21T17-36-31/
+├── applications.json
+├── users.json
+├── application_statuses.json
+├── workflows.json
+├── job_boards.json
+├── admin_users.json
+└── backup-metadata.json
+```
+
+### Restore Script (`scripts/restore-db.js`)
+
+**Usage:**
+```bash
+npm run db:restore <backup-directory-path>
+```
+
+**Example:**
+```bash
+npm run db:restore backups/backup_2025-08-21T17-36-31
+```
+
+**Environment Variables:**
+- `MONGO_URL`: Connection string for the target database to restore to
+
+**How it works:**
+1. Validates backup directory and reads metadata
+2. Connects to target database using `MONGO_URL`
+3. For each collection in the backup:
+   - **Drops the existing collection completely**
+   - Creates new collection with data from backup JSON file
+4. Restores all documents exactly as they were at backup time
+
+**⚠️ Important Notes:**
+- **Destructive operation**: Completely replaces existing data
+- **All-or-nothing**: If it fails partway, some collections will be restored and others won't
+- **Uses MONGO_URL**: Make sure this points to the correct database (staging, not production!)
+- **Complete replacement**: Any changes since backup will be lost
+
+### Backup Strategy for Deployments
+
+**Before staging deployment:**
+```bash
+# Set MONGO_URL to staging connection string
+export MONGO_URL="mongodb://staging-connection-string"
+npm run db:backup
+```
+
+**Before production deployment:**
+```bash
+# Set MONGO_URL to production connection string  
+export MONGO_URL="mongodb://production-connection-string"
+npm run db:backup
+```
+
+**Emergency rollback:**
+```bash
+# Set MONGO_URL to target database
+export MONGO_URL="mongodb://target-connection-string"
+npm run db:restore backups/backup_TIMESTAMP
+```
+
+### Cross-Environment Operations
+
+To backup from one environment and restore to another:
+
+```bash
+# 1. Backup from production
+export MONGO_URL="mongodb://production-connection-string"
+npm run db:backup
+
+# 2. Restore to staging (using same backup)
+export MONGO_URL="mongodb://staging-connection-string" 
+npm run db:restore backups/backup_TIMESTAMP
+```
+
+### Support
 
 ## Adding New Migrations
 
