@@ -37,22 +37,25 @@ export const migrateEventsSchema: Migration = {
         let hasOldFormat = false
         const migratedEvents = app.events.map((event: any) => {
           // Check if this event is in the old format
-          if (event.eventType || event.statusId || event.statusName || event.notes) {
+          if (event.eventType || event.statusId || event.statusName || event.notes !== undefined) {
             hasOldFormat = true
             
+            // Generate a proper event id if missing
+            const eventId = event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+            
             return {
-              id: event.id,
-              title: event.eventType || event.statusName || 'Event',
-              description: event.notes || event.description,
+              id: eventId,
+              title: event.eventType || event.statusName || event.title || 'Event',
+              description: event.notes || event.description || '',
               date: event.date
             }
           }
           
           // Already in new format or partially migrated
           return {
-            id: event.id,
+            id: event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
             title: event.title || event.eventType || 'Event',
-            description: event.description || event.notes,
+            description: event.description || event.notes || '',
             date: event.date
           }
         })

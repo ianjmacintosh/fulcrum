@@ -47,20 +47,24 @@ export class MigrationRunner {
     })
   }
 
-  async runMigrations(dryRun: boolean = false): Promise<void> {
+  async runMigrations(dryRun: boolean = false, force: boolean = false): Promise<void> {
     if (!this.db) {
       await this.connect()
     }
 
-    console.log(`\n🚀 Running migrations ${dryRun ? '(DRY RUN)' : ''}...`)
+    console.log(`\n🚀 Running migrations ${dryRun ? '(DRY RUN)' : ''}${force ? ' (FORCED)' : ''}...`)
     console.log('=' .repeat(50))
 
     for (const migration of this.migrations) {
       const hasRun = await this.hasRun(migration.id)
       
-      if (hasRun && !dryRun) {
+      if (hasRun && !dryRun && !force) {
         console.log(`✅ ${migration.id}: ${migration.name} (already run)`)
         continue
+      }
+
+      if (hasRun && force) {
+        console.log(`⚠️  ${migration.id}: ${migration.name} (forcing re-run)`)
       }
 
       console.log(`\n🔄 Running: ${migration.id} - ${migration.name}`)
@@ -144,8 +148,50 @@ export class MigrationRunner {
     
     console.log(`📊 Found ${appCount} applications and ${statusCount} statuses`)
     
-    // Sample validation
-    const sampleApp = await applications.findOne()
+    // Comprehensive validation of all applications
+    const allApps = await applications.find({}).toArray()
+    let validationErrors: string[] = []
+    
+    console.log('🔍 Comprehensive application structure validation:')
+    
+    // Track event format issues
+    let appsWithOldEventFormat = 0
+    let appsWithNewEventFormat = 0
+    let appsWithMixedEventFormat = 0
+    
+    for (const app of allApps) {
+      if (app.events && Array.isArray(app.events) && app.events.length > 0) {
+        let hasOldFormat = false
+        let hasNewFormat = false
+        
+        for (const event of app.events) {
+          // Check for old format indicators
+          if (event.statusId || event.statusName || event.notes || event.eventType) {
+            hasOldFormat = true
+          }
+          // Check for new format indicators  
+          if (event.title && !event.statusId) {
+            hasNewFormat = true
+          }
+        }
+        
+        if (hasOldFormat && hasNewFormat) {
+          appsWithMixedEventFormat++
+          validationErrors.push(`Application ${app._id}: Has mixed event formats`)
+        } else if (hasOldFormat) {
+          appsWithOldEventFormat++
+        } else if (hasNewFormat) {
+          appsWithNewEventFormat++
+        }
+      }
+    }
+    
+    console.log(`   - Applications with old event format: ${appsWithOldEventFormat}`)
+    console.log(`   - Applications with new event format: ${appsWithNewEventFormat}`)
+    console.log(`   - Applications with mixed event formats: ${appsWithMixedEventFormat}`)
+    
+    // Sample validation (for backward compatibility)
+    const sampleApp = allApps[0]
     if (sampleApp) {
       console.log('🔍 Sample application structure validation:')
       console.log(`   - Has events: ${Array.isArray(sampleApp.events)}`)
@@ -155,7 +201,9 @@ export class MigrationRunner {
         const firstEvent = sampleApp.events[0]
         console.log(`   - Event has title: ${!!firstEvent.title}`)
         console.log(`   - Event has date: ${!!firstEvent.date}`)
-        console.log(`   - Event missing statusId: ${!firstEvent.statusId}`)
+        console.log(`   - Event has statusId (old format): ${!!firstEvent.statusId}`)
+        console.log(`   - Event has statusName (old format): ${!!firstEvent.statusName}`)
+        console.log(`   - Event has notes (old format): ${!!firstEvent.notes}`)
       }
       
       // Check status dates
@@ -164,7 +212,25 @@ export class MigrationRunner {
       console.log(`   - Status dates present: ${presentDates.join(', ') || 'none'}`)
     }
     
-    console.log('✅ Data validation completed')
+    // Report validation errors
+    if (validationErrors.length > 0) {
+      console.log('\n⚠️  Validation errors detected:')
+      validationErrors.forEach(error => console.log(`     - ${error}`))
+    }
+    
+    // Critical validation failures
+    if (appsWithOldEventFormat > 0) {
+      console.log('\n❌ CRITICAL: Found applications with old event format!')
+      console.log('   This means migration 001 did not complete successfully.')
+      console.log('   Events should have {id, title, description, date} format.')
+      console.log('   Found events with {statusId, statusName, notes, date} format.')
+    }
+    
+    if (validationErrors.length === 0 && appsWithOldEventFormat === 0) {
+      console.log('✅ Data validation completed - All checks passed')
+    } else {
+      console.log('⚠️  Data validation completed with issues')
+    }
   }
 }
 
@@ -193,12 +259,18 @@ if (isMainModule) {
       switch (command) {
         case 'run':
           await createBackup('pre_migration')
-          await runner.runMigrations(false)
+          await runner.runMigrations(false, false)
+          await runner.validateData()
+          break
+          
+        case 'force':
+          await createBackup('pre_migration_force')
+          await runner.runMigrations(false, true)
           await runner.validateData()
           break
           
         case 'dry-run':
-          await runner.runMigrations(true)
+          await runner.runMigrations(true, false)
           break
           
         case 'rollback':
@@ -218,6 +290,7 @@ if (isMainModule) {
         default:
           console.log('Usage:')
           console.log('  npm run db:migrate run        - Run all pending migrations')
+          console.log('  npm run db:migrate force      - Force re-run all migrations')
           console.log('  npm run db:migrate dry-run    - Test migrations without changes')
           console.log('  npm run db:migrate rollback <id> - Rollback specific migration')
           console.log('  npm run db:migrate validate   - Validate current data')
