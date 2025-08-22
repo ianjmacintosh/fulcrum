@@ -62,6 +62,9 @@ test('Add New Application button navigates to the correct page', async ({ page }
   // Navigate to applications page
   await page.goto('/applications');
 
+  // Wait for authentication state to be fully loaded after navigation
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+
   // Wait for the page to be fully loaded before clicking the button
   await expect(page.getByRole('heading', { name: 'Applications' })).toBeVisible();
   
