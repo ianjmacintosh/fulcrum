@@ -95,6 +95,9 @@ test.describe('Navigation and Session Persistence', () => {
       // Try to access admin route
       await page.goto('/admin/users');
       
+      // Wait for authentication state to be fully loaded after navigation
+      await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
+      
       // Should be redirected or see unauthorized message
       // The exact behavior depends on your auth implementation
       // This might redirect to login, show 403, or redirect to user dashboard

@@ -3,10 +3,10 @@ import { ObjectId } from 'mongodb'
 
 // Zod schemas for validation
 export const ApplicationEventSchema = z.object({
-  statusId: z.string(),
-  statusName: z.string(),
-  date: z.string(), // ISO date string
-  notes: z.string().optional()
+  id: z.string(),
+  title: z.string(), // What happened (e.g., "Phone screen scheduled", "Interview completed")
+  description: z.string().optional(), // Additional details about the event
+  date: z.string() // ISO date string
 })
 
 export const JobBoardRefSchema = z.object({
@@ -21,7 +21,8 @@ export const WorkflowRefSchema = z.object({
 
 export const CurrentStatusSchema = z.object({
   id: z.string(),
-  name: z.string()
+  name: z.string(),
+  eventId: z.string().optional()
 })
 
 export const JobApplicationSchema = z.object({
@@ -35,6 +36,13 @@ export const JobApplicationSchema = z.object({
   roleType: z.enum(['manager', 'engineer']),
   locationType: z.enum(['on-site', 'hybrid', 'remote']),
   events: z.array(ApplicationEventSchema),
+  // Status dates - when each status was reached (no date for "Not Applied" status)
+  appliedDate: z.string().optional(), // ISO date string
+  phoneScreenDate: z.string().optional(), // ISO date string
+  round1Date: z.string().optional(), // ISO date string
+  round2Date: z.string().optional(), // ISO date string
+  acceptedDate: z.string().optional(), // ISO date string
+  declinedDate: z.string().optional(), // ISO date string
   currentStatus: CurrentStatusSchema,
   createdAt: z.date(),
   updatedAt: z.date()
@@ -88,10 +96,10 @@ export const AdminUserSchema = z.object({
 
 // TypeScript interfaces (for use in application code)
 export interface ApplicationEvent {
-  statusId: string
-  statusName: string
-  date: string
-  notes?: string
+  id: string
+  title: string // What happened (e.g., "Phone screen scheduled", "Interview completed")
+  description?: string // Additional details about the event
+  date: string // ISO date string
 }
 
 export interface JobBoardRef {
@@ -107,6 +115,7 @@ export interface WorkflowRef {
 export interface CurrentStatus {
   id: string
   name: string
+  eventId?: string
 }
 
 export interface JobApplication {
@@ -121,6 +130,13 @@ export interface JobApplication {
   roleType: 'manager' | 'engineer'
   locationType: 'on-site' | 'hybrid' | 'remote'
   events: ApplicationEvent[]
+  // Status dates - when each status was reached (no date for "Not Applied" status)
+  appliedDate?: string // ISO date string
+  phoneScreenDate?: string // ISO date string
+  round1Date?: string // ISO date string
+  round2Date?: string // ISO date string
+  acceptedDate?: string // ISO date string
+  declinedDate?: string // ISO date string
   currentStatus: CurrentStatus
   createdAt: Date
   updatedAt: Date

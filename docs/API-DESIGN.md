@@ -87,17 +87,24 @@ interface JobApplication {
 ```
 
 #### ApplicationStatus
-Individual statuses/phases that can be used in workflows.
+Represents workflow positions in the job application process. Uses a simplified 5-state workflow.
 
 ```typescript
 interface ApplicationStatus {
   id: string
-  name: string              // e.g., "Cold Apply", "Phone Screen", "Technical Interview", "Background Check"
-  description?: string      // Optional description of this phase
-  isTerminal: boolean       // Whether this status ends the application (offer/declined)
+  name: string              // "Not Started", "Applied", "In Progress", "Accepted", "Declined"
+  description?: string      // Optional description of this workflow state
+  isTerminal: boolean       // Whether this status ends the application ("Accepted", "Declined")
   createdAt: string
 }
 ```
+
+**Default Workflow States:**
+- `Not Started`: Application not yet submitted
+- `Applied`: Application has been submitted  
+- `In Progress`: Application is being processed (interviews, assessments, etc.)
+- `Accepted`: Job offer accepted (terminal)
+- `Declined`: Application was declined or withdrawn (terminal)
 
 #### Workflow
 Defines a sequence of statuses for different application types. Users can create custom workflows.
@@ -117,18 +124,33 @@ interface Workflow {
 ```
 
 #### ApplicationEvent
-Tracks timeline events for job applications. Events reference user-defined statuses.
+Tracks timeline events for job applications. Events describe what happened and optionally trigger status changes.
 
 ```typescript
 interface ApplicationEvent {
   id: string
-  applicationId: string     // Foreign key to JobApplication
-  statusId: string          // Foreign key to ApplicationStatus
-  eventDate: string         // ISO 8601 date string
+  eventType: string         // What happened (e.g., "phone_screen_scheduled", "interview_completed")
+  statusId?: string         // Optional: New status if this event changes application status
+  statusName?: string       // Optional: Display name for status change
+  date: string              // ISO 8601 date string (YYYY-MM-DD format)
   notes?: string            // Optional notes about the event
-  
-  // Audit fields
-  createdAt: string
+}
+```
+
+**Key Changes:**
+- Events are no longer 1:1 with status changes
+- `eventType` describes what happened (required)
+- `statusId` is optional - only used when event triggers workflow progression
+- Events can exist without changing application status (e.g., "follow-up email sent")
+
+#### EventType
+Defines the types of events that can occur during a job application process.
+
+```typescript
+interface EventType {
+  id: string                // e.g., "phone_screen_scheduled", "interview_completed"
+  name: string              // Display name (e.g., "Phone Screen Scheduled")
+  description: string       // Description of the event
 }
 ```
 

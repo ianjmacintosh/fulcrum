@@ -6,8 +6,8 @@ dotenv.config()
 
 // MongoDB connection string - Railway provides different URLs for different contexts
 const MONGODB_URI = 
-  process.env.MONGODB_URI ||           // Local development (set in .env)
-  process.env.MONGO_URL ||             // Railway private endpoint (production)
+  process.env.MONGO_URL ||             // Railway private endpoint (preferred)
+  process.env.MONGODB_URI ||           // Legacy local development
   process.env.DATABASE_URL ||          // Alternative Railway variable
   process.env.MONGO_PUBLIC_URL ||      // Railway public endpoint (fallback)
   'mongodb://localhost:27017/fulcrum'   // Local MongoDB fallback

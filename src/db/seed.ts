@@ -2,6 +2,8 @@ import { connectToDatabase } from './connection'
 import { JobApplication, ApplicationStatus, Workflow, JobBoard } from './schemas'
 import { adminService } from './services/admin'
 import { userService } from './services/users'
+import { applicationStatusService } from './services/application-statuses'
+import { applicationService } from './services/applications'
 import { hashPassword } from '../utils/crypto'
 
 async function seedAdmin() {
@@ -121,7 +123,7 @@ async function migrateTestUserDataToAlice(aliceUserId: string) {
   }
 }
 
-export async function seedDatabase() {
+export async function seedDatabase(forceReseed: boolean = false) {
   const db = await connectToDatabase()
 
   console.log('🌱 Checking database seed status...')
@@ -135,17 +137,6 @@ export async function seedDatabase() {
 
     // Migrate any existing test user data to Alice
     await migrateTestUserDataToAlice(aliceUserId)
-
-    // Define sample data using Alice's real user ID
-    const defaultStatuses: Omit<ApplicationStatus, '_id'>[] = [
-      { userId: aliceUserId, name: 'Applied', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Phone Screen', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Round 1', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Round 2', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Offer Letter Received', isTerminal: false, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Accepted', isTerminal: true, createdAt: new Date() },
-      { userId: aliceUserId, name: 'Declined', isTerminal: true, createdAt: new Date() }
-    ]
 
     const defaultWorkflows: Omit<Workflow, '_id'>[] = [
       {
@@ -186,11 +177,14 @@ export async function seedDatabase() {
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'applied', statusName: 'Applied', date: '2025-06-17', notes: 'Applied through LinkedIn' },
-          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen completed' },
-          { statusId: 'round_2', statusName: 'Round 2', date: '2025-07-29', notes: 'Technical interview' }
+          { id: 'event_1', title: 'Application Submitted', description: 'Applied through LinkedIn', date: '2025-06-17' },
+          { id: 'event_2', title: 'Phone Screen Completed', description: 'Phone screen completed', date: '2025-07-24' },
+          { id: 'event_3', title: 'Technical Interview', description: 'Technical interview', date: '2025-07-29' }
         ],
-        currentStatus: { id: 'round_2', name: 'Round 2' },
+        appliedDate: '2025-06-17',
+        phoneScreenDate: '2025-07-24',
+        round1Date: '2025-07-29',
+        currentStatus: { id: 'round_1', name: 'Round 1', eventId: 'event_3' },
         createdAt: new Date('2025-06-17'),
         updatedAt: new Date('2025-07-29')
       },
@@ -205,12 +199,16 @@ export async function seedDatabase() {
         roleType: 'engineer',
         locationType: 'remote',
         events: [
-          { statusId: 'applied', statusName: 'Applied', date: '2025-07-13', notes: 'Applied through LinkedIn' },
-          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-07-24', notes: 'Phone screen with hiring manager' },
-          { statusId: 'round_1', statusName: 'Round 1', date: '2025-08-06', notes: 'Technical coding challenge' },
-          { statusId: 'round_2', statusName: 'Round 2', date: '2025-08-13', notes: 'Final round interview' }
+          { id: 'event_4', title: 'Application Submitted', description: 'Applied through LinkedIn', date: '2025-07-13' },
+          { id: 'event_5', title: 'Phone Screen Completed', description: 'Phone screen with hiring manager', date: '2025-07-24' },
+          { id: 'event_6', title: 'Technical Challenge', description: 'Technical coding challenge', date: '2025-08-06' },
+          { id: 'event_7', title: 'Final Interview', description: 'Final round interview', date: '2025-08-13' }
         ],
-        currentStatus: { id: 'round_2', name: 'Round 2' },
+        appliedDate: '2025-07-13',
+        phoneScreenDate: '2025-07-24',
+        round1Date: '2025-08-06',
+        round2Date: '2025-08-13',
+        currentStatus: { id: 'round_2', name: 'Round 2', eventId: 'event_7' },
         createdAt: new Date('2025-07-13'),
         updatedAt: new Date('2025-08-13')
       },
@@ -225,11 +223,14 @@ export async function seedDatabase() {
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'applied', statusName: 'Applied', date: '2025-05-28', notes: 'Referral from former colleague' },
-          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-06-10', notes: 'Phone screen completed' },
-          { statusId: 'declined', statusName: 'Declined', date: '2025-06-20', notes: 'Position filled internally' }
+          { id: 'event_8', title: 'Application Submitted', description: 'Referral from former colleague', date: '2025-05-28' },
+          { id: 'event_9', title: 'Phone Screen Completed', description: 'Phone screen completed', date: '2025-06-10' },
+          { id: 'event_10', title: 'Rejection Received', description: 'Position filled internally', date: '2025-06-20' }
         ],
-        currentStatus: { id: 'declined', name: 'Declined' },
+        appliedDate: '2025-05-28',
+        phoneScreenDate: '2025-06-10',
+        declinedDate: '2025-06-20',
+        currentStatus: { id: 'declined', name: 'Declined', eventId: 'event_10' },
         createdAt: new Date('2025-05-28'),
         updatedAt: new Date('2025-06-20')
       },
@@ -244,10 +245,12 @@ export async function seedDatabase() {
         roleType: 'manager',
         locationType: 'on-site',
         events: [
-          { statusId: 'applied', statusName: 'Applied', date: '2025-07-31', notes: 'Applied through LinkedIn' },
-          { statusId: 'phone_screen', statusName: 'Phone Screen', date: '2025-08-14', notes: 'Phone screen scheduled' }
+          { id: 'event_11', title: 'Application Submitted', description: 'Applied through LinkedIn', date: '2025-07-31' },
+          { id: 'event_12', title: 'Phone Screen Scheduled', description: 'Phone screen scheduled', date: '2025-08-14' }
         ],
-        currentStatus: { id: 'phone_screen', name: 'Phone Screen' },
+        appliedDate: '2025-07-31',
+        phoneScreenDate: '2025-08-14',
+        currentStatus: { id: 'phone_screen', name: 'Phone Screen', eventId: 'event_12' },
         createdAt: new Date('2025-07-31'),
         updatedAt: new Date('2025-08-14')
       },
@@ -262,9 +265,10 @@ export async function seedDatabase() {
         roleType: 'engineer',
         locationType: 'hybrid',
         events: [
-          { statusId: 'applied', statusName: 'Applied', date: '2025-08-01', notes: 'Applied through LinkedIn' }
+          { id: 'event_13', title: 'Application Submitted', description: 'Applied through LinkedIn', date: '2025-08-01' }
         ],
-        currentStatus: { id: 'applied', name: 'Applied' },
+        appliedDate: '2025-08-01',
+        currentStatus: { id: 'applied', name: 'Applied', eventId: 'event_13' },
         createdAt: new Date('2025-08-01'),
         updatedAt: new Date('2025-08-01')
       }
@@ -278,7 +282,7 @@ export async function seedDatabase() {
 
     const totalExistingRecords = existingStatuses + existingWorkflows + existingJobBoards + existingApps
 
-    if (totalExistingRecords > 0) {
+    if (totalExistingRecords > 0 && !forceReseed) {
       console.log(`✅ Database already contains ${totalExistingRecords} records:`)
       console.log(`   - Application statuses: ${existingStatuses}`)
       console.log(`   - Workflows: ${existingWorkflows}`)
@@ -287,12 +291,16 @@ export async function seedDatabase() {
       console.log('🔒 Skipping seed to preserve existing data')
       return
     }
+    
+    if (forceReseed && totalExistingRecords > 0) {
+      console.log(`🔄 Force re-seeding with ${totalExistingRecords} existing records`)
+    }
 
     console.log('📦 Database is empty, proceeding with seed...')
 
-    // Insert default statuses
-    const statusResult = await db.collection('application_statuses').insertMany(defaultStatuses)
-    console.log(`✅ Inserted ${statusResult.insertedCount} application statuses`)
+    // Create default statuses using the new 7-status workflow
+    await applicationStatusService.createDefaultStatuses(aliceUserId)
+    console.log('✅ Created default application statuses')
 
     // Insert default workflows  
     const workflowResult = await db.collection('workflows').insertMany(defaultWorkflows)
@@ -302,9 +310,14 @@ export async function seedDatabase() {
     const jobBoardResult = await db.collection('job_boards').insertMany(defaultJobBoards)
     console.log(`✅ Inserted ${jobBoardResult.insertedCount} job boards`)
 
-    // Insert sample applications
-    const appResult = await db.collection('applications').insertMany(sampleApplications)
-    console.log(`✅ Inserted ${appResult.insertedCount} sample applications`)
+    // Insert sample applications with correct currentStatus calculation
+    const applicationsWithCorrectStatus = sampleApplications.map(app => ({
+      ...app,
+      currentStatus: applicationService.calculateCurrentStatus(app)
+    }))
+    
+    const appResult = await db.collection('applications').insertMany(applicationsWithCorrectStatus)
+    console.log(`✅ Inserted ${appResult.insertedCount} sample applications with calculated status`)
 
     console.log('🎉 Database seeded successfully!')
 

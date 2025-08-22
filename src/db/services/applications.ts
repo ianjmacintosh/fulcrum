@@ -1,6 +1,7 @@
 import { Db, Collection, ObjectId } from 'mongodb'
 import { connectToDatabase } from '../connection'
-import { JobApplication, JobApplicationSchema } from '../schemas'
+import { JobApplication, JobApplicationSchema, CurrentStatus } from '../schemas'
+import { defaultWorkflowService } from './default-workflow'
 
 export class ApplicationService {
   private db: Db | null = null
@@ -46,13 +47,40 @@ export class ApplicationService {
 
   async getApplicationById(userId: string, id: string | ObjectId): Promise<JobApplication | null> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    return await collection.findOne({ _id: objectId, userId })
+    
+    try {
+      // First try with ObjectId (standard MongoDB _id format)
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      let result = await collection.findOne({ _id: objectId, userId })
+      
+      if (result) {
+        return result
+      }
+      
+      // If not found with ObjectId, try with string _id (for migration compatibility)
+      if (typeof id === 'string') {
+        result = await collection.findOne({ _id: id, userId })
+        if (result) {
+          return result
+        }
+      }
+      
+      return null
+    } catch (error) {
+      // If ObjectId conversion failed, try with string _id
+      if (typeof id === 'string') {
+        try {
+          return await collection.findOne({ _id: id, userId })
+        } catch (stringError) {
+          return null
+        }
+      }
+      return null
+    }
   }
 
   async updateApplication(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
     const updateDoc = {
       ...updates,
@@ -62,21 +90,61 @@ export class ApplicationService {
     delete updateDoc._id // Don't update the _id field
     delete updateDoc.userId // Don't allow userId to be changed
 
-    const result = await collection.findOneAndUpdate(
-      { _id: objectId, userId },
-      { $set: updateDoc },
-      { returnDocument: 'after' }
-    )
+    try {
+      // First try with ObjectId (standard MongoDB _id format)
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      let result = await collection.findOneAndUpdate(
+        { _id: objectId, userId },
+        { $set: updateDoc },
+        { returnDocument: 'after' }
+      )
 
-    return result || null
+      if (result) {
+        return result
+      }
+      
+      // If not found with ObjectId, try with string _id (for migration compatibility)
+      if (typeof id === 'string') {
+        result = await collection.findOneAndUpdate(
+          { _id: id, userId },
+          { $set: updateDoc },
+          { returnDocument: 'after' }
+        )
+        if (result) {
+          return result
+        }
+      }
+      
+      return null
+    } catch (error) {
+      // If ObjectId conversion failed, try with string _id
+      if (typeof id === 'string') {
+        try {
+          return await collection.findOneAndUpdate(
+            { _id: id, userId },
+            { $set: updateDoc },
+            { returnDocument: 'after' }
+          )
+        } catch (stringError) {
+          return null
+        }
+      }
+      return null
+    }
   }
 
   async deleteApplication(userId: string, id: string | ObjectId): Promise<boolean> {
     const collection = await this.getCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
     
-    const result = await collection.deleteOne({ _id: objectId, userId })
-    return result.deletedCount === 1
+    try {
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      
+      const result = await collection.deleteOne({ _id: objectId, userId })
+      return result.deletedCount === 1
+    } catch (error) {
+      // Invalid ObjectId format
+      return false
+    }
   }
 
   async getApplicationCount(userId: string, filter: any = {}): Promise<number> {
@@ -133,6 +201,157 @@ export class ApplicationService {
     const collection = await this.getCollection()
     const result = await collection.deleteMany({ userId })
     return result.deletedCount
+  }
+
+  /**
+   * Calculate current status based on status date fields
+   * Uses the latest status date to determine current status according to the 6-state workflow
+   */
+  calculateCurrentStatus(application: Partial<JobApplication>): CurrentStatus {
+    const statusDates = [
+      { date: application.declinedDate, status: { id: 'declined', name: 'Declined' }, priority: 7 },
+      { date: application.acceptedDate, status: { id: 'accepted', name: 'Accepted' }, priority: 6 },
+      { date: application.round2Date, status: { id: 'round_2', name: 'Round 2' }, priority: 5 },
+      { date: application.round1Date, status: { id: 'round_1', name: 'Round 1' }, priority: 4 },
+      { date: application.phoneScreenDate, status: { id: 'phone_screen', name: 'Phone Screen' }, priority: 3 },
+      { date: application.appliedDate, status: { id: 'applied', name: 'Applied' }, priority: 2 }
+    ]
+
+    // Find the latest status date, with higher priority for equal dates
+    let latestStatus = { id: 'not_applied', name: 'Not Applied' }
+    let latestDate: Date | null = null
+    let latestPriority = 0
+
+    for (const { date, status, priority } of statusDates) {
+      if (date) {
+        const statusDate = new Date(date)
+        // Skip invalid dates
+        if (isNaN(statusDate.getTime())) {
+          continue
+        }
+        
+        // Update if this date is later, or if same date but higher priority
+        if (!latestDate || 
+            statusDate > latestDate || 
+            (statusDate.getTime() === latestDate.getTime() && priority > latestPriority)) {
+          latestStatus = status
+          latestDate = statusDate
+          latestPriority = priority
+        }
+      }
+    }
+
+    return latestStatus
+  }
+
+  /**
+   * Update application with automatic current status calculation
+   */
+  async updateApplicationWithStatusCalculation(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
+    const collection = await this.getCollection()
+    
+    // First get the current application to merge with updates
+    let currentApplication: any = null
+    
+    try {
+      // Try with ObjectId first
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      currentApplication = await collection.findOne({ _id: objectId, userId })
+      
+      // If not found with ObjectId, try with string _id
+      if (!currentApplication && typeof id === 'string') {
+        currentApplication = await collection.findOne({ _id: id, userId })
+      }
+    } catch (error) {
+      // If ObjectId conversion failed, try with string _id
+      if (typeof id === 'string') {
+        currentApplication = await collection.findOne({ _id: id, userId })
+      }
+    }
+    
+    if (!currentApplication) {
+      return null
+    }
+
+    // Merge current application with updates to get complete date fields
+    const mergedApplication = { ...currentApplication, ...updates }
+    
+    // Calculate the new current status
+    const newCurrentStatus = this.calculateCurrentStatus(mergedApplication)
+    
+    const updateDoc = {
+      ...updates,
+      currentStatus: newCurrentStatus,
+      updatedAt: new Date()
+    }
+    
+    delete updateDoc._id // Don't update the _id field
+    delete updateDoc.userId // Don't allow userId to be changed
+
+    // Now update using the same ID format that worked for finding
+    let result: any = null
+    
+    try {
+      // Try with ObjectId first
+      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      result = await collection.findOneAndUpdate(
+        { _id: objectId, userId },
+        { $set: updateDoc },
+        { returnDocument: 'after' }
+      )
+      
+      // If update with ObjectId didn't work, try with string _id
+      if (!result && typeof id === 'string') {
+        result = await collection.findOneAndUpdate(
+          { _id: id, userId },
+          { $set: updateDoc },
+          { returnDocument: 'after' }
+        )
+      }
+    } catch (error) {
+      // If ObjectId conversion failed, try with string _id
+      if (typeof id === 'string') {
+        result = await collection.findOneAndUpdate(
+          { _id: id, userId },
+          { $set: updateDoc },
+          { returnDocument: 'after' }
+        )
+      }
+    }
+
+    return result || null
+  }
+
+  /**
+   * Recalculate current status for all applications (for data migration)
+   */
+  async recalculateAllCurrentStatuses(userId?: string): Promise<number> {
+    const collection = await this.getCollection()
+    
+    const filter = userId ? { userId } : {}
+    const applications = await collection.find(filter).toArray()
+    
+    let updatedCount = 0
+    
+    for (const application of applications) {
+      const newCurrentStatus = this.calculateCurrentStatus(application)
+      
+      // Only update if the status has changed
+      if (newCurrentStatus.id !== application.currentStatus?.id || newCurrentStatus.name !== application.currentStatus?.name) {
+        await collection.updateOne(
+          { _id: application._id },
+          { 
+            $set: { 
+              currentStatus: newCurrentStatus,
+              updatedAt: new Date()
+            } 
+          }
+        )
+        updatedCount++
+      }
+    }
+    
+    return updatedCount
   }
 }
 

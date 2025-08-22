@@ -45,6 +45,20 @@ The application features:
 
 ## Architecture
 
+### Events vs Application Status Model
+
+**Important Conceptual Distinction:**
+- **Events** represent timeline activities - what happened when (e.g., "Phone screen scheduled", "Interview completed", "Offer received")
+- **Application Status** represents current workflow position - where the application stands (e.g., "Not Started", "Applied", "In Progress", "Accepted", "Declined")
+
+**Implementation:**
+- Events are recorded with a `title` (required) and optional `description` - completely independent of status tracking
+- Application statuses use a 6-state workflow: `Not Applied → Applied → Phone Screen → Round 1 → Round 2 → Accepted/Declined`
+- Status progression is tracked via date fields (`appliedDate`, `phoneScreenDate`, etc.) with date pickers in the UI
+- EventRecordingForm has simplified fields: title, description, and date (no status integration)
+- Current status is computed from the latest status date that has been set
+- Default workflow configurations are managed in `src/db/services/default-workflow.ts` as the single source of truth
+
 ### Routing Structure
 - File-based routing using TanStack Router
 - Routes are defined in `src/routes/` directory

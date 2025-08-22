@@ -2,35 +2,30 @@ import { applicationService } from './applications'
 import { JobApplication } from '../schemas'
 
 export class AnalyticsService {
-  
+
   async getDashboardMetrics(userId: string) {
     // Get all applications for user
-    console.log('Analytics: Fetching dashboard metrics for userId:', userId)
     const applications = await applicationService.getApplications(userId)
-    console.log('Analytics: Found applications:', applications.length)
     const totalApplications = applications.length
 
     if (totalApplications === 0) {
-      console.log('Analytics: No applications found, returning empty metrics')
       return this.getEmptyDashboardMetrics()
     }
 
     // Calculate monthly overview
     const monthlyOverview = this.calculateMonthlyOverview(applications)
-    
+
     // Calculate conversion rates
     let conversionRates
     try {
       conversionRates = await this.calculateConversionRates(applications)
-      console.log('Analytics: Conversion rates calculated:', conversionRates)
     } catch (error) {
-      console.error('Analytics: Error calculating conversion rates:', error)
       conversionRates = [] // Fallback to empty array
     }
-    
+
     // Calculate pipeline health
     const pipelineHealth = this.calculatePipelineHealth(applications)
-    
+
     // Find top job board
     const topJobBoard = this.findTopJobBoard(applications)
 
@@ -43,54 +38,46 @@ export class AnalyticsService {
         topJobBoard
       }
     }
-    
-    console.log('Analytics: Final dashboard data structure:', {
-      totalApplications: result.totalApplications,
-      hasConversionRates: !!result.conversionRates,
-      conversionRatesLength: result.conversionRates?.length,
-      hasMonthlyOverview: !!result.monthlyOverview,
-      hasPipelineHealth: !!result.pipelineHealth
-    })
-    
+
     return result
   }
 
   async getJobProjection(userId: string) {
     const applications = await applicationService.getApplications(userId)
-    
+
     if (applications.length === 0) {
       return this.getDefaultProjection()
     }
 
     // Calculate metrics for projection
     const coldApplications = applications.filter(app => app.applicationType === 'cold')
-    const phoneScreens = applications.filter(app => 
+    const phoneScreens = applications.filter(app =>
       app.events.some(event => event.statusId === 'phone_screen')
     )
-    
+
     // Calculate conversion rates
     const phoneScreenRate = coldApplications.length > 0 ? phoneScreens.length / coldApplications.length : 0
-    
+
     // Calculate weekly application rate from recent activity (last 3 months)
     const threeMonthsAgo = new Date()
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-    
+
     const recentApplications = applications.filter(app => app.createdAt >= threeMonthsAgo)
     const weeklyRate = recentApplications.length / 12 // 12 weeks in 3 months
-    
+
     // Industry benchmarks for projection
     const industryOfferRate = 0.0375 // 3.75% overall conversion rate
     const appsNeededForOffer = Math.ceil(1 / industryOfferRate)
-    
+
     // Current pipeline (non-terminal statuses)
     const activePipeline = applications.filter(app => !app.currentStatus.id.includes('declined'))
-    
+
     // Calculate projection
     const additionalAppsNeeded = Math.max(0, appsNeededForOffer - activePipeline.length)
     const weeksToApply = additionalAppsNeeded / Math.max(weeklyRate, 1)
     const pipelineProcessingWeeks = 4 // Average time through pipeline
     const totalWeeks = weeksToApply + pipelineProcessingWeeks
-    
+
     const targetDate = new Date()
     targetDate.setDate(targetDate.getDate() + (totalWeeks * 7))
 
@@ -125,11 +112,11 @@ export class AnalyticsService {
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
 
     const thisMonth = applications.filter(app => app.createdAt >= thisMonthStart)
-    const lastMonth = applications.filter(app => 
+    const lastMonth = applications.filter(app =>
       app.createdAt >= lastMonthStart && app.createdAt <= lastMonthEnd
     )
 
-    const trendVsPreviousMonth = lastMonth.length > 0 ? 
+    const trendVsPreviousMonth = lastMonth.length > 0 ?
       ((thisMonth.length - lastMonth.length) / lastMonth.length * 100) : 0
 
     return {
@@ -140,38 +127,29 @@ export class AnalyticsService {
   }
 
   private async calculateConversionRates(applications: JobApplication[]) {
-    console.log('Analytics: Calculating conversion rates for', applications.length, 'applications')
-    
-    // Debug: Log some event statusIds to see their format
-    if (applications.length > 0) {
-      console.log('Analytics: Sample statusIds from first application:')
-      applications[0].events.forEach(event => {
-        console.log(`  - ${event.statusName}: ${event.statusId}`)
-      })
-    }
-    
+
     const coldApplications = applications.filter(app => app.applicationType === 'cold')
-    
+
     // Applications that reached phone screen
-    const coldPhoneScreens = applications.filter(app => 
-      app.applicationType === 'cold' && 
+    const coldPhoneScreens = applications.filter(app =>
+      app.applicationType === 'cold' &&
       app.events.some(event => event.statusName === 'Phone Screen') // Use statusName instead of statusId
     )
-    
+
     // All applications that had phone screens
-    const allPhoneScreens = applications.filter(app => 
+    const allPhoneScreens = applications.filter(app =>
       app.events.some(event => event.statusName === 'Phone Screen')
     )
-    
+
     // Applications that progressed past phone screen
-    const round2Plus = applications.filter(app => 
+    const round2Plus = applications.filter(app =>
       app.events.some(event => ['Round 2', 'Offer Letter Received', 'Accepted'].includes(event.statusName))
     )
 
-    const coldToPhoneRate = coldApplications.length > 0 ? 
+    const coldToPhoneRate = coldApplications.length > 0 ?
       coldPhoneScreens.length / coldApplications.length : 0
-    
-    const phoneToRound2Rate = allPhoneScreens.length > 0 ? 
+
+    const phoneToRound2Rate = allPhoneScreens.length > 0 ?
       round2Plus.length / allPhoneScreens.length : 0
 
     return [
@@ -198,7 +176,7 @@ export class AnalyticsService {
 
   private calculatePipelineHealth(applications: JobApplication[]) {
     const statusCounts: { [key: string]: number } = {}
-    
+
     // Count current statuses
     applications.forEach(app => {
       const statusId = app.currentStatus.id
@@ -213,10 +191,10 @@ export class AnalyticsService {
     }))
 
     // Calculate days since last application
-    const sortedApps = applications.sort((a, b) => 
+    const sortedApps = applications.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-    const daysSinceLastApp = sortedApps.length > 0 ? 
+    const daysSinceLastApp = sortedApps.length > 0 ?
       Math.floor((Date.now() - new Date(sortedApps[0].createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0
 
     return {
@@ -227,17 +205,17 @@ export class AnalyticsService {
 
   private findTopJobBoard(applications: JobApplication[]) {
     const boardStats: { [key: string]: { total: number, responses: number } } = {}
-    
+
     applications.forEach(app => {
       const boardName = app.jobBoard.name
       if (!boardStats[boardName]) {
         boardStats[boardName] = { total: 0, responses: 0 }
       }
-      
+
       boardStats[boardName].total++
-      
+
       // Count as response if they got past initial application
-      const hasResponse = app.events.some(event => 
+      const hasResponse = app.events.some(event =>
         !['cold_apply', 'warm_apply'].includes(event.statusId)
       )
       if (hasResponse) {

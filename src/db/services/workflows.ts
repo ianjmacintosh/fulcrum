@@ -112,36 +112,6 @@ export class WorkflowService {
     return await collection.find({ userId }).limit(limit).skip(skip).sort({ createdAt: -1 }).toArray()
   }
 
-  async getStatusById(userId: string, id: string | ObjectId): Promise<ApplicationStatus | null> {
-    const collection = await this.getStatusesCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    return await collection.findOne({ _id: objectId, userId })
-  }
-
-  async updateStatus(userId: string, id: string | ObjectId, updates: Partial<ApplicationStatus>): Promise<ApplicationStatus | null> {
-    const collection = await this.getStatusesCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    
-    const updateDoc = { ...updates }
-    delete updateDoc._id
-    delete updateDoc.userId
-
-    const result = await collection.findOneAndUpdate(
-      { _id: objectId, userId },
-      { $set: updateDoc },
-      { returnDocument: 'after' }
-    )
-
-    return result || null
-  }
-
-  async deleteStatus(userId: string, id: string | ObjectId): Promise<boolean> {
-    const collection = await this.getStatusesCollection()
-    const objectId = typeof id === 'string' ? new ObjectId(id) : id
-    
-    const result = await collection.deleteOne({ _id: objectId, userId })
-    return result.deletedCount === 1
-  }
 
   // Admin methods (bypass user scoping)
   async getAllWorkflowsForUser(userId: string): Promise<Workflow[]> {

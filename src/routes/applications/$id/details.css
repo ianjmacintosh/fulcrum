@@ -1,0 +1,244 @@
+/* Application Details Page Styles */
+
+.application-info {
+  margin-bottom: 2rem;
+}
+
+.info-card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h2 {
+  margin: 0 0 0.5rem 0;
+  color: #1a202c;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.info-card h3 {
+  margin: 0 0 1.5rem 0;
+  color: #4a5568;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.application-metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metadata-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metadata-value {
+  font-size: 1rem;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+/* Timeline Table Styles */
+
+.events-timeline {
+  margin-bottom: 2rem;
+}
+
+.events-timeline h2 {
+  margin-bottom: 1.5rem;
+  color: #1a202c;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.timeline-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.timeline-table th {
+  background-color: #f8f9fa;
+  color: #374151;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.timeline-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.timeline-table tbody tr:hover {
+  background-color: #fafbfc;
+}
+
+.timeline-table .event-date {
+  width: 120px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.timeline-table .event-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  min-width: 180px;
+}
+
+.timeline-table .event-notes {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+/* Status Progression Section */
+
+.status-progression {
+  margin-bottom: 2rem;
+}
+
+.status-progression h2 {
+  margin-bottom: 1.5rem;
+  color: #1a202c;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.status-dates {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-date-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.status-date-group input[type="date"] {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.status-date-group input[type="date"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.status-date-group input[type="date"]:disabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Event Actions Section */
+
+.event-actions {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.event-actions h2 {
+  margin: 0 0 1rem 0;
+  color: #1a202c;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .info-card h2 {
+    font-size: 1.5rem;
+  }
+  
+  .info-card h3 {
+    font-size: 1.25rem;
+  }
+  
+  .application-metadata {
+    grid-template-columns: 1fr;
+  }
+  
+  .timeline {
+    padding-left: 1.5rem;
+  }
+  
+  .timeline-event {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .event-date {
+    width: auto;
+  }
+  
+  .status-dates {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+}

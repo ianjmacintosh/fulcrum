@@ -3,6 +3,7 @@ import { JobBoard, Workflow, ApplicationStatus, JobApplication } from '../schema
 import { jobBoardService } from './job-boards'
 import { workflowService } from './workflows'
 import { applicationService } from './applications'
+import { defaultWorkflowService } from './default-workflow'
 
 export interface ResetOptions {
   includeTestData: boolean
@@ -31,16 +32,13 @@ export class UserOnboardingService {
       })
     }
 
-    // Create default application statuses
-    const defaultStatuses = [
-      { name: 'Applied', description: 'Application submitted', isTerminal: false },
-      { name: 'Phone Screen', description: 'Initial phone screening', isTerminal: false },
-      { name: 'Round 1', description: 'First round interview', isTerminal: false },
-      { name: 'Round 2', description: 'Second round interview', isTerminal: false },
-      { name: 'Offer Letter Received', description: 'Job offer received', isTerminal: false },
-      { name: 'Accepted', description: 'Job offer accepted', isTerminal: true },
-      { name: 'Declined', description: 'Application declined or withdrawn', isTerminal: true }
-    ]
+    // Create default application statuses using shared configuration
+    const statuses = defaultWorkflowService.getDefaultStatuses()
+    const defaultStatuses = statuses.map(statusDef => ({
+      name: statusDef.name,
+      description: statusDef.description,
+      isTerminal: statusDef.isTerminal
+    }))
 
     const createdStatuses: { [key: string]: string } = {}
     
@@ -59,11 +57,11 @@ export class UserOnboardingService {
       description: 'Standard job application workflow',
       isDefault: true,
       steps: [
+        { statusId: createdStatuses['Not Applied'], isOptional: false },
         { statusId: createdStatuses['Applied'], isOptional: false },
         { statusId: createdStatuses['Phone Screen'], isOptional: true },
         { statusId: createdStatuses['Round 1'], isOptional: true },
         { statusId: createdStatuses['Round 2'], isOptional: true },
-        { statusId: createdStatuses['Offer Letter Received'], isOptional: true },
         { statusId: createdStatuses['Accepted'], isOptional: true },
         { statusId: createdStatuses['Declined'], isOptional: true } // Can be reached from any step
       ]
@@ -119,15 +117,15 @@ export class UserOnboardingService {
             notes: 'Phone screen completed' 
           },
           { 
-            statusId: findStatus('Round 2')._id!.toString(), 
-            statusName: 'Round 2', 
+            statusId: findStatus('Round 1')._id!.toString(), 
+            statusName: 'Round 1', 
             date: '2025-07-29', 
             notes: 'Technical interview scheduled' 
           }
         ],
         currentStatus: { 
-          id: findStatus('Round 2')._id!.toString(), 
-          name: 'Round 2' 
+          id: findStatus('Round 1')._id!.toString(), 
+          name: 'Round 1' 
         }
       },
       {
@@ -153,21 +151,15 @@ export class UserOnboardingService {
             notes: 'Phone screen with hiring manager' 
           },
           { 
-            statusId: findStatus('Round 1')._id!.toString(), 
-            statusName: 'Round 1', 
+            statusId: findStatus('In Progress')._id!.toString(), 
+            statusName: 'In Progress', 
             date: '2025-08-06', 
-            notes: 'Technical coding challenge' 
-          },
-          { 
-            statusId: findStatus('Round 2')._id!.toString(), 
-            statusName: 'Round 2', 
-            date: '2025-08-13', 
-            notes: 'Final round interview' 
+            notes: 'Technical coding challenge and interviews' 
           }
         ],
         currentStatus: { 
-          id: findStatus('Round 2')._id!.toString(), 
-          name: 'Round 2' 
+          id: findStatus('In Progress')._id!.toString(), 
+          name: 'In Progress' 
         }
       },
       {
