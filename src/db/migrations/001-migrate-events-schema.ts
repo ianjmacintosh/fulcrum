@@ -43,18 +43,26 @@ export const migrateEventsSchema: Migration = {
             // Generate a proper event id if missing
             const eventId = event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
             
+            // Ensure we have a non-empty title
+            const title = [event.eventType, event.statusName, event.title]
+              .find(val => val && typeof val === 'string' && val.trim().length > 0) || 'Event'
+            
             return {
               id: eventId,
-              title: event.eventType || event.statusName || event.title || 'Event',
+              title: title,
               description: event.notes || event.description || '',
               date: event.date
             }
           }
           
           // Already in new format or partially migrated
+          // Ensure we have a non-empty title
+          const title = [event.title, event.eventType]
+            .find(val => val && typeof val === 'string' && val.trim().length > 0) || 'Event'
+          
           return {
             id: event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
-            title: event.title || event.eventType || 'Event',
+            title: title,
             description: event.description || event.notes || '',
             date: event.date
           }

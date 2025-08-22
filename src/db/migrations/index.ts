@@ -2,6 +2,8 @@ import { Migration } from './migration-runner'
 import { migrateEventsSchema } from './001-migrate-events-schema'
 import { addStatusDates } from './002-add-status-dates'
 import { updateApplicationStatuses } from './003-update-application-statuses'
+import { recalculateCurrentStatuses } from './004-recalculate-current-statuses'
+import { fixEmptyEventTitles } from './005-fix-empty-event-titles'
 
 /**
  * All available migrations in execution order
@@ -10,7 +12,9 @@ export function getAllMigrations(): Migration[] {
   return [
     migrateEventsSchema,
     addStatusDates,
-    updateApplicationStatuses
+    updateApplicationStatuses,
+    recalculateCurrentStatuses,
+    fixEmptyEventTitles
   ]
 }
 
