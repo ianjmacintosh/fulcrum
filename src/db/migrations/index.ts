@@ -10,7 +10,7 @@ import { fixEmptyEventTitles } from "./005-fix-empty-event-titles";
  */
 export function getAllMigrations(): Migration[] {
   return [
-    migrateEventsSchema,
+      migrateEventsSchema,
     addStatusDates,
     updateApplicationStatuses,
     recalculateCurrentStatuses,
