@@ -68,7 +68,7 @@ async function seedUser() {
   const defaultPassword = "followthewhiterabbit";
 
   // Check if user already exists
-  let existingUser = await userService.getUserByEmail(defaultEmail);
+  const existingUser = await userService.getUserByEmail(defaultEmail);
   if (existingUser) {
     console.log("✅ Default user Alice already exists");
     return existingUser.id;
