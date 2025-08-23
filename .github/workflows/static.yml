@@ -1,4 +1,4 @@
-name: Run Unit Tests
+name: Run Static Analysis
 on:
   push:
     branches: [main, master]
@@ -6,12 +6,12 @@ on:
     branches: [main, master]
 jobs:
   unit-test:
-    name: Run Vitest tests
+    name: Check file formatting
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
       - name: Install deps
         run: npm ci
-      - name: Run tests
-        run: npm run test:unit
+      - name: Run Prettier
+        run: npm run format:check

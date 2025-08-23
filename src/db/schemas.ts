@@ -1,29 +1,29 @@
-import { z } from 'zod'
-import { ObjectId } from 'mongodb'
+import { z } from "zod";
+import { ObjectId } from "mongodb";
 
 // Zod schemas for validation
 export const ApplicationEventSchema = z.object({
   id: z.string(),
   title: z.string(), // What happened (e.g., "Phone screen scheduled", "Interview completed")
   description: z.string().optional(), // Additional details about the event
-  date: z.string() // ISO date string
-})
+  date: z.string(), // ISO date string
+});
 
 export const JobBoardRefSchema = z.object({
   id: z.string(),
-  name: z.string()
-})
+  name: z.string(),
+});
 
 export const WorkflowRefSchema = z.object({
   id: z.string(),
-  name: z.string()
-})
+  name: z.string(),
+});
 
 export const CurrentStatusSchema = z.object({
   id: z.string(),
   name: z.string(),
-  eventId: z.string().optional()
-})
+  eventId: z.string().optional(),
+});
 
 export const JobApplicationSchema = z.object({
   userId: z.string(),
@@ -32,9 +32,9 @@ export const JobApplicationSchema = z.object({
   jobPostingUrl: z.string().optional(),
   jobBoard: JobBoardRefSchema,
   workflow: WorkflowRefSchema,
-  applicationType: z.enum(['cold', 'warm']),
-  roleType: z.enum(['manager', 'engineer']),
-  locationType: z.enum(['on-site', 'hybrid', 'remote']),
+  applicationType: z.enum(["cold", "warm"]),
+  roleType: z.enum(["manager", "engineer"]),
+  locationType: z.enum(["on-site", "hybrid", "remote"]),
   events: z.array(ApplicationEventSchema),
   // Status dates - when each status was reached (no date for "Not Applied" status)
   appliedDate: z.string().optional(), // ISO date string
@@ -45,21 +45,21 @@ export const JobApplicationSchema = z.object({
   declinedDate: z.string().optional(), // ISO date string
   currentStatus: CurrentStatusSchema,
   createdAt: z.date(),
-  updatedAt: z.date()
-})
+  updatedAt: z.date(),
+});
 
 export const ApplicationStatusSchema = z.object({
   userId: z.string(),
   name: z.string(),
   description: z.string().optional(),
   isTerminal: z.boolean(),
-  createdAt: z.date()
-})
+  createdAt: z.date(),
+});
 
 export const WorkflowStepSchema = z.object({
   statusId: z.string(),
-  isOptional: z.boolean()
-})
+  isOptional: z.boolean(),
+});
 
 export const WorkflowSchema = z.object({
   userId: z.string(),
@@ -67,16 +67,16 @@ export const WorkflowSchema = z.object({
   description: z.string().optional(),
   isDefault: z.boolean(),
   steps: z.array(WorkflowStepSchema),
-  createdAt: z.date()
-})
+  createdAt: z.date(),
+});
 
 export const JobBoardSchema = z.object({
   userId: z.string(),
   name: z.string(),
   url: z.string(),
   description: z.string().optional(),
-  createdAt: z.date()
-})
+  createdAt: z.date(),
+});
 
 // User and Admin schemas
 export const UserSchema = z.object({
@@ -85,110 +85,110 @@ export const UserSchema = z.object({
   name: z.string(),
   hashedPassword: z.string(),
   createdAt: z.date(),
-  updatedAt: z.date()
-})
+  updatedAt: z.date(),
+});
 
 export const AdminUserSchema = z.object({
   username: z.string(),
   hashedPassword: z.string(),
-  createdAt: z.date()
-})
+  createdAt: z.date(),
+});
 
 // TypeScript interfaces (for use in application code)
 export interface ApplicationEvent {
-  id: string
-  title: string // What happened (e.g., "Phone screen scheduled", "Interview completed")
-  description?: string // Additional details about the event
-  date: string // ISO date string
+  id: string;
+  title: string; // What happened (e.g., "Phone screen scheduled", "Interview completed")
+  description?: string; // Additional details about the event
+  date: string; // ISO date string
 }
 
 export interface JobBoardRef {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export interface WorkflowRef {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export interface CurrentStatus {
-  id: string
-  name: string
-  eventId?: string
+  id: string;
+  name: string;
+  eventId?: string;
 }
 
 export interface JobApplication {
-  _id?: ObjectId
-  userId: string
-  companyName: string
-  roleName: string
-  jobPostingUrl?: string
-  jobBoard: JobBoardRef
-  workflow: WorkflowRef
-  applicationType: 'cold' | 'warm'
-  roleType: 'manager' | 'engineer'
-  locationType: 'on-site' | 'hybrid' | 'remote'
-  events: ApplicationEvent[]
+  _id?: ObjectId;
+  userId: string;
+  companyName: string;
+  roleName: string;
+  jobPostingUrl?: string;
+  jobBoard: JobBoardRef;
+  workflow: WorkflowRef;
+  applicationType: "cold" | "warm";
+  roleType: "manager" | "engineer";
+  locationType: "on-site" | "hybrid" | "remote";
+  events: ApplicationEvent[];
   // Status dates - when each status was reached (no date for "Not Applied" status)
-  appliedDate?: string // ISO date string
-  phoneScreenDate?: string // ISO date string
-  round1Date?: string // ISO date string
-  round2Date?: string // ISO date string
-  acceptedDate?: string // ISO date string
-  declinedDate?: string // ISO date string
-  currentStatus: CurrentStatus
-  createdAt: Date
-  updatedAt: Date
+  appliedDate?: string; // ISO date string
+  phoneScreenDate?: string; // ISO date string
+  round1Date?: string; // ISO date string
+  round2Date?: string; // ISO date string
+  acceptedDate?: string; // ISO date string
+  declinedDate?: string; // ISO date string
+  currentStatus: CurrentStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ApplicationStatus {
-  _id?: ObjectId
-  userId: string
-  name: string
-  description?: string
-  isTerminal: boolean
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string;
+  name: string;
+  description?: string;
+  isTerminal: boolean;
+  createdAt: Date;
 }
 
 export interface WorkflowStep {
-  statusId: string
-  isOptional: boolean
+  statusId: string;
+  isOptional: boolean;
 }
 
 export interface Workflow {
-  _id?: ObjectId
-  userId: string
-  name: string
-  description?: string
-  isDefault: boolean
-  steps: WorkflowStep[]
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string;
+  name: string;
+  description?: string;
+  isDefault: boolean;
+  steps: WorkflowStep[];
+  createdAt: Date;
 }
 
 export interface JobBoard {
-  _id?: ObjectId
-  userId: string
-  name: string
-  url: string
-  description?: string
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string;
+  name: string;
+  url: string;
+  description?: string;
+  createdAt: Date;
 }
 
 // User and Admin interfaces
 export interface User {
-  _id?: ObjectId
-  id: string // UUID
-  email: string
-  name: string
-  hashedPassword: string
-  createdAt: Date
-  updatedAt: Date
+  _id?: ObjectId;
+  id: string; // UUID
+  email: string;
+  name: string;
+  hashedPassword: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AdminUser {
-  _id?: ObjectId
-  username: string
-  hashedPassword: string
-  createdAt: Date
+  _id?: ObjectId;
+  username: string;
+  hashedPassword: string;
+  createdAt: Date;
 }

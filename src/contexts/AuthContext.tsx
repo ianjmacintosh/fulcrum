@@ -1,24 +1,32 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react'
-import { User } from '../db/schemas'
-import { AdminUser } from '../db/schemas'
+import React, { createContext, useState, useEffect, ReactNode } from "react";
+import { User } from "../db/schemas";
+import { AdminUser } from "../db/schemas";
 
 export interface AuthState {
-  user: User | AdminUser | null
-  userType: 'admin' | 'user' | null
-  isLoggedIn: boolean
-  isLoading: boolean
+  user: User | AdminUser | null;
+  userType: "admin" | "user" | null;
+  isLoggedIn: boolean;
+  isLoading: boolean;
 }
 
 export interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; userType?: 'admin' | 'user'; redirectUrl?: string }>
-  logout: () => Promise<void>
-  checkAuthStatus: () => Promise<void>
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    userType?: "admin" | "user";
+    redirectUrl?: string;
+  }>;
+  logout: () => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -26,137 +34,133 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: null,
     userType: null,
     isLoggedIn: false,
-    isLoading: true
-  })
+    isLoading: true,
+  });
 
   // Check authentication status on mount and when needed
   const checkAuthStatus = async () => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }))
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       // Check if we have a session cookie
-      const response = await fetch('/api/auth/status', {
-        method: 'GET',
-        credentials: 'include'
-      })
-      
+      const response = await fetch("/api/auth/status", {
+        method: "GET",
+        credentials: "include",
+      });
+
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json();
         if (data.success && data.authenticated && data.user) {
           setState({
             user: data.user,
             userType: data.userType,
             isLoggedIn: true,
-            isLoading: false
-          })
+            isLoading: false,
+          });
         } else {
           setState({
             user: null,
             userType: null,
             isLoggedIn: false,
-            isLoading: false
-          })
+            isLoading: false,
+          });
         }
       } else {
         setState({
           user: null,
           userType: null,
           isLoggedIn: false,
-          isLoading: false
-        })
+          isLoading: false,
+        });
       }
     } catch (error) {
-      console.error('Error checking auth status:', error)
+      console.error("Error checking auth status:", error);
       setState({
         user: null,
         userType: null,
         isLoggedIn: false,
-        isLoading: false
-      })
+        isLoading: false,
+      });
     }
-  }
+  };
 
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
-        body: JSON.stringify({ email, password })
-      })
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok && data.success) {
         // Refresh auth status after successful login
-        await checkAuthStatus()
-        return { 
-          success: true, 
+        await checkAuthStatus();
+        return {
+          success: true,
           userType: data.userType,
-          redirectUrl: data.redirectUrl 
-        }
+          redirectUrl: data.redirectUrl,
+        };
       } else {
-        return { 
-          success: false, 
-          error: data.error || 'Login failed' 
-        }
+        return {
+          success: false,
+          error: data.error || "Login failed",
+        };
       }
     } catch (error) {
-      console.error('Login error:', error)
-      return { 
-        success: false, 
-        error: 'Network error. Please try again.' 
-      }
+      console.error("Login error:", error);
+      return {
+        success: false,
+        error: "Network error. Please try again.",
+      };
     }
-  }
+  };
 
   // Logout function
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      })
-      
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
       // Clear auth state
       setState({
         user: null,
         userType: null,
         isLoggedIn: false,
-        isLoading: false
-      })
+        isLoading: false,
+      });
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error("Logout error:", error);
       // Clear auth state even if logout request fails
       setState({
         user: null,
         userType: null,
         isLoggedIn: false,
-        isLoading: false
-      })
+        isLoading: false,
+      });
     }
-  }
+  };
 
   // Check auth status on mount
   useEffect(() => {
-    checkAuthStatus()
-  }, [])
+    checkAuthStatus();
+  }, []);
 
   const value: AuthContextType = {
     ...state,
     login,
     logout,
-    checkAuthStatus
-  }
+    checkAuthStatus,
+  };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export { AuthContext }
+export { AuthContext };

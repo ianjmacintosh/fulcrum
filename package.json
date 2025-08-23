@@ -14,7 +14,18 @@
     "db:restore": "node scripts/restore-db.js",
     "db:test": "tsx test-connection.js",
     "test:unit": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "format": "prettier --write",
+    "format:check": "prettier --check",
+    "prepare": "husky"
+  },
+ "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.css": [
+      "prettier --write"
+    ]
   },
   "engines": {
     "node": ">=20.0.0"
@@ -43,7 +54,10 @@
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^4.7.0",
     "dotenv": "^17.2.1",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vite-tsconfig-paths": "^5.1.4",

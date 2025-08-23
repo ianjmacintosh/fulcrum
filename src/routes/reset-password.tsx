@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/reset-password')({
+export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
-})
+});
 
 function ResetPasswordPage() {
   return (
@@ -16,13 +16,34 @@ function ResetPasswordPage() {
         <div className="reset-password-content">
           <div className="message-box">
             <div className="icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="#667eea" strokeWidth="2"/>
-                <path d="m9 12 2 2 4-4" stroke="#667eea" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="#667eea"
+                  strokeWidth="2"
+                />
+                <path
+                  d="m9 12 2 2 4-4"
+                  stroke="#667eea"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <h2>Contact Your Admin</h2>
-            <p>To reset your password, please contact your system administrator. They will be able to help you regain access to your account.</p>
+            <p>
+              To reset your password, please contact your system administrator.
+              They will be able to help you regain access to your account.
+            </p>
           </div>
         </div>
 
@@ -143,5 +164,5 @@ function ResetPasswordPage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

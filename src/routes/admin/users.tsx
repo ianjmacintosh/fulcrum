@@ -1,373 +1,395 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { fetchCSRFTokens, CSRFTokens } from '../../utils/csrf-client'
-import { requireAdminAuth } from '../../utils/route-guards'
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { fetchCSRFTokens, CSRFTokens } from "../../utils/csrf-client";
+import { requireAdminAuth } from "../../utils/route-guards";
 
 // Server functions will be called via fetch, no direct imports needed
 
-export const Route = createFileRoute('/admin/users')({
+export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminAuth,
   loader: async () => {
     // Load CSRF tokens in the route loader
     try {
-      const { getCSRFTokens } = await import('../../server/admin-auth')
-      const csrfResult = await getCSRFTokens()
+      const { getCSRFTokens } = await import("../../server/admin-auth");
+      const csrfResult = await getCSRFTokens();
 
       return {
-        csrfTokens: csrfResult.success ? {
-          csrfToken: csrfResult.csrfToken!,
-          csrfHash: csrfResult.csrfHash!
-        } : null
-      }
+        csrfTokens: csrfResult.success
+          ? {
+              csrfToken: csrfResult.csrfToken!,
+              csrfHash: csrfResult.csrfHash!,
+            }
+          : null,
+      };
     } catch (error) {
-      console.error('Failed to load CSRF tokens in loader:', error)
-      return { csrfTokens: null }
+      console.error("Failed to load CSRF tokens in loader:", error);
+      return { csrfTokens: null };
     }
   },
   component: AdminUsersPage,
-})
+});
 
 interface User {
-  id: string
-  email: string
-  name: string
-  createdAt: string
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
 }
 
 interface UserDataSummary {
-  hasApplications: boolean
-  hasCustomJobBoards: boolean
-  hasDefaultWorkflow: boolean
-  applicationCount: number
-  jobBoardCount: number
+  hasApplications: boolean;
+  hasCustomJobBoards: boolean;
+  hasDefaultWorkflow: boolean;
+  applicationCount: number;
+  jobBoardCount: number;
 }
 
-
 interface NewUser {
-  email: string
-  name: string
-  password: string
+  email: string;
+  name: string;
+  password: string;
 }
 
 function AdminUsersPage() {
-  const router = useRouter()
-  const loaderData = Route.useLoaderData()
-  const [users, setUsers] = useState<User[]>([])
-  const [csrfTokens, setCsrfTokens] = useState<CSRFTokens | null>(loaderData.csrfTokens)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const router = useRouter();
+  const loaderData = Route.useLoaderData();
+  const [users, setUsers] = useState<User[]>([]);
+  const [csrfTokens, setCsrfTokens] = useState<CSRFTokens | null>(
+    loaderData.csrfTokens,
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [newUser, setNewUser] = useState<NewUser>({
-    email: '',
-    name: '',
-    password: ''
-  })
-  const [creatingUser, setCreatingUser] = useState(false)
-  const [deletingUser, setDeletingUser] = useState<string | null>(null)
-  const [resettingUser, setResettingUser] = useState<string | null>(null)
-  const [userDataSummaries, setUserDataSummaries] = useState<Record<string, UserDataSummary>>({})
+    email: "",
+    name: "",
+    password: "",
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [resettingUser, setResettingUser] = useState<string | null>(null);
+  const [userDataSummaries, setUserDataSummaries] = useState<
+    Record<string, UserDataSummary>
+  >({});
 
   // Initialize component
   useEffect(() => {
     // Check if CSRF tokens were loaded successfully
     if (!loaderData.csrfTokens) {
-      setError('Failed to load security tokens. Please refresh the page.')
+      setError("Failed to load security tokens. Please refresh the page.");
     }
 
-    fetchUsers()
-  }, [loaderData.csrfTokens])
+    fetchUsers();
+  }, [loaderData.csrfTokens]);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
-        credentials: 'include'  // This ensures cookies are sent with the request
-      })
-      const result = await response.json()
+      const response = await fetch("/api/admin/users", {
+        credentials: "include", // This ensures cookies are sent with the request
+      });
+      const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: '/admin' })
-        return
+        router.navigate({ to: "/admin" });
+        return;
       }
 
       if (result.success) {
-        setUsers(result.users)
+        setUsers(result.users);
         // Fetch data summaries for each user
-        fetchUserDataSummaries(result.users)
+        fetchUserDataSummaries(result.users);
       } else {
-        setError(result.error || 'Failed to fetch users')
+        setError(result.error || "Failed to fetch users");
       }
     } catch (err) {
-      setError('Failed to fetch users')
+      setError("Failed to fetch users");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchUserDataSummaries = async (userList: User[]) => {
-    const summaries: Record<string, UserDataSummary> = {}
+    const summaries: Record<string, UserDataSummary> = {};
 
     // Fetch data summary for each user
     for (const user of userList) {
       try {
-        const response = await fetch(`/api/admin/users/${user.id}/data-summary`, {
-          credentials: 'include'
-        })
-        const result = await response.json()
+        const response = await fetch(
+          `/api/admin/users/${user.id}/data-summary`,
+          {
+            credentials: "include",
+          },
+        );
+        const result = await response.json();
 
         if (result.success) {
-          summaries[user.id] = result.summary
+          summaries[user.id] = result.summary;
         }
       } catch (err) {
-        console.error(`Failed to fetch data summary for user ${user.id}:`, err)
+        console.error(`Failed to fetch data summary for user ${user.id}:`, err);
       }
     }
 
-    setUserDataSummaries(summaries)
-  }
+    setUserDataSummaries(summaries);
+  };
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', {
-        credentials: 'include'
-      })
-      router.navigate({ to: '/admin/logout' })
+      await fetch("/api/admin/logout", {
+        credentials: "include",
+      });
+      router.navigate({ to: "/admin/logout" });
     } catch (err) {
-      console.error('Logout error:', err)
-      router.navigate({ to: '/admin' })
+      console.error("Logout error:", err);
+      router.navigate({ to: "/admin" });
     }
-  }
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!csrfTokens) {
-      setError('Security token not ready. Please refresh the page.')
-      return
+      setError("Security token not ready. Please refresh the page.");
+      return;
     }
 
-    setCreatingUser(true)
-    setError('')
-    setSuccess('')
+    setCreatingUser(true);
+    setError("");
+    setSuccess("");
 
     try {
-      const formData = new FormData()
-      formData.append('email', newUser.email)
-      formData.append('name', newUser.name)
-      formData.append('password', newUser.password)
-      formData.append('csrf_token', csrfTokens.csrfToken)
-      formData.append('csrf_hash', csrfTokens.csrfHash)
+      const formData = new FormData();
+      formData.append("email", newUser.email);
+      formData.append("name", newUser.name);
+      formData.append("password", newUser.password);
+      formData.append("csrf_token", csrfTokens.csrfToken);
+      formData.append("csrf_hash", csrfTokens.csrfHash);
 
-      const response = await fetch('/api/admin/users/create', {
-        method: 'POST',
+      const response = await fetch("/api/admin/users/create", {
+        method: "POST",
         body: formData,
-        credentials: 'include'
-      })
+        credentials: "include",
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: '/admin' })
-        return
+        router.navigate({ to: "/admin" });
+        return;
       }
 
       if (result.success) {
-        setSuccess('User created successfully')
-        setNewUser({ email: '', name: '', password: '' })
+        setSuccess("User created successfully");
+        setNewUser({ email: "", name: "", password: "" });
         // Fetch new CSRF tokens
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
-        fetchUsers() // Refresh user list
+        fetchUsers(); // Refresh user list
       } else {
-        setError(result.error || 'Failed to create user')
+        setError(result.error || "Failed to create user");
         // Fetch new CSRF tokens on error
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
     } catch (err) {
-      setError('Failed to create user')
+      setError("Failed to create user");
       // Fetch new CSRF tokens on error
       try {
-        const newTokens = await fetchCSRFTokens()
-        setCsrfTokens(newTokens)
+        const newTokens = await fetchCSRFTokens();
+        setCsrfTokens(newTokens);
       } catch (tokenError) {
-        console.error('Failed to refresh CSRF tokens:', tokenError)
+        console.error("Failed to refresh CSRF tokens:", tokenError);
       }
     } finally {
-      setCreatingUser(false)
+      setCreatingUser(false);
     }
-  }
+  };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to delete user "${userName}"? This will also delete all their job applications and cannot be undone.`)) {
-      return
+    if (
+      !confirm(
+        `Are you sure you want to delete user "${userName}"? This will also delete all their job applications and cannot be undone.`,
+      )
+    ) {
+      return;
     }
 
     if (!csrfTokens) {
-      setError('Security token not ready. Please refresh the page.')
-      return
+      setError("Security token not ready. Please refresh the page.");
+      return;
     }
 
-    setDeletingUser(userId)
-    setError('')
-    setSuccess('')
+    setDeletingUser(userId);
+    setError("");
+    setSuccess("");
 
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'x-csrf-token': csrfTokens.csrfToken,
-          'x-csrf-hash': csrfTokens.csrfHash,
+          "x-csrf-token": csrfTokens.csrfToken,
+          "x-csrf-hash": csrfTokens.csrfHash,
         },
-        credentials: 'include'
-      })
+        credentials: "include",
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: '/admin' })
-        return
+        router.navigate({ to: "/admin" });
+        return;
       }
 
       if (result.success) {
-        setSuccess(result.message)
+        setSuccess(result.message);
         // Fetch new CSRF tokens
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
-        fetchUsers() // Refresh user list
+        fetchUsers(); // Refresh user list
       } else {
-        setError(result.error || 'Failed to delete user')
+        setError(result.error || "Failed to delete user");
         // Fetch new CSRF tokens on error
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
     } catch (err) {
-      setError('Failed to delete user')
+      setError("Failed to delete user");
       // Fetch new CSRF tokens on error
       try {
-        const newTokens = await fetchCSRFTokens()
-        setCsrfTokens(newTokens)
+        const newTokens = await fetchCSRFTokens();
+        setCsrfTokens(newTokens);
       } catch (tokenError) {
-        console.error('Failed to refresh CSRF tokens:', tokenError)
+        console.error("Failed to refresh CSRF tokens:", tokenError);
       }
     } finally {
-      setDeletingUser(null)
+      setDeletingUser(null);
     }
-  }
+  };
 
-  const handleResetUser = async (userId: string, userName: string, includeTestData: boolean) => {
-    const resetType = includeTestData ? 'reset with test data' : 'reset to defaults'
-    if (!confirm(`Are you sure you want to ${resetType} for user "${userName}"? This will delete all their applications and cannot be undone.`)) {
-      return
+  const handleResetUser = async (
+    userId: string,
+    userName: string,
+    includeTestData: boolean,
+  ) => {
+    const resetType = includeTestData
+      ? "reset with test data"
+      : "reset to defaults";
+    if (
+      !confirm(
+        `Are you sure you want to ${resetType} for user "${userName}"? This will delete all their applications and cannot be undone.`,
+      )
+    ) {
+      return;
     }
 
     if (!csrfTokens) {
-      setError('Security token not ready. Please refresh the page.')
-      return
+      setError("Security token not ready. Please refresh the page.");
+      return;
     }
 
-    setResettingUser(userId)
-    setError('')
-    setSuccess('')
+    setResettingUser(userId);
+    setError("");
+    setSuccess("");
 
     try {
-      const formData = new FormData()
-      formData.append('includeTestData', includeTestData.toString())
-      formData.append('preserveCustomJobBoards', 'false') // Always reset job boards for simplicity
-      formData.append('csrf_token', csrfTokens.csrfToken)
-      formData.append('csrf_hash', csrfTokens.csrfHash)
+      const formData = new FormData();
+      formData.append("includeTestData", includeTestData.toString());
+      formData.append("preserveCustomJobBoards", "false"); // Always reset job boards for simplicity
+      formData.append("csrf_token", csrfTokens.csrfToken);
+      formData.append("csrf_hash", csrfTokens.csrfHash);
 
       const response = await fetch(`/api/admin/users/${userId}/reset`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
-        credentials: 'include'
-      })
+        credentials: "include",
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: '/admin' })
-        return
+        router.navigate({ to: "/admin" });
+        return;
       }
 
       if (result.success) {
-        setSuccess(result.message)
+        setSuccess(result.message);
         // Fetch new CSRF tokens
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
-        fetchUsers() // Refresh user list and data summaries
+        fetchUsers(); // Refresh user list and data summaries
       } else {
-        setError(result.error || 'Failed to reset user data')
+        setError(result.error || "Failed to reset user data");
         // Fetch new CSRF tokens on error
         try {
-          const newTokens = await fetchCSRFTokens()
-          setCsrfTokens(newTokens)
+          const newTokens = await fetchCSRFTokens();
+          setCsrfTokens(newTokens);
         } catch (tokenError) {
-          console.error('Failed to refresh CSRF tokens:', tokenError)
+          console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
     } catch (err) {
-      setError('Failed to reset user data')
+      setError("Failed to reset user data");
       // Fetch new CSRF tokens on error
       try {
-        const newTokens = await fetchCSRFTokens()
-        setCsrfTokens(newTokens)
+        const newTokens = await fetchCSRFTokens();
+        setCsrfTokens(newTokens);
       } catch (tokenError) {
-        console.error('Failed to refresh CSRF tokens:', tokenError)
+        console.error("Failed to refresh CSRF tokens:", tokenError);
       }
     } finally {
-      setResettingUser(null)
+      setResettingUser(null);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setNewUser(prev => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
 
   const clearMessages = () => {
-    setError('')
-    setSuccess('')
-  }
+    setError("");
+    setSuccess("");
+  };
 
   const getDataStatusDisplay = (userId: string) => {
-    const summary = userDataSummaries[userId]
-    if (!summary) return 'Loading...'
+    const summary = userDataSummaries[userId];
+    if (!summary) return "Loading...";
 
     if (summary.applicationCount > 0) {
-      return `${summary.applicationCount} apps`
+      return `${summary.applicationCount} apps`;
     } else if (summary.hasDefaultWorkflow) {
-      return 'Default only'
+      return "Default only";
     } else {
-      return 'No data'
+      return "No data";
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="admin-loading">
         <div>Loading...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -379,14 +401,18 @@ function AdminUsersPage() {
       {error && (
         <div className="message error-message">
           {error}
-          <button onClick={clearMessages} className="close-button">×</button>
+          <button onClick={clearMessages} className="close-button">
+            ×
+          </button>
         </div>
       )}
 
       {success && (
         <div className="message success-message">
           {success}
-          <button onClick={clearMessages} className="close-button">×</button>
+          <button onClick={clearMessages} className="close-button">
+            ×
+          </button>
         </div>
       )}
 
@@ -403,15 +429,13 @@ function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.map((user) => (
               <tr key={user.id}>
                 <td className="user-id">{user.id}</td>
                 <td>{user.email}</td>
                 <td>{user.name}</td>
                 <td className="password-field">•••••••••</td>
-                <td className="data-status">
-                  {getDataStatusDisplay(user.id)}
-                </td>
+                <td className="data-status">{getDataStatusDisplay(user.id)}</td>
                 <td className="actions-cell">
                   <div className="actions-group">
                     <button
@@ -420,7 +444,7 @@ function AdminUsersPage() {
                       disabled={resettingUser === user.id}
                       title="Reset to default data only"
                     >
-                      {resettingUser === user.id ? 'Resetting...' : 'Reset'}
+                      {resettingUser === user.id ? "Resetting..." : "Reset"}
                     </button>
                     <button
                       onClick={() => handleResetUser(user.id, user.name, true)}
@@ -428,14 +452,18 @@ function AdminUsersPage() {
                       disabled={resettingUser === user.id}
                       title="Reset and add test applications"
                     >
-                      {resettingUser === user.id ? 'Resetting...' : 'Reset + Test'}
+                      {resettingUser === user.id
+                        ? "Resetting..."
+                        : "Reset + Test"}
                     </button>
                     <button
                       onClick={() => handleDeleteUser(user.id, user.name)}
                       className="delete-button"
-                      disabled={deletingUser === user.id || resettingUser === user.id}
+                      disabled={
+                        deletingUser === user.id || resettingUser === user.id
+                      }
                     >
-                      {deletingUser === user.id ? 'Deleting...' : 'Delete'}
+                      {deletingUser === user.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </td>
@@ -487,9 +515,14 @@ function AdminUsersPage() {
                 <button
                   onClick={handleCreateUser}
                   className="create-button"
-                  disabled={creatingUser || !newUser.email || !newUser.name || !newUser.password}
+                  disabled={
+                    creatingUser ||
+                    !newUser.email ||
+                    !newUser.name ||
+                    !newUser.password
+                  }
                 >
-                  {creatingUser ? 'Creating...' : 'Create'}
+                  {creatingUser ? "Creating..." : "Create"}
                 </button>
               </td>
             </tr>
@@ -780,5 +813,5 @@ function AdminUsersPage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

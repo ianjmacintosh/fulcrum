@@ -171,7 +171,13 @@
             "application/x-www-form-urlencoded": {
               "schema": {
                 "type": "object",
-                "required": ["email", "name", "password", "csrf_token", "csrf_hash"],
+                "required": [
+                  "email",
+                  "name",
+                  "password",
+                  "csrf_token",
+                  "csrf_hash"
+                ],
                 "properties": {
                   "email": {
                     "type": "string",
@@ -320,7 +326,11 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["currentPassword", "newPassword", "confirmPassword"],
+                "required": [
+                  "currentPassword",
+                  "newPassword",
+                  "confirmPassword"
+                ],
                 "properties": {
                   "currentPassword": {
                     "type": "string",
@@ -542,7 +552,14 @@
     "schemas": {
       "User": {
         "type": "object",
-        "required": ["id", "email", "name", "hashedPassword", "createdAt", "updatedAt"],
+        "required": [
+          "id",
+          "email",
+          "name",
+          "hashedPassword",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "_id": {
             "type": "string",
@@ -1016,7 +1033,11 @@
       },
       "MonthlyOverview": {
         "type": "object",
-        "required": ["applicationsThisMonth", "trendVsPreviousMonth", "dailyAverage"],
+        "required": [
+          "applicationsThisMonth",
+          "trendVsPreviousMonth",
+          "dailyAverage"
+        ],
         "properties": {
           "applicationsThisMonth": {
             "type": "integer",
@@ -1177,7 +1198,12 @@
       },
       "StepTransition": {
         "type": "object",
-        "required": ["fromStatusId", "toStatusId", "conversionRate", "averageDays"],
+        "required": [
+          "fromStatusId",
+          "toStatusId",
+          "conversionRate",
+          "averageDays"
+        ],
         "properties": {
           "fromStatusId": {
             "type": "string",

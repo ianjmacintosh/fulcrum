@@ -1,39 +1,42 @@
-import { randomBytes, createHash, timingSafeEqual } from 'crypto'
+import { randomBytes, createHash, timingSafeEqual } from "crypto";
 
 // CSRF token configuration
-const CSRF_TOKEN_LENGTH = 32
-const CSRF_SECRET_LENGTH = 32
-const TOKEN_EXPIRY_MS = 4 * 60 * 60 * 1000 // 4 hours
+const CSRF_TOKEN_LENGTH = 32;
+const CSRF_SECRET_LENGTH = 32;
+const TOKEN_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 // Store for CSRF tokens (in production, use Redis or session store)
-const tokenStore = new Map<string, { secret: string; expires: number }>()
+const tokenStore = new Map<string, { secret: string; expires: number }>();
 
 // Clean up expired tokens every hour
-setInterval(() => {
-  const now = Date.now()
-  const expiredTokens: string[] = []
-  
-  for (const [token, data] of tokenStore.entries()) {
-    if (now > data.expires) {
-      expiredTokens.push(token)
+setInterval(
+  () => {
+    const now = Date.now();
+    const expiredTokens: string[] = [];
+
+    for (const [token, data] of tokenStore.entries()) {
+      if (now > data.expires) {
+        expiredTokens.push(token);
+      }
     }
-  }
-  
-  expiredTokens.forEach(token => tokenStore.delete(token))
-}, 60 * 60 * 1000)
+
+    expiredTokens.forEach((token) => tokenStore.delete(token));
+  },
+  60 * 60 * 1000,
+);
 
 /**
  * Generate a new CSRF token and secret pair (SERVER ONLY)
  * @returns Object containing the token and secret
  */
 export function generateCSRFToken(): { token: string; secret: string } {
-  const token = randomBytes(CSRF_TOKEN_LENGTH).toString('hex')
-  const secret = randomBytes(CSRF_SECRET_LENGTH).toString('hex')
-  const expires = Date.now() + TOKEN_EXPIRY_MS
-  
-  tokenStore.set(token, { secret, expires })
-  
-  return { token, secret }
+  const token = randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
+  const secret = randomBytes(CSRF_SECRET_LENGTH).toString("hex");
+  const expires = Date.now() + TOKEN_EXPIRY_MS;
+
+  tokenStore.set(token, { secret, expires });
+
+  return { token, secret };
 }
 
 /**
@@ -43,9 +46,9 @@ export function generateCSRFToken(): { token: string; secret: string } {
  * @returns The CSRF hash to include in forms
  */
 export function createCSRFHash(token: string, secret: string): string {
-  return createHash('sha256')
+  return createHash("sha256")
     .update(token + secret)
-    .digest('hex')
+    .digest("hex");
 }
 
 /**
@@ -56,35 +59,35 @@ export function createCSRFHash(token: string, secret: string): string {
  */
 export function verifyCSRFToken(token: string, hash: string): boolean {
   if (!token || !hash) {
-    return false
+    return false;
   }
-  
-  const tokenData = tokenStore.get(token)
+
+  const tokenData = tokenStore.get(token);
   if (!tokenData) {
-    return false
+    return false;
   }
-  
+
   // Check if token has expired
   if (Date.now() > tokenData.expires) {
-    tokenStore.delete(token)
-    return false
+    tokenStore.delete(token);
+    return false;
   }
-  
+
   // Create expected hash
-  const expectedHash = createCSRFHash(token, tokenData.secret)
-  
+  const expectedHash = createCSRFHash(token, tokenData.secret);
+
   // Use timing-safe comparison to prevent timing attacks
   try {
-    const tokenBuffer = Buffer.from(hash, 'hex')
-    const expectedBuffer = Buffer.from(expectedHash, 'hex')
-    
+    const tokenBuffer = Buffer.from(hash, "hex");
+    const expectedBuffer = Buffer.from(expectedHash, "hex");
+
     if (tokenBuffer.length !== expectedBuffer.length) {
-      return false
+      return false;
     }
-    
-    return timingSafeEqual(tokenBuffer, expectedBuffer)
+
+    return timingSafeEqual(tokenBuffer, expectedBuffer);
   } catch (error) {
-    return false
+    return false;
   }
 }
 
@@ -93,7 +96,7 @@ export function verifyCSRFToken(token: string, hash: string): boolean {
  * @param token - The token to clean up
  */
 export function cleanupCSRFToken(token: string): void {
-  tokenStore.delete(token)
+  tokenStore.delete(token);
 }
 
 /**
@@ -101,13 +104,13 @@ export function cleanupCSRFToken(token: string): void {
  * @returns Object with token and hash for form inclusion
  */
 export function getCSRFTokenData(): { csrfToken: string; csrfHash: string } {
-  const { token, secret } = generateCSRFToken()
-  const hash = createCSRFHash(token, secret)
-  
+  const { token, secret } = generateCSRFToken();
+  const hash = createCSRFHash(token, secret);
+
   return {
     csrfToken: token,
-    csrfHash: hash
-  }
+    csrfHash: hash,
+  };
 }
 
 /**
@@ -115,35 +118,40 @@ export function getCSRFTokenData(): { csrfToken: string; csrfHash: string } {
  * @param request - The incoming request
  * @returns Promise resolving to validation result
  */
-export async function validateCSRFFromRequest(request: Request): Promise<boolean> {
+export async function validateCSRFFromRequest(
+  request: Request,
+): Promise<boolean> {
   try {
-    const contentType = request.headers.get('content-type') || ''
-    
+    const contentType = request.headers.get("content-type") || "";
+
     // Try to get CSRF data from form data first (supports both multipart/form-data and application/x-www-form-urlencoded)
-    if (contentType.includes('multipart/form-data') || contentType.includes('application/x-www-form-urlencoded')) {
+    if (
+      contentType.includes("multipart/form-data") ||
+      contentType.includes("application/x-www-form-urlencoded")
+    ) {
       try {
-        const formData = await request.formData()
-        const token = formData.get('csrf_token') as string
-        const hash = formData.get('csrf_hash') as string
-        
+        const formData = await request.formData();
+        const token = formData.get("csrf_token") as string;
+        const hash = formData.get("csrf_hash") as string;
+
         if (token && hash) {
-          return verifyCSRFToken(token, hash)
+          return verifyCSRFToken(token, hash);
         }
       } catch (formError) {
         // If form parsing fails, fall through to headers
       }
     }
-    
+
     // Try headers as fallback
-    const token = request.headers.get('x-csrf-token')
-    const hash = request.headers.get('x-csrf-hash')
-    
+    const token = request.headers.get("x-csrf-token");
+    const hash = request.headers.get("x-csrf-hash");
+
     if (token && hash) {
-      return verifyCSRFToken(token, hash)
+      return verifyCSRFToken(token, hash);
     }
-    
-    return false
+
+    return false;
   } catch (error) {
-    return false
+    return false;
   }
 }

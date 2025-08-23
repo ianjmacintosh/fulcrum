@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { Footer } from "./Footer";
 import "@testing-library/jest-dom/vitest";
 
-describe('<Footer>', () => {
-    beforeEach(() => {
-        render(<Footer />);
-    });
+describe("<Footer>", () => {
+  beforeEach(() => {
+    render(<Footer />);
+  });
 
-    test("displays the current year", () => {
-        const footer = document.querySelector("footer");
-        expect(footer).toHaveTextContent("2025");
-    });
+  test("displays the current year", () => {
+    const footer = document.querySelector("footer");
+    expect(footer).toHaveTextContent("2025");
+  });
 });

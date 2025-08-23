@@ -36,7 +36,9 @@
   font-size: 0.875rem;
   color: #374151;
   background-color: white;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .form-select:focus,
@@ -114,7 +116,7 @@
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .event-form {
     padding: 1rem;
   }

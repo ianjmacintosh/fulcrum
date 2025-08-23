@@ -1,103 +1,103 @@
 .job-boards-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .job-board-card {
-    padding: 1.5rem;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+  padding: 1.5rem;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .job-board-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .job-board-header h3 {
-    margin: 0;
-    color: #333;
+  margin: 0;
+  color: #333;
 }
 
 .job-board-status {
-    padding: 0.25rem 0.75rem;
-    background-color: #e8e8e8;
-    color: #333;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  background-color: #e8e8e8;
+  color: #333;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .job-board-status.inactive {
-    background-color: #f0f0f0;
-    color: #888;
+  background-color: #f0f0f0;
+  color: #888;
 }
 
 .job-board-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .stat-label {
-    font-size: 0.8rem;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #333;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .saved-searches h4 {
-    margin: 0 0 0.5rem 0;
-    color: #555;
-    font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+  color: #555;
+  font-size: 0.9rem;
 }
 
 .saved-searches ul {
-    margin: 0;
-    padding-left: 1.5rem;
-    color: #666;
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #666;
 }
 
 .saved-searches li {
-    margin-bottom: 0.25rem;
-    font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
 }
 
 .add-job-board {
-    text-align: center;
+  text-align: center;
 }
 
 .add-button {
-    padding: 1rem 2rem;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    color: #666;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  padding: 1rem 2rem;
+  background-color: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .add-button:hover {
-    background-color: #e8e8e8;
-    border-color: #999;
-    color: #333;
+  background-color: #e8e8e8;
+  border-color: #999;
+  color: #333;
 }

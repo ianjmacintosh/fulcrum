@@ -7,29 +7,29 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      env:
-        BASE_URL: ${{ github.event.deployment_status.environment_url }}
-        USER_EMAIL: ${{ vars.USER_EMAIL }}
-        USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
-        ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
-        ADMIN_PASSWORD: ${{ github.event.deployment_status.environment == 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
-        DEPLOY_LEVEL: ${{ github.event.deployment_status.environment == 'production' && 'Production' || 'Development' }}
-      run: |
-        echo Deploying to: $DEPLOY_LEVEL
-        echo Deployment URL: $BASE_URL
-        npm run test:e2e
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        env:
+          BASE_URL: ${{ github.event.deployment_status.environment_url }}
+          USER_EMAIL: ${{ vars.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ github.event.deployment_status.environment == 'production' && secrets.PROD_ADMIN_PASSWORD || secrets.DEV_ADMIN_PASSWORD }}
+          DEPLOY_LEVEL: ${{ github.event.deployment_status.environment == 'production' && 'Production' || 'Development' }}
+        run: |
+          echo Deploying to: $DEPLOY_LEVEL
+          echo Deployment URL: $BASE_URL
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

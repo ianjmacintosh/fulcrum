@@ -2,7 +2,10 @@ import { render, act, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { RouterAuthProvider } from "./RouterAuthProvider";
-import { AuthContext as ReactAuthContext, AuthContextType } from "../contexts/AuthContext";
+import {
+  AuthContext as ReactAuthContext,
+  AuthContextType,
+} from "../contexts/AuthContext";
 import { AuthContext as RouterAuthContext } from "../router";
 
 // Mock TanStack Router
@@ -15,13 +18,16 @@ const mockRouter = {
   invalidate: mockInvalidate,
   update: mockUpdate,
   state: {
-    location: { pathname: '/dashboard', href: 'http://localhost:3000/dashboard' },
-    matches: [{ id: 'dashboard' }]
-  }
+    location: {
+      pathname: "/dashboard",
+      href: "http://localhost:3000/dashboard",
+    },
+    matches: [{ id: "dashboard" }],
+  },
 };
 
-vi.mock('@tanstack/react-router', () => ({
-  useRouter: () => mockRouter
+vi.mock("@tanstack/react-router", () => ({
+  useRouter: () => mockRouter,
 }));
 
 const defaultAuthContext: AuthContextType = {
@@ -31,14 +37,14 @@ const defaultAuthContext: AuthContextType = {
   isLoading: false,
   login: vi.fn(),
   logout: vi.fn(),
-  checkAuthStatus: vi.fn()
+  checkAuthStatus: vi.fn(),
 };
 
 // Helper to render with auth context
 const renderWithAuthContext = (authContext: Partial<AuthContextType> = {}) => {
   const contextValue: AuthContextType = {
     ...defaultAuthContext,
-    ...authContext
+    ...authContext,
   };
 
   return render(
@@ -46,50 +52,50 @@ const renderWithAuthContext = (authContext: Partial<AuthContextType> = {}) => {
       <RouterAuthProvider>
         <div data-testid="child">Test Child</div>
       </RouterAuthProvider>
-    </ReactAuthContext.Provider>
+    </ReactAuthContext.Provider>,
   );
 };
 
-describe('RouterAuthProvider', () => {
+describe("RouterAuthProvider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRouter.state.location.pathname = '/dashboard';
-    mockRouter.state.matches = [{ id: 'dashboard' }];
+    mockRouter.state.location.pathname = "/dashboard";
+    mockRouter.state.matches = [{ id: "dashboard" }];
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  test('renders children when auth context is available', () => {
+  test("renders children when auth context is available", () => {
     const { getByTestId } = renderWithAuthContext();
-    expect(getByTestId('child')).toBeInTheDocument();
+    expect(getByTestId("child")).toBeInTheDocument();
   });
 
-  test('does not render children when auth context is null', () => {
+  test("does not render children when auth context is null", () => {
     const { container } = render(
       <ReactAuthContext.Provider value={null}>
         <RouterAuthProvider>
           <div data-testid="child">Test Child</div>
         </RouterAuthProvider>
-      </ReactAuthContext.Provider>
+      </ReactAuthContext.Provider>,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  test('updates router context when user logs in', async () => {
+  test("updates router context when user logs in", async () => {
     const user = {
-      id: 'user123',
-      email: 'user@example.com',
-      name: 'Test User',
-      createdAt: new Date('2025-01-01')
+      id: "user123",
+      email: "user@example.com",
+      name: "Test User",
+      createdAt: new Date("2025-01-01"),
     };
 
     renderWithAuthContext({
       user,
-      userType: 'user',
+      userType: "user",
       isLoggedIn: true,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
@@ -97,33 +103,33 @@ describe('RouterAuthProvider', () => {
         context: {
           auth: {
             user: {
-              id: 'user123',
-              email: 'user@example.com',
-              name: 'Test User',
+              id: "user123",
+              email: "user@example.com",
+              name: "Test User",
               username: undefined,
               createdAt: user.createdAt,
-              updatedAt: undefined
+              updatedAt: undefined,
             },
-            userType: 'user',
+            userType: "user",
             authenticated: true,
-            session: null
-          }
-        }
+            session: null,
+          },
+        },
       });
     });
   });
 
-  test('updates router context when admin logs in', async () => {
+  test("updates router context when admin logs in", async () => {
     const adminUser = {
-      username: 'admin',
-      createdAt: new Date('2025-01-01')
+      username: "admin",
+      createdAt: new Date("2025-01-01"),
     };
 
     renderWithAuthContext({
       user: adminUser,
-      userType: 'admin',
+      userType: "admin",
       isLoggedIn: true,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
@@ -131,70 +137,70 @@ describe('RouterAuthProvider', () => {
         context: {
           auth: {
             user: {
-              id: 'admin',
+              id: "admin",
               email: undefined,
               name: undefined,
-              username: 'admin',
+              username: "admin",
               createdAt: adminUser.createdAt,
-              updatedAt: undefined
+              updatedAt: undefined,
             },
-            userType: 'admin',
+            userType: "admin",
             authenticated: true,
-            session: null
-          }
-        }
+            session: null,
+          },
+        },
       });
     });
   });
 
-  test('redirects to login when accessing protected route while unauthenticated', async () => {
-    mockRouter.state.location.pathname = '/applications';
-    
+  test("redirects to login when accessing protected route while unauthenticated", async () => {
+    mockRouter.state.location.pathname = "/applications";
+
     renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: false // Important: not loading, so auth check is complete
+      isLoading: false, // Important: not loading, so auth check is complete
     });
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith({
-        to: '/login',
+        to: "/login",
         search: {
-          redirect: 'http://localhost:3000/dashboard'
-        }
+          redirect: "http://localhost:3000/dashboard",
+        },
       });
     });
   });
 
-  test('redirects to login when accessing admin route while unauthenticated', async () => {
-    mockRouter.state.location.pathname = '/admin/users';
-    
+  test("redirects to login when accessing admin route while unauthenticated", async () => {
+    mockRouter.state.location.pathname = "/admin/users";
+
     renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith({
-        to: '/login',
+        to: "/login",
         search: {
-          redirect: 'http://localhost:3000/dashboard'
-        }
+          redirect: "http://localhost:3000/dashboard",
+        },
       });
     });
   });
 
-  test('does not redirect when user is on login page', async () => {
-    mockRouter.state.location.pathname = '/login';
-    
+  test("does not redirect when user is on login page", async () => {
+    mockRouter.state.location.pathname = "/login";
+
     renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
@@ -202,14 +208,14 @@ describe('RouterAuthProvider', () => {
     });
   });
 
-  test('does not redirect when auth is still loading', async () => {
-    mockRouter.state.location.pathname = '/applications';
-    
+  test("does not redirect when auth is still loading", async () => {
+    mockRouter.state.location.pathname = "/applications";
+
     renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: true // Still loading, should not redirect yet
+      isLoading: true, // Still loading, should not redirect yet
     });
 
     await waitFor(() => {
@@ -217,20 +223,20 @@ describe('RouterAuthProvider', () => {
     });
   });
 
-  test('invalidates router when authenticated user accesses protected route', async () => {
-    mockRouter.state.location.pathname = '/applications';
-    
+  test("invalidates router when authenticated user accesses protected route", async () => {
+    mockRouter.state.location.pathname = "/applications";
+
     const user = {
-      id: 'user123',
-      email: 'user@example.com',
-      createdAt: new Date('2025-01-01')
+      id: "user123",
+      email: "user@example.com",
+      createdAt: new Date("2025-01-01"),
     };
 
     renderWithAuthContext({
       user,
-      userType: 'user',
+      userType: "user",
       isLoggedIn: true,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
@@ -239,14 +245,14 @@ describe('RouterAuthProvider', () => {
     });
   });
 
-  test('allows access to public routes without authentication', async () => {
-    mockRouter.state.location.pathname = '/';
-    
+  test("allows access to public routes without authentication", async () => {
+    mockRouter.state.location.pathname = "/";
+
     renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: false
+      isLoading: false,
     });
 
     await waitFor(() => {
@@ -255,12 +261,12 @@ describe('RouterAuthProvider', () => {
     });
   });
 
-  test('handles auth state changes correctly', async () => {
+  test("handles auth state changes correctly", async () => {
     const { rerender } = renderWithAuthContext({
       user: null,
       userType: null,
       isLoggedIn: false,
-      isLoading: true
+      isLoading: true,
     });
 
     // Initially loading, no navigation
@@ -268,23 +274,25 @@ describe('RouterAuthProvider', () => {
 
     // User logs in
     const user = {
-      id: 'user123',
-      email: 'user@example.com',
-      createdAt: new Date('2025-01-01')
+      id: "user123",
+      email: "user@example.com",
+      createdAt: new Date("2025-01-01"),
     };
 
     rerender(
-      <ReactAuthContext.Provider value={{
-        ...defaultAuthContext,
-        user,
-        userType: 'user',
-        isLoggedIn: true,
-        isLoading: false
-      }}>
+      <ReactAuthContext.Provider
+        value={{
+          ...defaultAuthContext,
+          user,
+          userType: "user",
+          isLoggedIn: true,
+          isLoading: false,
+        }}
+      >
         <RouterAuthProvider>
           <div data-testid="child">Test Child</div>
         </RouterAuthProvider>
-      </ReactAuthContext.Provider>
+      </ReactAuthContext.Provider>,
     );
 
     await waitFor(() => {
@@ -292,39 +300,41 @@ describe('RouterAuthProvider', () => {
         context: {
           auth: expect.objectContaining({
             authenticated: true,
-            userType: 'user'
-          })
-        }
+            userType: "user",
+          }),
+        },
       });
     });
   });
 
-  test('handles user logout correctly', async () => {
+  test("handles user logout correctly", async () => {
     // Start with logged in user
     const { rerender } = renderWithAuthContext({
       user: {
-        id: 'user123',
-        email: 'user@example.com',
-        createdAt: new Date('2025-01-01')
+        id: "user123",
+        email: "user@example.com",
+        createdAt: new Date("2025-01-01"),
       },
-      userType: 'user',
+      userType: "user",
       isLoggedIn: true,
-      isLoading: false
+      isLoading: false,
     });
 
     // User logs out
     rerender(
-      <ReactAuthContext.Provider value={{
-        ...defaultAuthContext,
-        user: null,
-        userType: null,
-        isLoggedIn: false,
-        isLoading: false
-      }}>
+      <ReactAuthContext.Provider
+        value={{
+          ...defaultAuthContext,
+          user: null,
+          userType: null,
+          isLoggedIn: false,
+          isLoading: false,
+        }}
+      >
         <RouterAuthProvider>
           <div data-testid="child">Test Child</div>
         </RouterAuthProvider>
-      </ReactAuthContext.Provider>
+      </ReactAuthContext.Provider>,
     );
 
     await waitFor(() => {
@@ -333,9 +343,9 @@ describe('RouterAuthProvider', () => {
           auth: expect.objectContaining({
             authenticated: false,
             user: null,
-            userType: null
-          })
-        }
+            userType: null,
+          }),
+        },
       });
     });
   });

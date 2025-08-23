@@ -1,48 +1,48 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { requireUserAuth } from '../../../utils/route-guards'
-import { EventRecordingForm } from '../../../components/EventRecordingForm'
-import './details.css'
+import { createFileRoute } from "@tanstack/react-router";
+import { requireUserAuth } from "../../../utils/route-guards";
+import { EventRecordingForm } from "../../../components/EventRecordingForm";
+import "./details.css";
 
-export const Route = createFileRoute('/applications/$id/details')({
+export const Route = createFileRoute("/applications/$id/details")({
   beforeLoad: requireUserAuth,
   loader: async ({ params }) => {
     // On server-side, skip loading data if user is not authenticated
     // Client will reload once auth context is available
-    if (typeof window === 'undefined') {
-      return { application: null }
+    if (typeof window === "undefined") {
+      return { application: null };
     }
-    
+
     try {
-      const response = await fetch(`/api/applications/${params.id}`, { 
-        credentials: 'include' 
-      })
-      
+      const response = await fetch(`/api/applications/${params.id}`, {
+        credentials: "include",
+      });
+
       if (response.status === 404) {
         // Application not found - return null to show "Application not found" message
-        return { application: null }
+        return { application: null };
       }
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch application: ${response.status}`)
+        throw new Error(`Failed to fetch application: ${response.status}`);
       }
-      
-      const result = await response.json()
-      
+
+      const result = await response.json();
+
       if (!result.success) {
-        throw new Error('Application API returned error')
+        throw new Error("Application API returned error");
       }
-      
-      return { application: result.application }
+
+      return { application: result.application };
     } catch (error) {
-      console.error('Application details loader error:', error)
-      throw error
+      console.error("Application details loader error:", error);
+      throw error;
     }
   },
   component: ApplicationDetails,
-})
+});
 
 function ApplicationDetails() {
-  const { application } = Route.useLoaderData()
+  const { application } = Route.useLoaderData();
 
   if (!application) {
     return (
@@ -51,46 +51,46 @@ function ApplicationDetails() {
           <p>Application not found</p>
         </div>
       </div>
-    )
+    );
   }
 
-  const formatApplicationType = (applicationType: 'cold' | 'warm') => {
-    return applicationType === 'cold' ? 'Cold Application' : 'Warm Application'
-  }
+  const formatApplicationType = (applicationType: "cold" | "warm") => {
+    return applicationType === "cold" ? "Cold Application" : "Warm Application";
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
-  }
+    return new Date(dateString).toLocaleDateString();
+  };
 
   const handleEventCreated = () => {
     // Refresh the page to show the new event
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handleStatusDateChange = async (dateField: string, value: string) => {
     try {
       const response = await fetch(`/api/applications/${application._id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
-          [dateField]: value || null
-        })
-      })
+          [dateField]: value || null,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to update ${dateField}`)
+        throw new Error(`Failed to update ${dateField}`);
       }
 
       // Refresh the page to show the updated status
-      window.location.reload()
+      window.location.reload();
     } catch (error) {
-      console.error(`Error updating ${dateField}:`, error)
+      console.error(`Error updating ${dateField}:`, error);
       // Could add a toast notification here
     }
-  }
+  };
 
   return (
     <div className="page">
@@ -107,19 +107,24 @@ function ApplicationDetails() {
             <div className="application-metadata">
               <div className="metadata-item">
                 <span className="metadata-label">Application Type:</span>
-                <span className="metadata-value">{formatApplicationType(application.applicationType)}</span>
+                <span className="metadata-value">
+                  {formatApplicationType(application.applicationType)}
+                </span>
               </div>
               <div className="metadata-item">
                 <span className="metadata-label">Role Type:</span>
                 <span className="metadata-value">
-                  {application.roleType === 'manager' ? 'Manager' : 'Engineer'}
+                  {application.roleType === "manager" ? "Manager" : "Engineer"}
                 </span>
               </div>
               <div className="metadata-item">
                 <span className="metadata-label">Location:</span>
                 <span className="metadata-value">
-                  {application.locationType === 'on-site' ? 'On-site' : 
-                   application.locationType === 'hybrid' ? 'Hybrid' : 'Remote'}
+                  {application.locationType === "on-site"
+                    ? "On-site"
+                    : application.locationType === "hybrid"
+                      ? "Hybrid"
+                      : "Remote"}
                 </span>
               </div>
               <div className="metadata-item">
@@ -137,56 +142,68 @@ function ApplicationDetails() {
           <div className="status-dates">
             <div className="status-date-group">
               <label htmlFor="appliedDate">Applied Date:</label>
-              <input 
-                type="date" 
-                id="appliedDate" 
-                value={application.appliedDate || ''} 
-                onChange={(e) => handleStatusDateChange('appliedDate', e.target.value)}
+              <input
+                type="date"
+                id="appliedDate"
+                value={application.appliedDate || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("appliedDate", e.target.value)
+                }
               />
             </div>
             <div className="status-date-group">
               <label htmlFor="phoneScreenDate">Phone Screen Date:</label>
-              <input 
-                type="date" 
-                id="phoneScreenDate" 
-                value={application.phoneScreenDate || ''} 
-                onChange={(e) => handleStatusDateChange('phoneScreenDate', e.target.value)}
+              <input
+                type="date"
+                id="phoneScreenDate"
+                value={application.phoneScreenDate || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("phoneScreenDate", e.target.value)
+                }
               />
             </div>
             <div className="status-date-group">
               <label htmlFor="round1Date">Round 1 Date:</label>
-              <input 
-                type="date" 
-                id="round1Date" 
-                value={application.round1Date || ''} 
-                onChange={(e) => handleStatusDateChange('round1Date', e.target.value)}
+              <input
+                type="date"
+                id="round1Date"
+                value={application.round1Date || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("round1Date", e.target.value)
+                }
               />
             </div>
             <div className="status-date-group">
               <label htmlFor="round2Date">Round 2 Date:</label>
-              <input 
-                type="date" 
-                id="round2Date" 
-                value={application.round2Date || ''} 
-                onChange={(e) => handleStatusDateChange('round2Date', e.target.value)}
+              <input
+                type="date"
+                id="round2Date"
+                value={application.round2Date || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("round2Date", e.target.value)
+                }
               />
             </div>
             <div className="status-date-group">
               <label htmlFor="acceptedDate">Accepted Date:</label>
-              <input 
-                type="date" 
-                id="acceptedDate" 
-                value={application.acceptedDate || ''} 
-                onChange={(e) => handleStatusDateChange('acceptedDate', e.target.value)}
+              <input
+                type="date"
+                id="acceptedDate"
+                value={application.acceptedDate || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("acceptedDate", e.target.value)
+                }
               />
             </div>
             <div className="status-date-group">
               <label htmlFor="declinedDate">Declined Date:</label>
-              <input 
-                type="date" 
-                id="declinedDate" 
-                value={application.declinedDate || ''} 
-                onChange={(e) => handleStatusDateChange('declinedDate', e.target.value)}
+              <input
+                type="date"
+                id="declinedDate"
+                value={application.declinedDate || ""}
+                onChange={(e) =>
+                  handleStatusDateChange("declinedDate", e.target.value)
+                }
               />
             </div>
           </div>
@@ -206,14 +223,10 @@ function ApplicationDetails() {
               <tbody>
                 {application.events.map((event: any) => (
                   <tr key={event.id}>
-                    <td className="event-date">
-                      {formatDate(event.date)}
-                    </td>
-                    <td className="event-title">
-                      {event.title}
-                    </td>
+                    <td className="event-date">{formatDate(event.date)}</td>
+                    <td className="event-title">{event.title}</td>
                     <td className="event-description">
-                      {event.description || '-'}
+                      {event.description || "-"}
                     </td>
                   </tr>
                 ))}
@@ -224,12 +237,12 @@ function ApplicationDetails() {
 
         <section className="event-actions">
           <h2>Add Event</h2>
-          <EventRecordingForm 
-            applicationId={application._id} 
+          <EventRecordingForm
+            applicationId={application._id}
             onEventCreated={handleEventCreated}
           />
         </section>
       </main>
     </div>
-  )
+  );
 }
