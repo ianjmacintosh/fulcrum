@@ -12,6 +12,7 @@ npm run db:restore   # Restore from backup using MONGO_URL
 ## Quick Start
 
 ### Create a backup
+
 ```bash
 # Set source database
 export MONGO_URL="mongodb://your-connection-string"
@@ -19,8 +20,9 @@ npm run db:backup
 ```
 
 ### Restore from backup
+
 ```bash
-# Set target database  
+# Set target database
 export MONGO_URL="mongodb://your-connection-string"
 npm run db:restore backups/backup_2025-08-21T17-36-31
 ```
@@ -28,6 +30,7 @@ npm run db:restore backups/backup_2025-08-21T17-36-31
 ## Cross-Environment Operations
 
 ### Backup from production, restore to staging
+
 ```bash
 # 1. Backup from production
 export MONGO_URL="mongodb://production-connection-string"

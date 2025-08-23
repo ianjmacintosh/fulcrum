@@ -1,145 +1,145 @@
 .resumes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .resume-card {
-    padding: 1.5rem;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+  padding: 1.5rem;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .resume-card.featured {
-    border-color: #999;
-    background-color: #f5f5f5;
+  border-color: #999;
+  background-color: #f5f5f5;
 }
 
 .resume-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .resume-header h3 {
-    margin: 0;
-    color: #333;
+  margin: 0;
+  color: #333;
 }
 
 .resume-status {
-    padding: 0.25rem 0.75rem;
-    background-color: #e8e8e8;
-    color: #333;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  background-color: #e8e8e8;
+  color: #333;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
 }
 
 .resume-status.inactive {
-    background-color: #f0f0f0;
-    color: #888;
+  background-color: #f0f0f0;
+  color: #888;
 }
 
 .resume-card.featured .resume-status {
-    background-color: #d0d0d0;
-    color: #333;
+  background-color: #d0d0d0;
+  color: #333;
 }
 
 .resume-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .stat-label {
-    font-size: 0.8rem;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
-    font-size: 1rem;
-    font-weight: bold;
-    color: #333;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .resume-actions {
-    display: flex;
-    gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .action-button {
-    padding: 0.5rem 1rem;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #666;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .action-button:hover {
-    background-color: #e8e8e8;
-    color: #333;
+  background-color: #e8e8e8;
+  color: #333;
 }
 
 .resume-insights {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 .resume-insights h2 {
-    margin-bottom: 1rem;
-    color: #333;
+  margin-bottom: 1rem;
+  color: #333;
 }
 
 .insight-card {
-    padding: 1rem;
-    background-color: #f5f5f5;
-    border-left: 4px solid #999;
-    border-radius: 4px;
-    margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-left: 4px solid #999;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 }
 
 .insight-card h4 {
-    margin: 0 0 0.5rem 0;
-    color: #333;
+  margin: 0 0 0.5rem 0;
+  color: #333;
 }
 
 .insight-card p {
-    margin: 0;
-    color: #666;
-    line-height: 1.4;
+  margin: 0;
+  color: #666;
+  line-height: 1.4;
 }
 
 .add-resume {
-    text-align: center;
+  text-align: center;
 }
 
 .add-button {
-    padding: 1rem 2rem;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    color: #666;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  padding: 1rem 2rem;
+  background-color: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .add-button:hover {
-    background-color: #e8e8e8;
-    border-color: #999;
-    color: #333;
+  background-color: #e8e8e8;
+  border-color: #999;
+  color: #333;
 }

@@ -1,111 +1,116 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
-import { requireAdminAuth } from '../../utils/route-guards'
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
+import { requireAdminAuth } from "../../utils/route-guards";
 
-export const Route = createFileRoute('/admin/change-password')({
+export const Route = createFileRoute("/admin/change-password")({
   beforeLoad: requireAdminAuth,
   component: AdminChangePasswordPage,
-})
+});
 
 interface PasswordFormData {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 function AdminChangePasswordPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState<PasswordFormData>({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  })
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
     // Client-side validation
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("New password and confirmation don't match")
-      setLoading(false)
-      return
+      setError("New password and confirmation don't match");
+      setLoading(false);
+      return;
     }
 
     if (formData.newPassword.length < 8) {
-      setError('New password must be at least 8 characters')
-      setLoading(false)
-      return
+      setError("New password must be at least 8 characters");
+      setLoading(false);
+      return;
     }
 
     try {
-      const response = await fetch('/api/admin/change-password', {
-        method: 'POST',
+      const response = await fetch("/api/admin/change-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
-          confirmPassword: formData.confirmPassword
-        })
-      })
-      
-      const result = await response.json()
+          confirmPassword: formData.confirmPassword,
+        }),
+      });
+
+      const result = await response.json();
 
       if (response.ok && result.success) {
-        setSuccess('Password changed successfully!')
+        setSuccess("Password changed successfully!");
         setFormData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        })
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       } else {
         // Handle rate limiting specially
         if (response.status === 429) {
-          const retryAfter = result?.retryAfter
+          const retryAfter = result?.retryAfter;
           if (retryAfter) {
-            const minutes = Math.ceil(retryAfter / 60)
-            setError(`Too many failed attempts. Please wait ${minutes} minute${minutes > 1 ? 's' : ''} before trying again.`)
+            const minutes = Math.ceil(retryAfter / 60);
+            setError(
+              `Too many failed attempts. Please wait ${minutes} minute${minutes > 1 ? "s" : ""} before trying again.`,
+            );
           } else {
-            setError(result?.error || 'Too many failed attempts. Please try again later.')
+            setError(
+              result?.error ||
+                "Too many failed attempts. Please try again later.",
+            );
           }
         } else {
-          setError(result?.error || 'Failed to change password')
+          setError(result?.error || "Failed to change password");
         }
       }
     } catch (err) {
-      console.error('Password change error:', err)
-      setError('An error occurred. Please try again.')
+      console.error("Password change error:", err);
+      setError("An error occurred. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Clear messages when user starts typing
-    if (error) setError('')
-    if (success) setSuccess('')
-  }
+    if (error) setError("");
+    if (success) setSuccess("");
+  };
 
   const handleBackToUsers = () => {
-    router.navigate({ to: '/admin/users' })
-  }
+    router.navigate({ to: "/admin/users" });
+  };
 
   return (
     <div className="admin-change-password">
       <div className="admin-change-password-container">
         <div className="admin-change-password-header">
-          <button 
+          <button
             type="button"
             onClick={handleBackToUsers}
             className="back-button"
@@ -166,12 +171,12 @@ function AdminChangePasswordPage() {
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="change-password-button"
             disabled={loading}
           >
-            {loading ? 'Changing Password...' : 'Change Password'}
+            {loading ? "Changing Password..." : "Change Password"}
           </button>
         </form>
       </div>
@@ -328,5 +333,5 @@ function AdminChangePasswordPage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

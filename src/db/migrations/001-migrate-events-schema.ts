@@ -1,85 +1,104 @@
-import { Db } from 'mongodb'
-import { Migration, MigrationResult } from './migration-runner'
+import { Db } from "mongodb";
+import { Migration, MigrationResult } from "./migration-runner";
 
 /**
  * Migration 001: Migrate Events Schema
- * 
+ *
  * Transforms application events from the old format to the new format:
  * OLD: { eventType, statusId, statusName, notes, date, id }
  * NEW: { title, description, date, id }
- * 
+ *
  * This migration removes the coupling between events and status changes.
  */
 export const migrateEventsSchema: Migration = {
-  id: '001',
-  name: 'Migrate Events Schema',
-  description: 'Convert event format from eventType/notes to title/description and remove status coupling',
+  id: "001",
+  name: "Migrate Events Schema",
+  description:
+    "Convert event format from eventType/notes to title/description and remove status coupling",
 
   async execute(db: Db, dryRun: boolean): Promise<MigrationResult> {
-    const errors: string[] = []
-    let documentsModified = 0
+    const errors: string[] = [];
+    let documentsModified = 0;
 
     try {
-      const collection = db.collection('applications')
-      
-      // Find all applications with events
-      const applications = await collection.find({
-        events: { $exists: true, $ne: [] }
-      }).toArray()
+      const collection = db.collection("applications");
 
-      console.log(`   Found ${applications.length} applications with events`)
+      // Find all applications with events
+      const applications = await collection
+        .find({
+          events: { $exists: true, $ne: [] },
+        })
+        .toArray();
+
+      console.log(`   Found ${applications.length} applications with events`);
 
       for (const app of applications) {
         if (!app.events || !Array.isArray(app.events)) {
-          continue
+          continue;
         }
 
-        let hasOldFormat = false
+        let hasOldFormat = false;
         const migratedEvents = app.events.map((event: any) => {
           // Check if this event is in the old format
-          if (event.eventType || event.statusId || event.statusName || event.notes !== undefined) {
-            hasOldFormat = true
-            
+          if (
+            event.eventType ||
+            event.statusId ||
+            event.statusName ||
+            event.notes !== undefined
+          ) {
+            hasOldFormat = true;
+
             // Generate a proper event id if missing
-            const eventId = event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
-            
+            const eventId =
+              event.id ||
+              `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
             // Ensure we have a non-empty title
-            const title = [event.eventType, event.statusName, event.title]
-              .find(val => val && typeof val === 'string' && val.trim().length > 0) || 'Event'
-            
+            const title =
+              [event.eventType, event.statusName, event.title].find(
+                (val) =>
+                  val && typeof val === "string" && val.trim().length > 0,
+              ) || "Event";
+
             return {
               id: eventId,
               title: title,
-              description: event.notes || event.description || '',
-              date: event.date
-            }
+              description: event.notes || event.description || "",
+              date: event.date,
+            };
           }
-          
+
           // Already in new format or partially migrated
           // Ensure we have a non-empty title
-          const title = [event.title, event.eventType]
-            .find(val => val && typeof val === 'string' && val.trim().length > 0) || 'Event'
-          
+          const title =
+            [event.title, event.eventType].find(
+              (val) => val && typeof val === "string" && val.trim().length > 0,
+            ) || "Event";
+
           return {
-            id: event.id || `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+            id:
+              event.id ||
+              `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
             title: title,
-            description: event.description || event.notes || '',
-            date: event.date
-          }
-        })
+            description: event.description || event.notes || "",
+            date: event.date,
+          };
+        });
 
         // Only update if we found events in the old format
         if (hasOldFormat) {
           if (!dryRun) {
             await collection.updateOne(
               { _id: app._id },
-              { $set: { events: migratedEvents } }
-            )
+              { $set: { events: migratedEvents } },
+            );
           }
-          documentsModified++
-          
+          documentsModified++;
+
           if (dryRun) {
-            console.log(`   [DRY RUN] Would migrate ${app.events.length} events for application ${app._id}`)
+            console.log(
+              `   [DRY RUN] Would migrate ${app.events.length} events for application ${app._id}`,
+            );
           }
         }
       }
@@ -88,71 +107,73 @@ export const migrateEventsSchema: Migration = {
         success: true,
         message: `Successfully migrated events schema`,
         documentsModified,
-        errors
-      }
-
+        errors,
+      };
     } catch (error: any) {
-      errors.push(error.message)
+      errors.push(error.message);
       return {
         success: false,
         message: `Failed to migrate events schema: ${error.message}`,
         documentsModified,
-        errors
-      }
+        errors,
+      };
     }
   },
 
   async rollback(db: Db): Promise<MigrationResult> {
     // Note: This rollback is limited because we've lost the original statusId/statusName data
     // In a real production scenario, you'd want to preserve this data during migration
-    
-    console.log('⚠️  WARNING: Events schema rollback will restore structure but cannot recover original statusId/statusName data')
-    
-    try {
-      const collection = db.collection('applications')
-      
-      const applications = await collection.find({
-        events: { $exists: true, $ne: [] }
-      }).toArray()
 
-      let documentsModified = 0
+    console.log(
+      "⚠️  WARNING: Events schema rollback will restore structure but cannot recover original statusId/statusName data",
+    );
+
+    try {
+      const collection = db.collection("applications");
+
+      const applications = await collection
+        .find({
+          events: { $exists: true, $ne: [] },
+        })
+        .toArray();
+
+      let documentsModified = 0;
 
       for (const app of applications) {
         if (!app.events || !Array.isArray(app.events)) {
-          continue
+          continue;
         }
 
         const rolledBackEvents = app.events.map((event: any) => ({
           id: event.id,
           eventType: event.title,
-          statusId: 'unknown', // Cannot recover original statusId
+          statusId: "unknown", // Cannot recover original statusId
           statusName: event.title,
           notes: event.description,
-          date: event.date
-        }))
+          date: event.date,
+        }));
 
         await collection.updateOne(
           { _id: app._id },
-          { $set: { events: rolledBackEvents } }
-        )
-        
-        documentsModified++
+          { $set: { events: rolledBackEvents } },
+        );
+
+        documentsModified++;
       }
 
       return {
         success: true,
         message: `Rolled back events schema for ${documentsModified} applications`,
         documentsModified,
-        errors: ['WARNING: Original statusId values could not be recovered']
-      }
-
+        errors: ["WARNING: Original statusId values could not be recovered"],
+      };
     } catch (error: any) {
       return {
         success: false,
         message: `Failed to rollback events schema: ${error.message}`,
         documentsModified: 0,
-        errors: [error.message]
-      }
+        errors: [error.message],
+      };
     }
-  }
-}
+  },
+};

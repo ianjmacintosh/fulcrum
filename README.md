@@ -1,21 +1,22 @@
 # Fulcrum
 
-## Summary 
+## Summary
 
 Find your next job like a pro
 
 Fulcrum is a tool to help job seekers keep track of all the moving pieces in their job search:
+
 - Jobs they've applied for so they can track their "conversion rate" for different stages of their search, and know what kinds of jobs they're likely to convert
 - Job boards that are yielding results vs not
 - Resumes that are working (and whether spending time tweaking them is helpful)
 
 ## Pages
 
-* Dashboard
-* Job Boards
-* Applications
-* Resumes
-* Settings
+- Dashboard
+- Job Boards
+- Applications
+- Resumes
+- Settings
 
 ### Dashboard
 

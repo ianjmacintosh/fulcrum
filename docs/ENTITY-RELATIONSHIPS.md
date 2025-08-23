@@ -70,9 +70,11 @@ This document provides a detailed explanation of the data model used in Fulcrum,
 ## Core Entities
 
 ### User
+
 **Purpose**: Represents a job seeker using the application
 **Collection**: `users`
 **Key Features**:
+
 - UUID-based identification for external references
 - Email uniqueness enforced at database level
 - Password hashing with bcrypt
@@ -80,37 +82,41 @@ This document provides a detailed explanation of the data model used in Fulcrum,
 
 ```typescript
 interface User {
-  _id?: ObjectId        // MongoDB internal ID
-  id: string           // UUID for external references
-  email: string        // Unique, lowercase normalized
-  name: string         // Display name
-  hashedPassword: string // bcrypt hashed, never plaintext
-  createdAt: Date
-  updatedAt: Date
+  _id?: ObjectId; // MongoDB internal ID
+  id: string; // UUID for external references
+  email: string; // Unique, lowercase normalized
+  name: string; // Display name
+  hashedPassword: string; // bcrypt hashed, never plaintext
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
 ### AdminUser
+
 **Purpose**: Administrative users for system management
 **Collection**: `admin_users`
 **Key Features**:
+
 - Separate from regular users for security
 - Username-based authentication
 - Session-based authorization
 
 ```typescript
 interface AdminUser {
-  _id?: ObjectId
-  username: string     // Unique admin identifier
-  hashedPassword: string
-  createdAt: Date
+  _id?: ObjectId;
+  username: string; // Unique admin identifier
+  hashedPassword: string;
+  createdAt: Date;
 }
 ```
 
 ### JobApplication
+
 **Purpose**: Core entity tracking a single job application
 **Collection**: `applications`
 **Key Features**:
+
 - User-scoped (multi-tenant ready)
 - Embedded events for timeline tracking
 - Denormalized references for performance
@@ -118,70 +124,76 @@ interface AdminUser {
 
 ```typescript
 interface JobApplication {
-  _id?: ObjectId
-  userId: string       // Foreign key to User.id
-  companyName: string
-  roleName: string
-  jobPostingUrl?: string
-  
+  _id?: ObjectId;
+  userId: string; // Foreign key to User.id
+  companyName: string;
+  roleName: string;
+  jobPostingUrl?: string;
+
   // Embedded references (denormalized)
-  jobBoard: { id: string, name: string }
-  workflow: { id: string, name: string }
-  currentStatus: { id: string, name: string }
-  
+  jobBoard: { id: string; name: string };
+  workflow: { id: string; name: string };
+  currentStatus: { id: string; name: string };
+
   // Categorization (fixed enums)
-  applicationType: 'cold' | 'warm'
-  roleType: 'manager' | 'engineer'
-  locationType: 'on-site' | 'hybrid' | 'remote'
-  
+  applicationType: "cold" | "warm";
+  roleType: "manager" | "engineer";
+  locationType: "on-site" | "hybrid" | "remote";
+
   // Timeline (embedded for performance)
-  events: ApplicationEvent[]
-  
-  createdAt: Date
-  updatedAt: Date
+  events: ApplicationEvent[];
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
 ### ApplicationEvent
+
 **Purpose**: Timeline entry for job application progress
 **Schema**: Embedded within JobApplication
 **Key Features**:
+
 - Chronological ordering
 - Status references
 - Optional notes for context
 
 ```typescript
 interface ApplicationEvent {
-  statusId: string     // Reference to ApplicationStatus
-  statusName: string   // Denormalized for display
-  date: string        // ISO date string
-  notes?: string      // Optional context
+  statusId: string; // Reference to ApplicationStatus
+  statusName: string; // Denormalized for display
+  date: string; // ISO date string
+  notes?: string; // Optional context
 }
 ```
 
 ### ApplicationStatus
+
 **Purpose**: Configurable status definitions for workflows
 **Collection**: `application_statuses`
 **Key Features**:
+
 - User-defined statuses
 - Terminal status marking
 - Referenced by events and current status
 
 ```typescript
 interface ApplicationStatus {
-  _id?: ObjectId
-  userId: string       // User who owns this status
-  name: string        // Display name
-  description?: string // Optional explanation
-  isTerminal: boolean // Ends the application process
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string; // User who owns this status
+  name: string; // Display name
+  description?: string; // Optional explanation
+  isTerminal: boolean; // Ends the application process
+  createdAt: Date;
 }
 ```
 
 ### Workflow
+
 **Purpose**: Defines sequences of statuses for different application types
 **Collection**: `workflows`
 **Key Features**:
+
 - User-customizable workflows
 - Default system workflows
 - Ordered step sequences
@@ -189,37 +201,39 @@ interface ApplicationStatus {
 
 ```typescript
 interface Workflow {
-  _id?: ObjectId
-  userId: string
-  name: string
-  description?: string
-  isDefault: boolean   // System vs user-defined
-  steps: WorkflowStep[]
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string;
+  name: string;
+  description?: string;
+  isDefault: boolean; // System vs user-defined
+  steps: WorkflowStep[];
+  createdAt: Date;
 }
 
 interface WorkflowStep {
-  statusId: string     // Reference to ApplicationStatus
-  isOptional: boolean  // Can this step be skipped?
+  statusId: string; // Reference to ApplicationStatus
+  isOptional: boolean; // Can this step be skipped?
 }
 ```
 
 ### JobBoard
+
 **Purpose**: Platforms where job opportunities are found
 **Collection**: `job_boards`
 **Key Features**:
+
 - User-defined job boards
 - URL tracking for source attribution
 - Performance analytics support
 
 ```typescript
 interface JobBoard {
-  _id?: ObjectId
-  userId: string
-  name: string
-  url: string
-  description?: string
-  createdAt: Date
+  _id?: ObjectId;
+  userId: string;
+  name: string;
+  url: string;
+  description?: string;
+  createdAt: Date;
 }
 ```
 

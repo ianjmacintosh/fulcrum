@@ -23,7 +23,7 @@
         "averageDays": 13
       },
       {
-        "fromStatusId": "phone_screen", 
+        "fromStatusId": "phone_screen",
         "toStatusId": "round_2",
         "conversionRate": 0.5,
         "averageDays": 8

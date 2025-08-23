@@ -1,49 +1,49 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 
-export const Route = createFileRoute('/login')({
+export const Route = createFileRoute("/login")({
   component: LoginPage,
-})
+});
 
 function LoginPage() {
-  const router = useRouter()
-  const { login } = useAuth()
+  const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const result = await login(formData.email, formData.password)
+      const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        setFormData({ email: '', password: '' })
+        setFormData({ email: "", password: "" });
         // Use window.location for post-login navigation to ensure clean state
-        const redirectPath = result.redirectUrl || '/dashboard'
-        window.location.href = redirectPath
-        return // Don't set loading to false since we're navigating away
+        const redirectPath = result.redirectUrl || "/dashboard";
+        window.location.href = redirectPath;
+        return; // Don't set loading to false since we're navigating away
       } else {
-        setError(result.error || 'Login failed')
-        setLoading(false)
+        setError(result.error || "Login failed");
+        setLoading(false);
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
-      setLoading(false)
+      setError("An error occurred. Please try again.");
+      setLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   return (
     <div className="login">
@@ -86,12 +86,8 @@ function LoginPage() {
 
           {error && <div className="error-message">{error}</div>}
 
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={loading}
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 
@@ -246,5 +242,5 @@ function LoginPage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

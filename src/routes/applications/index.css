@@ -1,202 +1,202 @@
 .applications-summary {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 .summary-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
 }
 
 .summary-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 .summary-label {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .summary-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .applications-table {
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 2rem;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
 }
 
 .table-header {
-    display: grid;
-    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
-    gap: 1rem;
-    padding: 1rem;
-    background-color: #e8e8e8;
-    border-bottom: 1px solid #ddd;
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #e8e8e8;
+  border-bottom: 1px solid #ddd;
 }
 
 .header-cell {
-    font-weight: bold;
-    color: #333;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-weight: bold;
+  color: #333;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .application-row {
-    display: grid;
-    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
-    gap: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid #ddd;
-    transition: background-color 0.2s ease;
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.2s ease;
 }
 
 .application-row:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
 
 .application-row:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .cell {
-    color: #333;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
+  color: #333;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
 }
 
 .status-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-badge.applied {
-    background-color: #e8e8e8;
-    color: #666;
+  background-color: #e8e8e8;
+  color: #666;
 }
 
 .status-badge.phone-screen {
-    background-color: #d8d8d8;
-    color: #333;
+  background-color: #d8d8d8;
+  color: #333;
 }
 
 .status-badge.interview {
-    background-color: #c8c8c8;
-    color: #333;
+  background-color: #c8c8c8;
+  color: #333;
 }
 
 .status-badge.rejected {
-    background-color: #f0f0f0;
-    color: #888;
+  background-color: #f0f0f0;
+  color: #888;
 }
 
 .add-application {
-    text-align: center;
+  text-align: center;
 }
 
 .add-button {
-    display: inline-block;
-    padding: 1rem 2rem;
-    background-color: #f0f0f0;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-    color: #666;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: #f0f0f0;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .add-button:hover {
-    background-color: #e8e8e8;
-    border-color: #999;
-    color: #333;
-    text-decoration: none;
+  background-color: #e8e8e8;
+  border-color: #999;
+  color: #333;
+  text-decoration: none;
 }
 
 /* Application Cards Styles */
 .applications-list {
-    display: grid;
-    gap: 1rem;
-    margin-bottom: 2rem;
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .application-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
 }
 
 .application-card {
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .application-card:hover,
 .application-card-link:hover .application-card {
-    background-color: #f0f0f0;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .company-name {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #333;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
 }
 
 .role-name {
-    color: #555;
-    font-size: 0.95rem;
+  color: #555;
+  font-size: 0.95rem;
 }
 
 .status-date {
-    color: #666;
-    font-size: 0.85rem;
+  color: #666;
+  font-size: 0.85rem;
 }
 
 .no-applications {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-    font-style: italic;
-    margin-bottom: 2rem;
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+  margin-bottom: 2rem;
 }

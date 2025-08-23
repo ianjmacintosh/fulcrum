@@ -1,81 +1,102 @@
-import { createServerFileRoute } from '@tanstack/react-start/server'
-import { createSuccessResponse, createErrorResponse } from '../../../../utils/auth-helpers'
-import { requireUserAuth } from '../../../../middleware/auth'
-import { applicationService } from '../../../../db/services/applications'
+import { createServerFileRoute } from "@tanstack/react-start/server";
+import {
+  createSuccessResponse,
+  createErrorResponse,
+} from "../../../../utils/auth-helpers";
+import { requireUserAuth } from "../../../../middleware/auth";
+import { applicationService } from "../../../../db/services/applications";
 
-export const ServerRoute = createServerFileRoute('/api/applications/$id/')
+export const ServerRoute = createServerFileRoute("/api/applications/$id/")
   .middleware([requireUserAuth])
   .methods({
     GET: async ({ context, params }) => {
-      const { auth } = context
-      const { id } = params
-      
+      const { auth } = context;
+      const { id } = params;
+
       if (!auth.authenticated || !auth.user) {
-        return createErrorResponse('Unauthorized', 401)
+        return createErrorResponse("Unauthorized", 401);
       }
-      
+
       if (!id) {
-        return createErrorResponse('Application ID is required', 400)
+        return createErrorResponse("Application ID is required", 400);
       }
-      
+
       try {
-        const application = await applicationService.getApplicationById(auth.user.id, id)
-        
+        const application = await applicationService.getApplicationById(
+          auth.user.id,
+          id,
+        );
+
         if (!application) {
-          return createErrorResponse('Application not found', 404)
+          return createErrorResponse("Application not found", 404);
         }
 
         // Sort events chronologically (oldest first) for timeline display
-        const sortedEvents = [...application.events].sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        )
+        const sortedEvents = [...application.events].sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
 
         const applicationWithSortedEvents = {
           ...application,
-          events: sortedEvents
-        }
-        
-        return createSuccessResponse({ application: applicationWithSortedEvents })
-        
+          events: sortedEvents,
+        };
+
+        return createSuccessResponse({
+          application: applicationWithSortedEvents,
+        });
       } catch (error: any) {
-        console.error('Applications API: Error fetching application:', error)
-        return createErrorResponse('Failed to load application')
+        console.error("Applications API: Error fetching application:", error);
+        return createErrorResponse("Failed to load application");
       }
     },
     PATCH: async ({ context, params, request }) => {
-      const { auth } = context
-      const { id } = params
-      
+      const { auth } = context;
+      const { id } = params;
+
       if (!auth.authenticated || !auth.user) {
-        return createErrorResponse('Unauthorized', 401)
+        return createErrorResponse("Unauthorized", 401);
       }
-      
+
       if (!id) {
-        return createErrorResponse('Application ID is required', 400)
+        return createErrorResponse("Application ID is required", 400);
       }
-      
+
       try {
-        const body = await request.json()
-        
+        const body = await request.json();
+
         // Validate that we're only updating status date fields
-        const allowedFields = ['appliedDate', 'phoneScreenDate', 'round1Date', 'round2Date', 'acceptedDate', 'declinedDate']
-        const updateFields = Object.keys(body)
-        
-        if (!updateFields.every(field => allowedFields.includes(field))) {
-          return createErrorResponse('Invalid update fields. Only status dates can be updated via this endpoint.', 400)
+        const allowedFields = [
+          "appliedDate",
+          "phoneScreenDate",
+          "round1Date",
+          "round2Date",
+          "acceptedDate",
+          "declinedDate",
+        ];
+        const updateFields = Object.keys(body);
+
+        if (!updateFields.every((field) => allowedFields.includes(field))) {
+          return createErrorResponse(
+            "Invalid update fields. Only status dates can be updated via this endpoint.",
+            400,
+          );
         }
 
-        const updatedApplication = await applicationService.updateApplicationWithStatusCalculation(auth.user.id, id, body)
-        
+        const updatedApplication =
+          await applicationService.updateApplicationWithStatusCalculation(
+            auth.user.id,
+            id,
+            body,
+          );
+
         if (!updatedApplication) {
-          return createErrorResponse('Application not found', 404)
+          return createErrorResponse("Application not found", 404);
         }
 
-        return createSuccessResponse({ application: updatedApplication })
-        
+        return createSuccessResponse({ application: updatedApplication });
       } catch (error: any) {
-        console.error('Applications API: Error updating application:', error)
-        return createErrorResponse('Failed to update application')
+        console.error("Applications API: Error updating application:", error);
+        return createErrorResponse("Failed to update application");
       }
-    }
-  })
+    },
+  });

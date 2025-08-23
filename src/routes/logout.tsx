@@ -1,30 +1,30 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
 
-export const Route = createFileRoute('/logout')({
+export const Route = createFileRoute("/logout")({
   component: LogoutPage,
-})
+});
 
 function LogoutPage() {
-  const router = useRouter()
-  const { logout } = useAuth()
+  const router = useRouter();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const performLogout = async () => {
       try {
-        await logout()
+        await logout();
         // Redirect to homepage after logout
-        await router.navigate({ to: '/' })
+        await router.navigate({ to: "/" });
       } catch (error) {
-        console.error('Logout error:', error)
+        console.error("Logout error:", error);
         // Still redirect to homepage even if logout fails
-        await router.navigate({ to: '/' })
+        await router.navigate({ to: "/" });
       }
-    }
+    };
 
-    performLogout()
-  }, [logout, router])
+    performLogout();
+  }, [logout, router]);
 
   return (
     <div className="logout">
@@ -89,5 +89,5 @@ function LogoutPage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

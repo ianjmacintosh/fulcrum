@@ -68,6 +68,7 @@ Before running migrations in any environment:
 ### Environment Rollout Strategy
 
 #### Development Environment
+
 ```bash
 # 1. Backup current data (if needed)
 mongodump --uri $MONGODB_URI --out backup_$(date +%Y%m%d_%H%M%S)
@@ -86,6 +87,7 @@ npm run dev
 ```
 
 #### Staging/Production Environments
+
 ```bash
 # 1. Create backup
 railway run mongodump --uri $MONGO_URL --out backup_$(date +%Y%m%d_%H%M%S)
@@ -105,6 +107,7 @@ railway run npm run db:migrate validate
 ### Data Transformation Logic
 
 #### Event Title Mapping
+
 The migration analyzes event titles and maps them to status dates:
 
 - **Applied**: `eventTitle.includes('applied' | 'application')` → `appliedDate`
@@ -115,6 +118,7 @@ The migration analyzes event titles and maps them to status dates:
 - **Declined**: `eventTitle.includes('rejected' | 'declined' | 'not selected')` → `declinedDate`
 
 #### Special Cases
+
 - If no explicit "applied" event exists, the earliest event date becomes `appliedDate`
 - Status dates use the latest relevant event date (except for `appliedDate` which uses earliest)
 - Existing status dates are preserved and not overwritten
@@ -159,14 +163,17 @@ The application includes native JavaScript backup/restore scripts that work with
 ### Backup Script (`scripts/backup-db.js`)
 
 **Usage:**
+
 ```bash
 npm run db:backup
 ```
 
 **Environment Variables:**
+
 - `MONGO_URL`: Connection string for the database to backup
 
 **How it works:**
+
 1. Connects to MongoDB using the `MONGO_URL` environment variable
 2. Discovers all collections in the 'fulcrum' database
 3. Exports each collection to a separate JSON file (e.g., `applications.json`, `users.json`)
@@ -174,6 +181,7 @@ npm run db:backup
 5. Stores backup in `backups/backup_TIMESTAMP/` directory
 
 **Output Structure:**
+
 ```
 backups/backup_2025-08-21T17-36-31/
 ├── applications.json
@@ -188,19 +196,23 @@ backups/backup_2025-08-21T17-36-31/
 ### Restore Script (`scripts/restore-db.js`)
 
 **Usage:**
+
 ```bash
 npm run db:restore <backup-directory-path>
 ```
 
 **Example:**
+
 ```bash
 npm run db:restore backups/backup_2025-08-21T17-36-31
 ```
 
 **Environment Variables:**
+
 - `MONGO_URL`: Connection string for the target database to restore to
 
 **How it works:**
+
 1. Validates backup directory and reads metadata
 2. Connects to target database using `MONGO_URL`
 3. For each collection in the backup:
@@ -209,6 +221,7 @@ npm run db:restore backups/backup_2025-08-21T17-36-31
 4. Restores all documents exactly as they were at backup time
 
 **⚠️ Important Notes:**
+
 - **Destructive operation**: Completely replaces existing data
 - **All-or-nothing**: If it fails partway, some collections will be restored and others won't
 - **Uses MONGO_URL**: Make sure this points to the correct database (staging, not production!)
@@ -217,6 +230,7 @@ npm run db:restore backups/backup_2025-08-21T17-36-31
 ### Backup Strategy for Deployments
 
 **Before staging deployment:**
+
 ```bash
 # Set MONGO_URL to staging connection string
 export MONGO_URL="mongodb://staging-connection-string"
@@ -224,13 +238,15 @@ npm run db:backup
 ```
 
 **Before production deployment:**
+
 ```bash
-# Set MONGO_URL to production connection string  
+# Set MONGO_URL to production connection string
 export MONGO_URL="mongodb://production-connection-string"
 npm run db:backup
 ```
 
 **Emergency rollback:**
+
 ```bash
 # Set MONGO_URL to target database
 export MONGO_URL="mongodb://target-connection-string"
@@ -247,7 +263,7 @@ export MONGO_URL="mongodb://production-connection-string"
 npm run db:backup
 
 # 2. Restore to staging (using same backup)
-export MONGO_URL="mongodb://staging-connection-string" 
+export MONGO_URL="mongodb://staging-connection-string"
 npm run db:restore backups/backup_TIMESTAMP
 ```
 

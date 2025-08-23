@@ -1,206 +1,257 @@
-import { Db, Collection, ObjectId } from 'mongodb'
-import { connectToDatabase } from '../connection'
-import { JobApplication, JobApplicationSchema, CurrentStatus } from '../schemas'
-import { defaultWorkflowService } from './default-workflow'
+import { Db, Collection, ObjectId } from "mongodb";
+import { connectToDatabase } from "../connection";
+import {
+  JobApplication,
+  JobApplicationSchema,
+  CurrentStatus,
+} from "../schemas";
+import { defaultWorkflowService } from "./default-workflow";
 
 export class ApplicationService {
-  private db: Db | null = null
-  private collection: Collection<JobApplication> | null = null
+  private db: Db | null = null;
+  private collection: Collection<JobApplication> | null = null;
 
   private async getCollection(): Promise<Collection<JobApplication>> {
     if (!this.collection) {
-      this.db = await connectToDatabase()
-      this.collection = this.db.collection<JobApplication>('applications')
+      this.db = await connectToDatabase();
+      this.collection = this.db.collection<JobApplication>("applications");
     }
-    return this.collection
+    return this.collection;
   }
 
-  async createApplication(application: Omit<JobApplication, '_id' | 'createdAt' | 'updatedAt'>): Promise<JobApplication> {
-    const collection = await this.getCollection()
-    
+  async createApplication(
+    application: Omit<JobApplication, "_id" | "createdAt" | "updatedAt">,
+  ): Promise<JobApplication> {
+    const collection = await this.getCollection();
+
     const newApplication: JobApplication = {
       ...application,
       createdAt: new Date(),
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    };
 
     // Validate with Zod (excluding _id since MongoDB will generate it)
     const validationResult = JobApplicationSchema.safeParse({
       ...newApplication,
       createdAt: newApplication.createdAt,
-      updatedAt: newApplication.updatedAt
-    })
+      updatedAt: newApplication.updatedAt,
+    });
 
     if (!validationResult.success) {
-      throw new Error(`Validation error: ${validationResult.error.message}`)
+      throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newApplication)
-    return { ...newApplication, _id: result.insertedId }
+    const result = await collection.insertOne(newApplication);
+    return { ...newApplication, _id: result.insertedId };
   }
 
-  async getApplications(userId: string, filter: any = {}, limit: number = 100, skip: number = 0): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    const userFilter = { ...filter, userId }
-    return await collection.find(userFilter).limit(limit).skip(skip).sort({ createdAt: -1 }).toArray()
+  async getApplications(
+    userId: string,
+    filter: any = {},
+    limit: number = 100,
+    skip: number = 0,
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    const userFilter = { ...filter, userId };
+    return await collection
+      .find(userFilter)
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 })
+      .toArray();
   }
 
-  async getApplicationById(userId: string, id: string | ObjectId): Promise<JobApplication | null> {
-    const collection = await this.getCollection()
-    
+  async getApplicationById(
+    userId: string,
+    id: string | ObjectId,
+  ): Promise<JobApplication | null> {
+    const collection = await this.getCollection();
+
     try {
       // First try with ObjectId (standard MongoDB _id format)
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id
-      let result = await collection.findOne({ _id: objectId, userId })
-      
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      let result = await collection.findOne({ _id: objectId, userId });
+
       if (result) {
-        return result
+        return result;
       }
-      
+
       // If not found with ObjectId, try with string _id (for migration compatibility)
-      if (typeof id === 'string') {
-        result = await collection.findOne({ _id: id, userId })
+      if (typeof id === "string") {
+        result = await collection.findOne({ _id: id, userId });
         if (result) {
-          return result
+          return result;
         }
       }
-      
-      return null
+
+      return null;
     } catch (error) {
       // If ObjectId conversion failed, try with string _id
-      if (typeof id === 'string') {
+      if (typeof id === "string") {
         try {
-          return await collection.findOne({ _id: id, userId })
+          return await collection.findOne({ _id: id, userId });
         } catch (stringError) {
-          return null
+          return null;
         }
       }
-      return null
+      return null;
     }
   }
 
-  async updateApplication(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
-    const collection = await this.getCollection()
-    
+  async updateApplication(
+    userId: string,
+    id: string | ObjectId,
+    updates: Partial<JobApplication>,
+  ): Promise<JobApplication | null> {
+    const collection = await this.getCollection();
+
     const updateDoc = {
       ...updates,
-      updatedAt: new Date()
-    }
-    
-    delete updateDoc._id // Don't update the _id field
-    delete updateDoc.userId // Don't allow userId to be changed
+      updatedAt: new Date(),
+    };
+
+    delete updateDoc._id; // Don't update the _id field
+    delete updateDoc.userId; // Don't allow userId to be changed
 
     try {
       // First try with ObjectId (standard MongoDB _id format)
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
       let result = await collection.findOneAndUpdate(
         { _id: objectId, userId },
         { $set: updateDoc },
-        { returnDocument: 'after' }
-      )
+        { returnDocument: "after" },
+      );
 
       if (result) {
-        return result
+        return result;
       }
-      
+
       // If not found with ObjectId, try with string _id (for migration compatibility)
-      if (typeof id === 'string') {
+      if (typeof id === "string") {
         result = await collection.findOneAndUpdate(
           { _id: id, userId },
           { $set: updateDoc },
-          { returnDocument: 'after' }
-        )
+          { returnDocument: "after" },
+        );
         if (result) {
-          return result
+          return result;
         }
       }
-      
-      return null
+
+      return null;
     } catch (error) {
       // If ObjectId conversion failed, try with string _id
-      if (typeof id === 'string') {
+      if (typeof id === "string") {
         try {
           return await collection.findOneAndUpdate(
             { _id: id, userId },
             { $set: updateDoc },
-            { returnDocument: 'after' }
-          )
+            { returnDocument: "after" },
+          );
         } catch (stringError) {
-          return null
+          return null;
         }
       }
-      return null
+      return null;
     }
   }
 
-  async deleteApplication(userId: string, id: string | ObjectId): Promise<boolean> {
-    const collection = await this.getCollection()
-    
+  async deleteApplication(
+    userId: string,
+    id: string | ObjectId,
+  ): Promise<boolean> {
+    const collection = await this.getCollection();
+
     try {
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id
-      
-      const result = await collection.deleteOne({ _id: objectId, userId })
-      return result.deletedCount === 1
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+
+      const result = await collection.deleteOne({ _id: objectId, userId });
+      return result.deletedCount === 1;
     } catch (error) {
       // Invalid ObjectId format
-      return false
+      return false;
     }
   }
 
   async getApplicationCount(userId: string, filter: any = {}): Promise<number> {
-    const collection = await this.getCollection()
-    const userFilter = { ...filter, userId }
-    return await collection.countDocuments(userFilter)
+    const collection = await this.getCollection();
+    const userFilter = { ...filter, userId };
+    return await collection.countDocuments(userFilter);
   }
 
   // Analytics helper methods
-  async getApplicationsByStatus(userId: string, statusId: string): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({ userId, 'currentStatus.id': statusId }).toArray()
+  async getApplicationsByStatus(
+    userId: string,
+    statusId: string,
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    return await collection
+      .find({ userId, "currentStatus.id": statusId })
+      .toArray();
   }
 
-  async getApplicationsByWorkflow(userId: string, workflowId: string): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({ userId, 'workflow.id': workflowId }).toArray()
+  async getApplicationsByWorkflow(
+    userId: string,
+    workflowId: string,
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    return await collection
+      .find({ userId, "workflow.id": workflowId })
+      .toArray();
   }
 
-  async getApplicationsInDateRange(userId: string, startDate: Date, endDate: Date): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({
-      userId,
-      createdAt: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    }).toArray()
+  async getApplicationsInDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    return await collection
+      .find({
+        userId,
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      })
+      .toArray();
   }
 
-  async getApplicationsWithPhoneScreens(userId: string): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({
-      userId,
-      'events.statusId': { $in: ['phone_screen'] }
-    }).toArray()
+  async getApplicationsWithPhoneScreens(
+    userId: string,
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    return await collection
+      .find({
+        userId,
+        "events.statusId": { $in: ["phone_screen"] },
+      })
+      .toArray();
   }
 
-  async getApplicationsWithStatus(userId: string, statusIds: string[]): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({
-      userId,
-      'currentStatus.id': { $in: statusIds }
-    }).toArray()
+  async getApplicationsWithStatus(
+    userId: string,
+    statusIds: string[],
+  ): Promise<JobApplication[]> {
+    const collection = await this.getCollection();
+    return await collection
+      .find({
+        userId,
+        "currentStatus.id": { $in: statusIds },
+      })
+      .toArray();
   }
 
   // Admin methods (bypass user scoping)
   async getAllApplicationsForUser(userId: string): Promise<JobApplication[]> {
-    const collection = await this.getCollection()
-    return await collection.find({ userId }).toArray()
+    const collection = await this.getCollection();
+    return await collection.find({ userId }).toArray();
   }
 
   async deleteAllApplicationsForUser(userId: string): Promise<number> {
-    const collection = await this.getCollection()
-    const result = await collection.deleteMany({ userId })
-    return result.deletedCount
+    const collection = await this.getCollection();
+    const result = await collection.deleteMany({ userId });
+    return result.deletedCount;
   }
 
   /**
@@ -209,151 +260,185 @@ export class ApplicationService {
    */
   calculateCurrentStatus(application: Partial<JobApplication>): CurrentStatus {
     const statusDates = [
-      { date: application.declinedDate, status: { id: 'declined', name: 'Declined' }, priority: 7 },
-      { date: application.acceptedDate, status: { id: 'accepted', name: 'Accepted' }, priority: 6 },
-      { date: application.round2Date, status: { id: 'round_2', name: 'Round 2' }, priority: 5 },
-      { date: application.round1Date, status: { id: 'round_1', name: 'Round 1' }, priority: 4 },
-      { date: application.phoneScreenDate, status: { id: 'phone_screen', name: 'Phone Screen' }, priority: 3 },
-      { date: application.appliedDate, status: { id: 'applied', name: 'Applied' }, priority: 2 }
-    ]
+      {
+        date: application.declinedDate,
+        status: { id: "declined", name: "Declined" },
+        priority: 7,
+      },
+      {
+        date: application.acceptedDate,
+        status: { id: "accepted", name: "Accepted" },
+        priority: 6,
+      },
+      {
+        date: application.round2Date,
+        status: { id: "round_2", name: "Round 2" },
+        priority: 5,
+      },
+      {
+        date: application.round1Date,
+        status: { id: "round_1", name: "Round 1" },
+        priority: 4,
+      },
+      {
+        date: application.phoneScreenDate,
+        status: { id: "phone_screen", name: "Phone Screen" },
+        priority: 3,
+      },
+      {
+        date: application.appliedDate,
+        status: { id: "applied", name: "Applied" },
+        priority: 2,
+      },
+    ];
 
     // Find the latest status date, with higher priority for equal dates
-    let latestStatus = { id: 'not_applied', name: 'Not Applied' }
-    let latestDate: Date | null = null
-    let latestPriority = 0
+    let latestStatus = { id: "not_applied", name: "Not Applied" };
+    let latestDate: Date | null = null;
+    let latestPriority = 0;
 
     for (const { date, status, priority } of statusDates) {
       if (date) {
-        const statusDate = new Date(date)
+        const statusDate = new Date(date);
         // Skip invalid dates
         if (isNaN(statusDate.getTime())) {
-          continue
+          continue;
         }
-        
+
         // Update if this date is later, or if same date but higher priority
-        if (!latestDate || 
-            statusDate > latestDate || 
-            (statusDate.getTime() === latestDate.getTime() && priority > latestPriority)) {
-          latestStatus = status
-          latestDate = statusDate
-          latestPriority = priority
+        if (
+          !latestDate ||
+          statusDate > latestDate ||
+          (statusDate.getTime() === latestDate.getTime() &&
+            priority > latestPriority)
+        ) {
+          latestStatus = status;
+          latestDate = statusDate;
+          latestPriority = priority;
         }
       }
     }
 
-    return latestStatus
+    return latestStatus;
   }
 
   /**
    * Update application with automatic current status calculation
    */
-  async updateApplicationWithStatusCalculation(userId: string, id: string | ObjectId, updates: Partial<JobApplication>): Promise<JobApplication | null> {
-    const collection = await this.getCollection()
-    
+  async updateApplicationWithStatusCalculation(
+    userId: string,
+    id: string | ObjectId,
+    updates: Partial<JobApplication>,
+  ): Promise<JobApplication | null> {
+    const collection = await this.getCollection();
+
     // First get the current application to merge with updates
-    let currentApplication: any = null
-    
+    let currentApplication: any = null;
+
     try {
       // Try with ObjectId first
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id
-      currentApplication = await collection.findOne({ _id: objectId, userId })
-      
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      currentApplication = await collection.findOne({ _id: objectId, userId });
+
       // If not found with ObjectId, try with string _id
-      if (!currentApplication && typeof id === 'string') {
-        currentApplication = await collection.findOne({ _id: id, userId })
+      if (!currentApplication && typeof id === "string") {
+        currentApplication = await collection.findOne({ _id: id, userId });
       }
     } catch (error) {
       // If ObjectId conversion failed, try with string _id
-      if (typeof id === 'string') {
-        currentApplication = await collection.findOne({ _id: id, userId })
+      if (typeof id === "string") {
+        currentApplication = await collection.findOne({ _id: id, userId });
       }
     }
-    
+
     if (!currentApplication) {
-      return null
+      return null;
     }
 
     // Merge current application with updates to get complete date fields
-    const mergedApplication = { ...currentApplication, ...updates }
-    
+    const mergedApplication = { ...currentApplication, ...updates };
+
     // Calculate the new current status
-    const newCurrentStatus = this.calculateCurrentStatus(mergedApplication)
-    
+    const newCurrentStatus = this.calculateCurrentStatus(mergedApplication);
+
     const updateDoc = {
       ...updates,
       currentStatus: newCurrentStatus,
-      updatedAt: new Date()
-    }
-    
-    delete updateDoc._id // Don't update the _id field
-    delete updateDoc.userId // Don't allow userId to be changed
+      updatedAt: new Date(),
+    };
+
+    delete updateDoc._id; // Don't update the _id field
+    delete updateDoc.userId; // Don't allow userId to be changed
 
     // Now update using the same ID format that worked for finding
-    let result: any = null
-    
+    let result: any = null;
+
     try {
       // Try with ObjectId first
-      const objectId = typeof id === 'string' ? new ObjectId(id) : id
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
       result = await collection.findOneAndUpdate(
         { _id: objectId, userId },
         { $set: updateDoc },
-        { returnDocument: 'after' }
-      )
-      
+        { returnDocument: "after" },
+      );
+
       // If update with ObjectId didn't work, try with string _id
-      if (!result && typeof id === 'string') {
+      if (!result && typeof id === "string") {
         result = await collection.findOneAndUpdate(
           { _id: id, userId },
           { $set: updateDoc },
-          { returnDocument: 'after' }
-        )
+          { returnDocument: "after" },
+        );
       }
     } catch (error) {
       // If ObjectId conversion failed, try with string _id
-      if (typeof id === 'string') {
+      if (typeof id === "string") {
         result = await collection.findOneAndUpdate(
           { _id: id, userId },
           { $set: updateDoc },
-          { returnDocument: 'after' }
-        )
+          { returnDocument: "after" },
+        );
       }
     }
 
-    return result || null
+    return result || null;
   }
 
   /**
    * Recalculate current status for all applications (for data migration)
    */
   async recalculateAllCurrentStatuses(userId?: string): Promise<number> {
-    const collection = await this.getCollection()
-    
-    const filter = userId ? { userId } : {}
-    const applications = await collection.find(filter).toArray()
-    
-    let updatedCount = 0
-    
+    const collection = await this.getCollection();
+
+    const filter = userId ? { userId } : {};
+    const applications = await collection.find(filter).toArray();
+
+    let updatedCount = 0;
+
     for (const application of applications) {
-      const newCurrentStatus = this.calculateCurrentStatus(application)
-      
+      const newCurrentStatus = this.calculateCurrentStatus(application);
+
       // Only update if the status has changed
-      if (newCurrentStatus.id !== application.currentStatus?.id || newCurrentStatus.name !== application.currentStatus?.name) {
+      if (
+        newCurrentStatus.id !== application.currentStatus?.id ||
+        newCurrentStatus.name !== application.currentStatus?.name
+      ) {
         await collection.updateOne(
           { _id: application._id },
-          { 
-            $set: { 
+          {
+            $set: {
               currentStatus: newCurrentStatus,
-              updatedAt: new Date()
-            } 
-          }
-        )
-        updatedCount++
+              updatedAt: new Date(),
+            },
+          },
+        );
+        updatedCount++;
       }
     }
-    
-    return updatedCount
+
+    return updatedCount;
   }
 }
 
 // Export singleton instance
-export const applicationService = new ApplicationService()
+export const applicationService = new ApplicationService();

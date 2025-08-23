@@ -1,12 +1,12 @@
 .footer {
-    margin-top: auto;
-    padding: 2rem 1rem 1rem;
-    border-top: 1px solid #ddd;
-    background-color: #f9f9f9;
+  margin-top: auto;
+  padding: 2rem 1rem 1rem;
+  border-top: 1px solid #ddd;
+  background-color: #f9f9f9;
 }
 
 .footer-content {
-    text-align: center;
-    color: #666;
-    font-size: 0.9rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
 }
