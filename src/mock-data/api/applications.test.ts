@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import applicationsData from "./applications.json";
-import { JobApplication } from "../../db/schemas";
 
 describe("Applications Mock Data", () => {
   it('should have applications starting with "applied" events instead of cold/warm apply', () => {
