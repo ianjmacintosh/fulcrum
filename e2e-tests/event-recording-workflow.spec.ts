@@ -25,9 +25,6 @@ test.describe("Event Recording Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Check if we got a 404 or error page instead of the expected details page
-    const pageTitle = await page.title();
-    const url = page.url();
-    const h1Text = await page.locator("h1").textContent();
 
     // Verify we're on the application details page (this should fail with 404)
     await expect(page.locator("h1")).toContainText("Application Details", {

@@ -13,7 +13,6 @@ import {
   sessionStore,
   SESSION_COOKIE,
   SESSION_MAX_AGE,
-  SessionData,
 } from "./session";
 
 // Mock crypto.getRandomValues for session ID generation

@@ -101,7 +101,7 @@ function AdminUsersPage() {
       } else {
         setError(result.error || "Failed to fetch users");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to fetch users");
     } finally {
       setLoading(false);
@@ -125,24 +125,12 @@ function AdminUsersPage() {
         if (result.success) {
           summaries[user.id] = result.summary;
         }
-      } catch (err) {
+      } catch {
         console.error(`Failed to fetch data summary for user ${user.id}:`, err);
       }
     }
 
     setUserDataSummaries(summaries);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/admin/logout", {
-        credentials: "include",
-      });
-      router.navigate({ to: "/admin/logout" });
-    } catch (err) {
-      console.error("Logout error:", err);
-      router.navigate({ to: "/admin" });
-    }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -199,7 +187,7 @@ function AdminUsersPage() {
           console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
-    } catch (err) {
+    } catch {
       setError("Failed to create user");
       // Fetch new CSRF tokens on error
       try {
@@ -268,7 +256,7 @@ function AdminUsersPage() {
           console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
-    } catch (err) {
+    } catch {
       setError("Failed to delete user");
       // Fetch new CSRF tokens on error
       try {
@@ -347,7 +335,7 @@ function AdminUsersPage() {
           console.error("Failed to refresh CSRF tokens:", tokenError);
         }
       }
-    } catch (err) {
+    } catch {
       setError("Failed to reset user data");
       // Fetch new CSRF tokens on error
       try {

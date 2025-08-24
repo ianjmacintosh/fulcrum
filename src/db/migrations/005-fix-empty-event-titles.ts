@@ -93,7 +93,7 @@ export const fixEmptyEventTitles: Migration = {
     }
   },
 
-  async rollback(db: Db): Promise<MigrationResult> {
+  async rollback(): Promise<MigrationResult> {
     // This rollback cannot restore the original empty titles since we don't know
     // which events originally had empty titles vs which had "Event" as their title
     return {

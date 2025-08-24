@@ -5,7 +5,6 @@ import {
   JobApplicationSchema,
   CurrentStatus,
 } from "../schemas";
-import { defaultWorkflowService } from "./default-workflow";
 
 export class ApplicationService {
   private db: Db | null = null;
@@ -85,12 +84,12 @@ export class ApplicationService {
       }
 
       return null;
-    } catch (error) {
+    } catch {
       // If ObjectId conversion failed, try with string _id
       if (typeof id === "string") {
         try {
           return await collection.findOne({ _id: id, userId });
-        } catch (stringError) {
+        } catch {
           return null;
         }
       }
@@ -139,7 +138,7 @@ export class ApplicationService {
       }
 
       return null;
-    } catch (error) {
+    } catch {
       // If ObjectId conversion failed, try with string _id
       if (typeof id === "string") {
         try {
@@ -148,7 +147,7 @@ export class ApplicationService {
             { $set: updateDoc },
             { returnDocument: "after" },
           );
-        } catch (stringError) {
+        } catch {
           return null;
         }
       }
@@ -167,7 +166,7 @@ export class ApplicationService {
 
       const result = await collection.deleteOne({ _id: objectId, userId });
       return result.deletedCount === 1;
-    } catch (error) {
+    } catch {
       // Invalid ObjectId format
       return false;
     }
@@ -344,7 +343,7 @@ export class ApplicationService {
       if (!currentApplication && typeof id === "string") {
         currentApplication = await collection.findOne({ _id: id, userId });
       }
-    } catch (error) {
+    } catch {
       // If ObjectId conversion failed, try with string _id
       if (typeof id === "string") {
         currentApplication = await collection.findOne({ _id: id, userId });
@@ -390,7 +389,7 @@ export class ApplicationService {
           { returnDocument: "after" },
         );
       }
-    } catch (error) {
+    } catch {
       // If ObjectId conversion failed, try with string _id
       if (typeof id === "string") {
         result = await collection.findOneAndUpdate(

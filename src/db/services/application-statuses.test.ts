@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mockApplicationStatusService } from "./mock-application-status-service";
-import { ApplicationStatus } from "../schemas";
 
 describe("ApplicationStatusService", () => {
   const testUserId = "test-user-123";

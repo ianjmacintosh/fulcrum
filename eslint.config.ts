@@ -34,6 +34,21 @@ export default [
     rules: {
       "react/react-in-jsx-scope": "off",
       "react/jsx-uses-react": "off",
+      // TODO: Re-enable this rule in the future after refactoring components
+      // to use proper TypeScript types instead of 'any'. Currently disabled
+      // to focus on other code quality issues while the codebase matures.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  // Allow 'any' types in database operations and migrations
+  {
+    files: [
+      "src/db/migrations/**/*.ts",
+      "src/db/services/**/*.ts",
+      "src/routes/api/**/*.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 ];

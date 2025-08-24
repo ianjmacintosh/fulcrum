@@ -29,7 +29,7 @@ export const ServerRoute = createServerFileRoute("/api/admin/users")
         }));
 
         return createSuccessResponse({ users: safeUsers });
-      } catch (error) {
+      } catch {
         return createErrorResponse("Failed to fetch users");
       }
     },

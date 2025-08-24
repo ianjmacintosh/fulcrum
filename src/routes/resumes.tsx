@@ -133,8 +133,8 @@ function Resumes() {
           <div className="insight-card">
             <h4>Best Performing Keywords</h4>
             <p>
-              Resumes mentioning "React", "TypeScript", and "AWS" have 23%
-              higher response rates.
+              Resumes mentioning &quot;React&quot;, &quot;TypeScript&quot;, and
+              &quot;AWS&quot; have 23% higher response rates.
             </p>
           </div>
           <div className="insight-card">

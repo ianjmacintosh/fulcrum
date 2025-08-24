@@ -7,10 +7,7 @@ import {
   SESSION_MAX_AGE,
 } from "../../../utils/session";
 import { adminRateLimiter, getClientIP } from "../../../utils/rate-limiter";
-import {
-  createSuccessResponse,
-  createErrorResponse,
-} from "../../../utils/auth-helpers";
+import { createErrorResponse } from "../../../utils/auth-helpers";
 import { z } from "zod";
 
 // Schema for login validation
@@ -95,7 +92,7 @@ export const ServerRoute = createServerFileRoute("/api/admin/login").methods({
           },
         },
       );
-    } catch (error) {
+    } catch {
       // Record failed attempt for server errors too
       adminRateLimiter.record(clientIP, false);
       return createErrorResponse("An error occurred. Please try again.");

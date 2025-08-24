@@ -63,7 +63,7 @@ export const ServerRoute = createServerFileRoute(
       } else {
         return createErrorResponse("Failed to delete user");
       }
-    } catch (error) {
+    } catch {
       return createErrorResponse("Failed to delete user");
     }
   },

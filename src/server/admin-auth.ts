@@ -13,7 +13,7 @@ export const getCSRFTokens = createServerFn({ method: "GET" }).handler(
         csrfToken: token,
         csrfHash: hash,
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: "Failed to generate CSRF token",

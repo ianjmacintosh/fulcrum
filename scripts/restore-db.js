@@ -79,7 +79,7 @@ async function restoreBackup(backupPath) {
       try {
         await collection.drop();
         console.log(`      🗑️  Dropped existing collection`);
-      } catch (error) {
+      } catch {
         // Collection might not exist, which is fine
       }
 

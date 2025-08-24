@@ -49,8 +49,10 @@ export const Route = createFileRoute("/dashboard")({
       }
 
       // Extract data from response (createSuccessResponse spreads the data)
-      const { success: dashSuccess, ...dashboardData } = dashboardResult;
-      const { success: projSuccess, ...projectionData } = projectionResult;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { success: _, ...dashboardData } = dashboardResult;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { success: __, ...projectionData } = projectionResult;
 
       return {
         dashboardData,

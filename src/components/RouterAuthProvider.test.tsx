@@ -1,4 +1,4 @@
-import { render, act, waitFor } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { RouterAuthProvider } from "./RouterAuthProvider";
@@ -6,7 +6,6 @@ import {
   AuthContext as ReactAuthContext,
   AuthContextType,
 } from "../contexts/AuthContext";
-import { AuthContext as RouterAuthContext } from "../router";
 
 // Mock TanStack Router
 const mockNavigate = vi.fn();
