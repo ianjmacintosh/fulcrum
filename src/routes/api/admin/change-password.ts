@@ -69,7 +69,7 @@ export const ServerRoute = createServerFileRoute(
 
       if (!validation.success) {
         const errorMessage =
-          validation.error.errors[0]?.message || "Invalid input";
+          validation.error.issues[0]?.message || "Invalid input";
         adminRateLimiter.record(clientIP, false);
         return createErrorResponse(errorMessage, 400);
       }

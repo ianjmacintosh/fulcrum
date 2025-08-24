@@ -83,7 +83,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
         });
 
         if (!validation.success) {
-          return createErrorResponse(validation.error.errors[0].message, 400);
+          return createErrorResponse(validation.error.issues[0].message, 400);
         }
 
         const validatedData = validation.data;
@@ -153,10 +153,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             | "remote",
           events: [
             {
-              statusId: appliedStatus._id!.toString(),
-              statusName: appliedStatus.name,
+              id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              title: "Application submitted",
+              description: validatedData.notes || "Applied to position",
               date: validatedData.appliedDate,
-              notes: validatedData.notes || undefined,
             },
           ],
           currentStatus: {

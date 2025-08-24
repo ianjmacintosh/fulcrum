@@ -57,7 +57,7 @@ export const ServerRoute = createServerFileRoute(
       // Validate input
       const validation = CreateUserSchema.safeParse({ email, name, password });
       if (!validation.success) {
-        return createErrorResponse(validation.error.errors[0].message, 400);
+        return createErrorResponse(validation.error.issues[0].message, 400);
       }
 
       // Hash password

@@ -131,22 +131,22 @@ export class UserOnboardingService {
         locationType: "on-site" as const,
         events: [
           {
-            statusId: findStatus("Applied")._id!.toString(),
-            statusName: "Applied",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application submitted",
             date: "2025-06-17",
-            notes: "Applied through LinkedIn",
+            description: "Applied through LinkedIn",
           },
           {
-            statusId: findStatus("Phone Screen")._id!.toString(),
-            statusName: "Phone Screen",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Phone screen completed",
             date: "2025-07-24",
-            notes: "Phone screen completed",
+            description: "Phone screen completed",
           },
           {
-            statusId: findStatus("Round 1")._id!.toString(),
-            statusName: "Round 1",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Technical interview scheduled",
             date: "2025-07-29",
-            notes: "Technical interview scheduled",
+            description: "Technical interview scheduled",
           },
         ],
         currentStatus: {
@@ -171,22 +171,22 @@ export class UserOnboardingService {
         locationType: "remote" as const,
         events: [
           {
-            statusId: findStatus("Applied")._id!.toString(),
-            statusName: "Applied",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application submitted",
             date: "2025-07-13",
-            notes: "Applied through LinkedIn",
+            description: "Applied through LinkedIn",
           },
           {
-            statusId: findStatus("Phone Screen")._id!.toString(),
-            statusName: "Phone Screen",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Phone screen completed",
             date: "2025-07-24",
-            notes: "Phone screen with hiring manager",
+            description: "Phone screen with hiring manager",
           },
           {
-            statusId: findStatus("In Progress")._id!.toString(),
-            statusName: "In Progress",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Technical interview in progress",
             date: "2025-08-06",
-            notes: "Technical coding challenge and interviews",
+            description: "Technical coding challenge and interviews",
           },
         ],
         currentStatus: {
@@ -211,22 +211,22 @@ export class UserOnboardingService {
         locationType: "on-site" as const,
         events: [
           {
-            statusId: findStatus("Applied")._id!.toString(),
-            statusName: "Applied",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application submitted",
             date: "2025-05-28",
-            notes: "Referral from former colleague",
+            description: "Referral from former colleague",
           },
           {
-            statusId: findStatus("Phone Screen")._id!.toString(),
-            statusName: "Phone Screen",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Phone screen completed",
             date: "2025-06-10",
-            notes: "Phone screen completed",
+            description: "Phone screen completed",
           },
           {
-            statusId: findStatus("Declined")._id!.toString(),
-            statusName: "Declined",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application declined",
             date: "2025-06-20",
-            notes: "Position filled internally",
+            description: "Position filled internally",
           },
         ],
         currentStatus: {
@@ -251,16 +251,16 @@ export class UserOnboardingService {
         locationType: "hybrid" as const,
         events: [
           {
-            statusId: findStatus("Applied")._id!.toString(),
-            statusName: "Applied",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application submitted",
             date: "2025-07-31",
-            notes: "Applied through LinkedIn",
+            description: "Applied through LinkedIn",
           },
           {
-            statusId: findStatus("Phone Screen")._id!.toString(),
-            statusName: "Phone Screen",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Phone screen scheduled",
             date: "2025-08-14",
-            notes: "Phone screen scheduled",
+            description: "Phone screen scheduled",
           },
         ],
         currentStatus: {
@@ -285,10 +285,10 @@ export class UserOnboardingService {
         locationType: "remote" as const,
         events: [
           {
-            statusId: findStatus("Applied")._id!.toString(),
-            statusName: "Applied",
+            id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            title: "Application submitted",
             date: "2025-08-01",
-            notes: "Applied through LinkedIn",
+            description: "Applied through LinkedIn",
           },
         ],
         currentStatus: {

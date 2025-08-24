@@ -20,8 +20,8 @@ describe("<JobApplicationCardsList>", () => {
       locationType: "remote",
       events: [
         {
-          statusId: "applied",
-          statusName: "Applied",
+          id: "event_app1",
+          title: "Application submitted",
           date: "2025-01-05T00:00:00.000Z",
         },
       ],
@@ -40,8 +40,9 @@ describe("<JobApplicationCardsList>", () => {
       locationType: "hybrid",
       events: [
         {
-          statusId: "rejected",
-          statusName: "Rejected",
+          id: "event_app2",
+          title: "Application rejected",
+          description: "Position filled",
           date: "2025-01-03T00:00:00.000Z",
         },
       ],

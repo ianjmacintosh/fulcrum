@@ -58,9 +58,8 @@ describe("JobApplication Schema with event IDs", () => {
       events: [
         {
           id: "event_123e4567-e89b-12d3-a456-426614174000",
-          eventType: "Application submitted",
-          statusId: "applied",
-          statusName: "Applied",
+          title: "Application submitted",
+          description: "Applied through LinkedIn",
           date: "2025-01-15",
         },
       ],
@@ -76,7 +75,7 @@ describe("JobApplication Schema with event IDs", () => {
     // Note: This test will initially fail until we update the schema
     // const result = JobApplicationSchema.safeParse(application)
     // expect(result.success).toBe(true)
-    expect(application.currentStatus.eventId).toBe(
+    expect(application.currentStatus?.eventId).toBe(
       "event_123e4567-e89b-12d3-a456-426614174000",
     );
   });

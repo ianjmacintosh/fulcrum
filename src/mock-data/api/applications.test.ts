@@ -4,7 +4,7 @@ import { JobApplication } from "../../db/schemas";
 
 describe("Applications Mock Data", () => {
   it('should have applications starting with "applied" events instead of cold/warm apply', () => {
-    const applications = applicationsData.data as JobApplication[];
+    const applications = applicationsData.data as any[];
 
     for (const app of applications) {
       expect(app.events.length).toBeGreaterThan(0);
@@ -20,7 +20,7 @@ describe("Applications Mock Data", () => {
   });
 
   it("should have events with title and description fields", () => {
-    const applications = applicationsData.data as JobApplication[];
+    const applications = applicationsData.data as any[];
 
     for (const app of applications) {
       for (const event of app.events) {
@@ -37,7 +37,7 @@ describe("Applications Mock Data", () => {
   });
 
   it("should preserve applicationType as cold/warm attribute on applications", () => {
-    const applications = applicationsData.data as JobApplication[];
+    const applications = applicationsData.data as any[];
 
     for (const app of applications) {
       expect(["cold", "warm"]).toContain(app.applicationType);
@@ -45,7 +45,7 @@ describe("Applications Mock Data", () => {
   });
 
   it("should have events with unique IDs", () => {
-    const applications = applicationsData.data as JobApplication[];
+    const applications = applicationsData.data as any[];
 
     for (const app of applications) {
       const eventIds = app.events.map((e) => e.id);
@@ -60,7 +60,7 @@ describe("Applications Mock Data", () => {
   });
 
   it("should have status dates that match application timeline", () => {
-    const applications = applicationsData.data as JobApplication[];
+    const applications = applicationsData.data as any[];
 
     for (const app of applications) {
       // Check that appliedDate is present for all applications that have applied

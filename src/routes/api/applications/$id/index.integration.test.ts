@@ -22,16 +22,12 @@ describe("Application Details API Unit Tests", () => {
         {
           id: "event-1",
           title: "Application submitted",
-          statusId: "applied",
-          statusName: "Applied",
           date: "2025-01-15",
           description: "Test application",
         },
         {
           id: "event-2",
-          title: "phone_screen_completed",
-          statusId: "in_progress",
-          statusName: "In Progress",
+          title: "Phone screen completed",
           date: "2025-01-25",
           description: "Phone screen completed",
         },
@@ -63,8 +59,8 @@ describe("Application Details API Unit Tests", () => {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].statusName).toBe("Applied");
-    expect(sortedEvents[1].statusName).toBe("In Progress");
+    expect(sortedEvents[0].title).toBe("Application submitted");
+    expect(sortedEvents[1].title).toBe("Phone screen completed");
   });
 
   it("should handle invalid application IDs", async () => {

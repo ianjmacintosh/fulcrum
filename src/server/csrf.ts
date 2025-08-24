@@ -7,28 +7,13 @@ export const getCSRFToken = createServerFn({ method: "GET" }).handler(
     try {
       const tokenData = getCSRFTokenData();
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          ...tokenData,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return {
+        success: true,
+        ...tokenData,
+      };
     } catch (error) {
       console.error("CSRF token generation error:", error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Failed to generate CSRF token",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      throw new Error("Failed to generate CSRF token");
     }
   },
 );

@@ -20,13 +20,15 @@ describe("<JobApplicationCard>", () => {
     locationType: "remote",
     events: [
       {
-        statusId: "applied",
-        statusName: "Applied",
+        id: "event_1",
+        title: "Application submitted",
+        description: "Applied through company website",
         date: "2025-01-05T10:30:00.000Z",
       },
       {
-        statusId: "phone_screen",
-        statusName: "Phone Screen",
+        id: "event_2",
+        title: "Phone screen scheduled",
+        description: "Interview with hiring manager",
         date: "2025-01-08T14:00:00.000Z",
       },
     ],
@@ -77,8 +79,9 @@ describe("<JobApplicationCard>", () => {
       currentStatus: { id: "rejected", name: "Rejected" },
       events: [
         {
-          statusId: "rejected",
-          statusName: "Rejected",
+          id: "event_reject",
+          title: "Application rejected",
+          description: "Position filled by another candidate",
           date: "2025-01-10T09:00:00.000Z",
         },
       ],
