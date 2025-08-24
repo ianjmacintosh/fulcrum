@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { Footer } from "./Footer";
 import "@testing-library/jest-dom/vitest";
 
