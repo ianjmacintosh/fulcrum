@@ -1,11 +1,11 @@
 name: Run Static Analysis
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 jobs:
-  unit-test:
+  prettier:
     name: Check file formatting
     runs-on: ubuntu-latest
     steps:
@@ -15,3 +15,13 @@ jobs:
         run: npm ci
       - name: Run Prettier
         run: npm run format:check
+  lint:
+    name: Lint all files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Install deps
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
