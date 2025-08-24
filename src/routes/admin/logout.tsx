@@ -59,7 +59,7 @@ function AdminLogoutPage() {
         <p>You have been successfully logged out of the admin panel.</p>
 
         <div className="logout-actions">
-          <Link to="/admin" className="login-again-button">
+          <Link to="/login" className="login-again-button">
             Login Again
           </Link>
           <Link to="/" className="home-button">

@@ -67,32 +67,11 @@ export class ApplicationService {
     const collection = await this.getCollection();
 
     try {
-      // First try with ObjectId (standard MongoDB _id format)
+      // Convert string to ObjectId if needed
       const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      let result = await collection.findOne({ _id: objectId, userId });
-
-      if (result) {
-        return result;
-      }
-
-      // If not found with ObjectId, try with string _id (for migration compatibility)
-      if (typeof id === "string") {
-        result = await collection.findOne({ _id: id, userId });
-        if (result) {
-          return result;
-        }
-      }
-
-      return null;
+      return await collection.findOne({ _id: objectId, userId });
     } catch {
-      // If ObjectId conversion failed, try with string _id
-      if (typeof id === "string") {
-        try {
-          return await collection.findOne({ _id: id, userId });
-        } catch {
-          return null;
-        }
-      }
+      // Return null if ObjectId conversion fails or query fails
       return null;
     }
   }
@@ -113,44 +92,16 @@ export class ApplicationService {
     delete updateDoc.userId; // Don't allow userId to be changed
 
     try {
-      // First try with ObjectId (standard MongoDB _id format)
+      // Convert string to ObjectId if needed
       const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      let result = await collection.findOneAndUpdate(
+      const result = await collection.findOneAndUpdate(
         { _id: objectId, userId },
         { $set: updateDoc },
         { returnDocument: "after" },
       );
-
-      if (result) {
-        return result;
-      }
-
-      // If not found with ObjectId, try with string _id (for migration compatibility)
-      if (typeof id === "string") {
-        result = await collection.findOneAndUpdate(
-          { _id: id, userId },
-          { $set: updateDoc },
-          { returnDocument: "after" },
-        );
-        if (result) {
-          return result;
-        }
-      }
-
-      return null;
+      return result;
     } catch {
-      // If ObjectId conversion failed, try with string _id
-      if (typeof id === "string") {
-        try {
-          return await collection.findOneAndUpdate(
-            { _id: id, userId },
-            { $set: updateDoc },
-            { returnDocument: "after" },
-          );
-        } catch {
-          return null;
-        }
-      }
+      // Return null if ObjectId conversion fails or query fails
       return null;
     }
   }
@@ -335,19 +286,12 @@ export class ApplicationService {
     let currentApplication: any = null;
 
     try {
-      // Try with ObjectId first
+      // Convert string to ObjectId if needed
       const objectId = typeof id === "string" ? new ObjectId(id) : id;
       currentApplication = await collection.findOne({ _id: objectId, userId });
-
-      // If not found with ObjectId, try with string _id
-      if (!currentApplication && typeof id === "string") {
-        currentApplication = await collection.findOne({ _id: id, userId });
-      }
     } catch {
-      // If ObjectId conversion failed, try with string _id
-      if (typeof id === "string") {
-        currentApplication = await collection.findOne({ _id: id, userId });
-      }
+      // Return null if ObjectId conversion fails
+      return null;
     }
 
     if (!currentApplication) {
@@ -373,34 +317,18 @@ export class ApplicationService {
     let result: any = null;
 
     try {
-      // Try with ObjectId first
+      // Convert string to ObjectId if needed
       const objectId = typeof id === "string" ? new ObjectId(id) : id;
       result = await collection.findOneAndUpdate(
         { _id: objectId, userId },
         { $set: updateDoc },
         { returnDocument: "after" },
       );
-
-      // If update with ObjectId didn't work, try with string _id
-      if (!result && typeof id === "string") {
-        result = await collection.findOneAndUpdate(
-          { _id: id, userId },
-          { $set: updateDoc },
-          { returnDocument: "after" },
-        );
-      }
+      return result;
     } catch {
-      // If ObjectId conversion failed, try with string _id
-      if (typeof id === "string") {
-        result = await collection.findOneAndUpdate(
-          { _id: id, userId },
-          { $set: updateDoc },
-          { returnDocument: "after" },
-        );
-      }
+      // Return null if ObjectId conversion fails or update fails
+      return null;
     }
-
-    return result || null;
   }
 
   /**

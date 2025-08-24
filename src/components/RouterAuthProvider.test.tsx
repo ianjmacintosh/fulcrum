@@ -87,7 +87,9 @@ describe("RouterAuthProvider", () => {
       id: "user123",
       email: "user@example.com",
       name: "Test User",
+      hashedPassword: "hashed_password",
       createdAt: new Date("2025-01-01"),
+      updatedAt: new Date("2025-01-01"),
     };
 
     renderWithAuthContext({
@@ -107,7 +109,7 @@ describe("RouterAuthProvider", () => {
               name: "Test User",
               username: undefined,
               createdAt: user.createdAt,
-              updatedAt: undefined,
+              updatedAt: user.updatedAt,
             },
             userType: "user",
             authenticated: true,
@@ -121,6 +123,7 @@ describe("RouterAuthProvider", () => {
   test("updates router context when admin logs in", async () => {
     const adminUser = {
       username: "admin",
+      hashedPassword: "hashed_admin_password",
       createdAt: new Date("2025-01-01"),
     };
 
@@ -228,7 +231,10 @@ describe("RouterAuthProvider", () => {
     const user = {
       id: "user123",
       email: "user@example.com",
+      name: "Test User",
+      hashedPassword: "hashed_password",
       createdAt: new Date("2025-01-01"),
+      updatedAt: new Date("2025-01-01"),
     };
 
     renderWithAuthContext({
@@ -275,7 +281,10 @@ describe("RouterAuthProvider", () => {
     const user = {
       id: "user123",
       email: "user@example.com",
+      name: "Test User",
+      hashedPassword: "hashed_password",
       createdAt: new Date("2025-01-01"),
+      updatedAt: new Date("2025-01-01"),
     };
 
     rerender(
@@ -312,7 +321,10 @@ describe("RouterAuthProvider", () => {
       user: {
         id: "user123",
         email: "user@example.com",
+        name: "Test User",
+        hashedPassword: "hashed_password",
         createdAt: new Date("2025-01-01"),
+        updatedAt: new Date("2025-01-01"),
       },
       userType: "user",
       isLoggedIn: true,

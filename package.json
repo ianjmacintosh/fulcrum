@@ -15,6 +15,7 @@
     "db:test": "tsx test-connection.js",
     "test:unit": "vitest",
     "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "format": "prettier --write",

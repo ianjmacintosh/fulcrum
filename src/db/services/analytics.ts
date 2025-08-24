@@ -52,9 +52,7 @@ export class AnalyticsService {
     const coldApplications = applications.filter(
       (app) => app.applicationType === "cold",
     );
-    const phoneScreens = applications.filter((app) =>
-      app.events.some((event) => event.statusId === "phone_screen"),
-    );
+    const phoneScreens = applications.filter((app) => app.phoneScreenDate);
 
     // Calculate conversion rates
     const phoneScreenRate =
@@ -148,23 +146,15 @@ export class AnalyticsService {
 
     // Applications that reached phone screen
     const coldPhoneScreens = applications.filter(
-      (app) =>
-        app.applicationType === "cold" &&
-        app.events.some((event) => event.statusName === "Phone Screen"), // Use statusName instead of statusId
+      (app) => app.applicationType === "cold" && app.phoneScreenDate, // Use phoneScreenDate instead of event search
     );
 
     // All applications that had phone screens
-    const allPhoneScreens = applications.filter((app) =>
-      app.events.some((event) => event.statusName === "Phone Screen"),
-    );
+    const allPhoneScreens = applications.filter((app) => app.phoneScreenDate);
 
-    // Applications that progressed past phone screen
-    const round2Plus = applications.filter((app) =>
-      app.events.some((event) =>
-        ["Round 2", "Offer Letter Received", "Accepted"].includes(
-          event.statusName,
-        ),
-      ),
+    // Applications that progressed past phone screen (Round 2, accepted, or declined)
+    const round2Plus = applications.filter(
+      (app) => app.round2Date || app.acceptedDate || app.declinedDate,
     );
 
     const coldToPhoneRate =
@@ -246,10 +236,13 @@ export class AnalyticsService {
 
       boardStats[boardName].total++;
 
-      // Count as response if they got past initial application
-      const hasResponse = app.events.some(
-        (event) => !["cold_apply", "warm_apply"].includes(event.statusId),
-      );
+      // Count as response if they got past initial application (have any status beyond applied)
+      const hasResponse =
+        app.phoneScreenDate ||
+        app.round1Date ||
+        app.round2Date ||
+        app.acceptedDate ||
+        app.declinedDate;
       if (hasResponse) {
         boardStats[boardName].responses++;
       }

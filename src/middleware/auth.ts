@@ -24,7 +24,7 @@ export interface AuthContext {
  * Authentication middleware that verifies user identity and adds auth context
  * Follows TanStack Start middleware best practices for server routes
  */
-export const authMiddleware = createMiddleware({ type: "function" }).server(
+export const authMiddleware = createMiddleware({ type: "request" }).server(
   async ({ request, next }) => {
     // Get session from request
     const session = getSession(request);
@@ -38,7 +38,7 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
 
     if (session) {
       // Get user details based on session type
-      let user = null;
+      let user: AuthContext["user"] = null;
       if (session.userType === "admin") {
         const { adminService } = await import("../db/services/admin");
         const adminUser = await adminService.getAdminByUsername(session.userId);
@@ -89,26 +89,21 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
 /**
  * Middleware that requires user authentication
  */
-export const requireUserAuth = createMiddleware({ type: "function" }).server(
+export const requireUserAuth = createMiddleware({ type: "request" }).server(
   async ({ request, next }) => {
     const session = getSession(request);
 
     if (!session || session.userType !== "user") {
-      return {
-        request,
-        pathname: new URL(request.url).pathname,
-        context: {},
-        response: new Response(
-          JSON.stringify({
-            success: false,
-            error: "Unauthorized",
-          }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      };
+      throw new Response(
+        JSON.stringify({
+          success: false,
+          error: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Get user details
@@ -116,21 +111,16 @@ export const requireUserAuth = createMiddleware({ type: "function" }).server(
     const user = await userService.getUserById(session.userId);
 
     if (!user) {
-      return {
-        request,
-        pathname: new URL(request.url).pathname,
-        context: {},
-        response: new Response(
-          JSON.stringify({
-            success: false,
-            error: "User not found",
-          }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      };
+      throw new Response(
+        JSON.stringify({
+          success: false,
+          error: "User not found",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return next({
@@ -159,26 +149,21 @@ export const requireUserAuth = createMiddleware({ type: "function" }).server(
 /**
  * Middleware that requires admin authentication
  */
-export const requireAdminAuth = createMiddleware({ type: "function" }).server(
+export const requireAdminAuth = createMiddleware({ type: "request" }).server(
   async ({ request, next }) => {
     const session = getSession(request);
 
     if (!session || session.userType !== "admin") {
-      return {
-        request,
-        pathname: new URL(request.url).pathname,
-        context: {},
-        response: new Response(
-          JSON.stringify({
-            success: false,
-            error: "Unauthorized",
-          }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      };
+      throw new Response(
+        JSON.stringify({
+          success: false,
+          error: "Unauthorized",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Get admin details
@@ -186,21 +171,16 @@ export const requireAdminAuth = createMiddleware({ type: "function" }).server(
     const admin = await adminService.getAdminByUsername(session.userId);
 
     if (!admin) {
-      return {
-        request,
-        pathname: new URL(request.url).pathname,
-        context: {},
-        response: new Response(
-          JSON.stringify({
-            success: false,
-            error: "Admin not found",
-          }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      };
+      throw new Response(
+        JSON.stringify({
+          success: false,
+          error: "Admin not found",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return next({

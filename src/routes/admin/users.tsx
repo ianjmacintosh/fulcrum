@@ -90,7 +90,7 @@ function AdminUsersPage() {
       const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: "/admin" });
+        router.navigate({ to: "/admin/users" });
         return;
       }
 
@@ -125,8 +125,11 @@ function AdminUsersPage() {
         if (result.success) {
           summaries[user.id] = result.summary;
         }
-      } catch {
-        console.error(`Failed to fetch data summary for user ${user.id}:`, err);
+      } catch (error) {
+        console.error(
+          `Failed to fetch data summary for user ${user.id}:`,
+          error,
+        );
       }
     }
 
@@ -162,7 +165,7 @@ function AdminUsersPage() {
       const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: "/admin" });
+        router.navigate({ to: "/admin/users" });
         return;
       }
 
@@ -232,7 +235,7 @@ function AdminUsersPage() {
       const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: "/admin" });
+        router.navigate({ to: "/admin/users" });
         return;
       }
 
@@ -311,7 +314,7 @@ function AdminUsersPage() {
       const result = await response.json();
 
       if (response.status === 401) {
-        router.navigate({ to: "/admin" });
+        router.navigate({ to: "/admin/users" });
         return;
       }
 
