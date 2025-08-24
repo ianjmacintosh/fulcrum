@@ -130,7 +130,7 @@ export async function authenticateAdmin(
     }
 
     return { success: true, adminId: admin.username };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Authentication failed." };
   }
 }
@@ -156,7 +156,7 @@ export async function authenticateUser(
     }
 
     return { success: true, userId: user.id };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Authentication failed." };
   }
 }

@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { ApplicationStatus } from "../db/schemas";
+import { useState } from "react";
 import "./EventRecordingForm.css";
 
 interface EventRecordingFormProps {
@@ -97,11 +96,12 @@ export function EventRecordingForm({
 
       // Notify parent component to refresh data
       onEventCreated();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating event:", error);
       setFormState({
         loading: false,
-        error: error.message || "Failed to create event",
+        error:
+          error instanceof Error ? error.message : "Failed to create event",
       });
     }
   };

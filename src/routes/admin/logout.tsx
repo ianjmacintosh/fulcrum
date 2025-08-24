@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
+import "./logout.css";
 
 export const Route = createFileRoute("/admin/logout")({
   component: AdminLogoutPage,
@@ -66,105 +67,6 @@ function AdminLogoutPage() {
           </Link>
         </div>
       </div>
-
-      <style jsx>{`
-        .admin-logout {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: #f5f5f5;
-          padding: 20px;
-        }
-
-        .logout-container {
-          background: white;
-          padding: 60px 40px;
-          border-radius: 12px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-          text-align: center;
-          max-width: 500px;
-          width: 100%;
-        }
-
-        .logout-icon {
-          margin-bottom: 30px;
-          display: flex;
-          justify-content: center;
-        }
-
-        .logout-container h1 {
-          margin: 0 0 15px 0;
-          color: #333;
-          font-size: 28px;
-          font-weight: 600;
-        }
-
-        .logout-container p {
-          margin: 0 0 40px 0;
-          color: #666;
-          font-size: 16px;
-          line-height: 1.5;
-        }
-
-        .logout-actions {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-          flex-wrap: wrap;
-        }
-
-        .login-again-button,
-        .home-button {
-          display: inline-block;
-          padding: 12px 24px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 16px;
-          transition: all 0.2s ease;
-        }
-
-        .login-again-button {
-          background-color: #007bff;
-          color: white;
-        }
-
-        .login-again-button:hover {
-          background-color: #0056b3;
-          transform: translateY(-1px);
-        }
-
-        .home-button {
-          background-color: #6c757d;
-          color: white;
-        }
-
-        .home-button:hover {
-          background-color: #5a6268;
-          transform: translateY(-1px);
-        }
-
-        @media (max-width: 480px) {
-          .logout-container {
-            padding: 40px 20px;
-          }
-
-          .logout-container h1 {
-            font-size: 24px;
-          }
-
-          .logout-actions {
-            flex-direction: column;
-          }
-
-          .login-again-button,
-          .home-button {
-            width: 100%;
-            text-align: center;
-          }
-        }
-      `}</style>
     </div>
   );
 }

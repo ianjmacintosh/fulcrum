@@ -46,7 +46,8 @@ function Home() {
             <div className="feature-item">
               <h4>Application Tracking</h4>
               <p>
-                Keep track of where you've applied and follow up appropriately
+                Keep track of where you&apos;ve applied and follow up
+                appropriately
               </p>
             </div>
             <div className="feature-item">

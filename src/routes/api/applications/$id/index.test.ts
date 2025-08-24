@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JobApplication } from "../../../../db/schemas";
-import { ObjectId } from "mongodb";
 import { mockApplicationService } from "../../../../db/services/mock-application-service";
 
 // Mock the module
@@ -82,7 +81,7 @@ describe("GET /api/applications/:id", () => {
 
   it("should return events sorted chronologically", async () => {
     // Add more events to the application
-    const updatedApp = await applicationService.updateApplication(
+    await applicationService.updateApplication(
       testUserId,
       testApplication._id!,
       {

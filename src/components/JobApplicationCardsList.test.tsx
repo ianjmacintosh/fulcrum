@@ -1,5 +1,5 @@
 import { render, screen, cleanup } from "@testing-library/react";
-import { beforeEach, afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { JobApplicationCardsList } from "./JobApplicationCardsList";
 import { JobApplication } from "../db/schemas";
 import "@testing-library/jest-dom/vitest";

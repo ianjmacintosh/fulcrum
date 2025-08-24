@@ -1,4 +1,4 @@
-import { Db, Collection, ObjectId } from "mongodb";
+import { Db, Collection } from "mongodb";
 import { connectToDatabase } from "../connection";
 import { User, UserSchema } from "../schemas";
 import { randomUUID } from "crypto";

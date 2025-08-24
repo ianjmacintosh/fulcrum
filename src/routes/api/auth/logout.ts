@@ -1,6 +1,5 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 import { clearSession, SESSION_COOKIE } from "../../../utils/session";
-import { createSuccessResponse } from "../../../utils/auth-helpers";
 
 export const ServerRoute = createServerFileRoute("/api/auth/logout").methods({
   POST: async ({ request }) => {

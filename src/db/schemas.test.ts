@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   ApplicationEventSchema,
-  JobApplicationSchema,
   ApplicationEvent,
   JobApplication,
 } from "./schemas";

@@ -1,10 +1,4 @@
 import { connectToDatabase } from "../connection";
-import {
-  JobBoard,
-  Workflow,
-  ApplicationStatus,
-  JobApplication,
-} from "../schemas";
 import { jobBoardService } from "./job-boards";
 import { workflowService } from "./workflows";
 import { applicationService } from "./applications";
@@ -317,7 +311,7 @@ export class UserOnboardingService {
    * Resets user data and optionally reprovisions with default and/or test data
    */
   async resetUserData(userId: string, options: ResetOptions): Promise<void> {
-    const db = await connectToDatabase();
+    await connectToDatabase();
 
     // Always delete applications first (they reference other collections)
     await applicationService.deleteAllApplicationsForUser(userId);
@@ -350,7 +344,7 @@ export class UserOnboardingService {
     applicationCount: number;
     jobBoardCount: number;
   }> {
-    const [applications, jobBoards, defaultWorkflow] = await Promise.all([
+    const [, jobBoards, defaultWorkflow] = await Promise.all([
       applicationService.getApplications(userId, {}, 1), // Just check if any exist
       jobBoardService.getJobBoards(userId),
       workflowService.getDefaultWorkflow(userId),

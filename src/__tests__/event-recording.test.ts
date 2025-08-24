@@ -187,8 +187,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
 
   it("should validate event data consistency across API operations", async () => {
     // Test the data flow that would happen in the real application
-    const statuses =
-      await mockApplicationStatusService.getAllStatuses(testUserId);
+    await mockApplicationStatusService.getAllStatuses(testUserId);
 
     // Simulate form submission data
     const formData = {
@@ -227,32 +226,31 @@ describe("Event Recording Unit Tests - New Architecture", () => {
     // Create a different user's application
     const differentUserStatuses =
       await mockApplicationStatusService.createDefaultStatuses(differentUserId);
-    const differentUserApplication =
-      await mockApplicationService.createApplication({
-        userId: differentUserId,
-        companyName: "Different Company",
-        roleName: "Different Role",
-        jobBoard: { id: "indeed", name: "Indeed" },
-        workflow: { id: "custom", name: "Custom Process" },
-        applicationType: "warm",
-        roleType: "manager",
-        locationType: "on-site",
-        events: [
-          {
-            id: `event_${randomUUID()}`,
-            title: "Application submitted",
-            description: "Different user application",
-            date: "2025-01-10",
-          },
-        ],
-        currentStatus: {
-          id: differentUserStatuses
-            .find((s) => s.name === "Applied")!
-            ._id!.toString(),
-          name: "Applied",
-          eventId: `event_${randomUUID()}`,
+    await mockApplicationService.createApplication({
+      userId: differentUserId,
+      companyName: "Different Company",
+      roleName: "Different Role",
+      jobBoard: { id: "indeed", name: "Indeed" },
+      workflow: { id: "custom", name: "Custom Process" },
+      applicationType: "warm",
+      roleType: "manager",
+      locationType: "on-site",
+      events: [
+        {
+          id: `event_${randomUUID()}`,
+          title: "Application submitted",
+          description: "Different user application",
+          date: "2025-01-10",
         },
-      });
+      ],
+      currentStatus: {
+        id: differentUserStatuses
+          .find((s) => s.name === "Applied")!
+          ._id!.toString(),
+        name: "Applied",
+        eventId: `event_${randomUUID()}`,
+      },
+    });
 
     // Verify that each user can only see their own data
     const user1Applications =

@@ -1,10 +1,5 @@
 import { connectToDatabase } from "./connection";
-import {
-  JobApplication,
-  ApplicationStatus,
-  Workflow,
-  JobBoard,
-} from "./schemas";
+import { JobApplication, Workflow, JobBoard } from "./schemas";
 import { adminService } from "./services/admin";
 import { userService } from "./services/users";
 import { applicationStatusService } from "./services/application-statuses";
@@ -68,7 +63,7 @@ async function seedUser() {
   const defaultPassword = "followthewhiterabbit";
 
   // Check if user already exists
-  let existingUser = await userService.getUserByEmail(defaultEmail);
+  const existingUser = await userService.getUserByEmail(defaultEmail);
   if (existingUser) {
     console.log("✅ Default user Alice already exists");
     return existingUser.id;

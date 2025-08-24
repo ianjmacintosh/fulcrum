@@ -18,7 +18,7 @@ export class AnalyticsService {
     let conversionRates;
     try {
       conversionRates = await this.calculateConversionRates(applications);
-    } catch (error) {
+    } catch {
       conversionRates = []; // Fallback to empty array
     }
 

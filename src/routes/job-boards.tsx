@@ -39,8 +39,8 @@ function JobBoards() {
             <div className="saved-searches">
               <h4>Saved Searches</h4>
               <ul>
-                <li>"Software Engineer" in San Francisco</li>
-                <li>"Full Stack Developer" Remote</li>
+                <li>&quot;Software Engineer&quot; in San Francisco</li>
+                <li>&quot;Full Stack Developer&quot; Remote</li>
               </ul>
             </div>
           </div>
@@ -67,7 +67,7 @@ function JobBoards() {
             <div className="saved-searches">
               <h4>Saved Searches</h4>
               <ul>
-                <li>"React Developer" Remote</li>
+                <li>&quot;React Developer&quot; Remote</li>
               </ul>
             </div>
           </div>
@@ -94,7 +94,7 @@ function JobBoards() {
             <div className="saved-searches">
               <h4>Saved Searches</h4>
               <ul>
-                <li>"Startup Engineer" in Bay Area</li>
+                <li>&quot;Startup Engineer&quot; in Bay Area</li>
               </ul>
             </div>
           </div>

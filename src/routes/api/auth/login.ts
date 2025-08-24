@@ -5,10 +5,7 @@ import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
 } from "../../../utils/session";
-import {
-  createSuccessResponse,
-  createErrorResponse,
-} from "../../../utils/auth-helpers";
+import { createErrorResponse } from "../../../utils/auth-helpers";
 import { adminRateLimiter, getClientIP } from "../../../utils/rate-limiter";
 import { z } from "zod";
 
@@ -90,7 +87,7 @@ export const ServerRoute = createServerFileRoute("/api/auth/login").methods({
           },
         },
       );
-    } catch (error) {
+    } catch {
       // Record failed attempt for server errors too
       adminRateLimiter.record(clientIP, false);
       return createErrorResponse("An error occurred. Please try again.");

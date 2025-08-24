@@ -86,7 +86,7 @@ export function verifyCSRFToken(token: string, hash: string): boolean {
     }
 
     return timingSafeEqual(tokenBuffer, expectedBuffer);
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -137,7 +137,7 @@ export async function validateCSRFFromRequest(
         if (token && hash) {
           return verifyCSRFToken(token, hash);
         }
-      } catch (formError) {
+      } catch {
         // If form parsing fails, fall through to headers
       }
     }
@@ -151,7 +151,7 @@ export async function validateCSRFFromRequest(
     }
 
     return false;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

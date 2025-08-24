@@ -20,22 +20,18 @@ export async function connectToDatabase(): Promise<Db> {
     return db;
   }
 
-  try {
-    if (!client) {
-      client = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000,
-        socketTimeoutMS: 10000,
-        maxPoolSize: 10,
-      });
-      await client.connect();
-    }
-
-    db = client.db("fulcrum");
-    return db;
-  } catch (error) {
-    throw error;
+  if (!client) {
+    client = new MongoClient(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000,
+      maxPoolSize: 10,
+    });
+    await client.connect();
   }
+
+  db = client.db("fulcrum");
+  return db;
 }
 
 export async function closeDatabaseConnection(): Promise<void> {

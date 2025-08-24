@@ -161,7 +161,7 @@ export class MigrationRunner {
 
     // Comprehensive validation of all applications
     const allApps = await applications.find({}).toArray();
-    let validationErrors: string[] = [];
+    const validationErrors: string[] = [];
 
     console.log("🔍 Comprehensive application structure validation:");
 
