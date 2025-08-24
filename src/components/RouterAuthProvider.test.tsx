@@ -109,7 +109,7 @@ describe("RouterAuthProvider", () => {
               name: "Test User",
               username: undefined,
               createdAt: user.createdAt,
-              updatedAt: undefined,
+              updatedAt: user.updatedAt,
             },
             userType: "user",
             authenticated: true,
