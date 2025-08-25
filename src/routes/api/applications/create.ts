@@ -22,6 +22,9 @@ const CreateApplicationSchema = z.object({
   notes: z.string().optional().or(z.literal("")),
 });
 
+// Schema for bulk application creation
+const BulkCreateApplicationSchema = z.array(CreateApplicationSchema);
+
 export const ServerRoute = createServerFileRoute("/api/applications/create")
   .middleware([requireUserAuth])
   .methods({
@@ -58,43 +61,64 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           );
         }
 
-        // Extract form fields
-        const companyName = formData.get("companyName") as string;
-        const roleName = formData.get("roleName") as string;
-        const jobPostingUrl = formData.get("jobPostingUrl") as string;
-        const appliedDate = formData.get("appliedDate") as string;
-        const jobBoard = formData.get("jobBoard") as string;
-        const applicationType = formData.get("applicationType") as string;
-        const roleType = formData.get("roleType") as string;
-        const locationType = formData.get("locationType") as string;
-        const notes = formData.get("notes") as string;
+        // Check if this is a bulk operation
+        const applicationsData = formData.get("applications");
+        let validatedData: z.infer<typeof CreateApplicationSchema> | undefined;
+        let isBulkOperation = false;
+        let bulkValidatedData: z.infer<typeof BulkCreateApplicationSchema> = [];
 
-        // Validate input
-        const validation = CreateApplicationSchema.safeParse({
-          companyName,
-          roleName,
-          jobPostingUrl,
-          appliedDate,
-          jobBoard,
-          applicationType,
-          roleType,
-          locationType,
-          notes,
-        });
+        if (applicationsData) {
+          // Bulk operation - parse JSON array
+          isBulkOperation = true;
+          try {
+            const parsedApplications = JSON.parse(applicationsData as string);
+            const bulkValidation =
+              BulkCreateApplicationSchema.safeParse(parsedApplications);
 
-        if (!validation.success) {
-          return createErrorResponse(validation.error.issues[0].message, 400);
+            if (!bulkValidation.success) {
+              return createErrorResponse(
+                bulkValidation.error.issues[0].message,
+                400,
+              );
+            }
+
+            bulkValidatedData = bulkValidation.data;
+          } catch (error) {
+            return createErrorResponse("Invalid application data format", 400);
+          }
+        } else {
+          // Single operation - extract form fields
+          const companyName = formData.get("companyName") as string;
+          const roleName = formData.get("roleName") as string;
+          const jobPostingUrl = formData.get("jobPostingUrl") as string;
+          const appliedDate = formData.get("appliedDate") as string;
+          const jobBoard = formData.get("jobBoard") as string;
+          const applicationType = formData.get("applicationType") as string;
+          const roleType = formData.get("roleType") as string;
+          const locationType = formData.get("locationType") as string;
+          const notes = formData.get("notes") as string;
+
+          // Validate input
+          const validation = CreateApplicationSchema.safeParse({
+            companyName,
+            roleName,
+            jobPostingUrl,
+            appliedDate,
+            jobBoard,
+            applicationType,
+            roleType,
+            locationType,
+            notes,
+          });
+
+          if (!validation.success) {
+            return createErrorResponse(validation.error.issues[0].message, 400);
+          }
+
+          validatedData = validation.data;
         }
 
-        const validatedData = validation.data;
-
-        // Get or create job board
-        const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
-          userId,
-          validatedData.jobBoard,
-        );
-
-        // Get default workflow for user
+        // Get default workflow and status for user (shared for both single and bulk)
         let defaultWorkflow = await workflowService.getDefaultWorkflow(userId);
 
         if (!defaultWorkflow) {
@@ -131,52 +155,131 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           });
         }
 
-        // Create the job application
-        const application = await applicationService.createApplication({
-          userId,
-          companyName: validatedData.companyName,
-          roleName: validatedData.roleName,
-          jobPostingUrl: validatedData.jobPostingUrl || undefined,
-          jobBoard: {
-            id: jobBoardRecord._id!.toString(),
-            name: jobBoardRecord.name,
-          },
-          workflow: {
-            id: defaultWorkflow._id!.toString(),
-            name: defaultWorkflow.name,
-          },
-          applicationType: validatedData.applicationType as "cold" | "warm",
-          roleType: validatedData.roleType as "manager" | "engineer",
-          locationType: validatedData.locationType as
-            | "on-site"
-            | "hybrid"
-            | "remote",
-          events: [
-            {
-              id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              title: "Application submitted",
-              description: validatedData.notes || "Applied to position",
-              date: validatedData.appliedDate,
-            },
-          ],
-          currentStatus: {
-            id: appliedStatus._id!.toString(),
-            name: appliedStatus.name,
-          },
-        });
+        if (isBulkOperation) {
+          // Handle bulk creation
+          const createdApplications: Array<{
+            id: string;
+            companyName: string;
+            roleName: string;
+            currentStatus: any;
+            createdAt: Date;
+          }> = [];
 
-        return createSuccessResponse(
-          {
-            application: {
+          for (const appData of bulkValidatedData) {
+            // Get or create job board for each application
+            const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
+              userId,
+              appData.jobBoard,
+            );
+
+            // Create the job application
+            const application = await applicationService.createApplication({
+              userId,
+              companyName: appData.companyName,
+              roleName: appData.roleName,
+              jobPostingUrl: appData.jobPostingUrl || undefined,
+              jobBoard: {
+                id: jobBoardRecord._id!.toString(),
+                name: jobBoardRecord.name,
+              },
+              workflow: {
+                id: defaultWorkflow._id!.toString(),
+                name: defaultWorkflow.name,
+              },
+              applicationType: appData.applicationType as "cold" | "warm",
+              roleType: appData.roleType as "manager" | "engineer",
+              locationType: appData.locationType as
+                | "on-site"
+                | "hybrid"
+                | "remote",
+              events: [
+                {
+                  id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  title: "Application submitted",
+                  description: appData.notes || "Applied to position",
+                  date: appData.appliedDate,
+                },
+              ],
+              currentStatus: {
+                id: appliedStatus._id!.toString(),
+                name: appliedStatus.name,
+              },
+            });
+
+            createdApplications.push({
               id: application._id!.toString(),
               companyName: application.companyName,
               roleName: application.roleName,
               currentStatus: application.currentStatus,
               createdAt: application.createdAt,
+            });
+          }
+
+          return createSuccessResponse(
+            {
+              applications: createdApplications,
+              count: createdApplications.length,
             },
-          },
-          201,
-        );
+            201,
+          );
+        } else {
+          // Handle single creation (existing logic)
+          if (!validatedData) {
+            return createErrorResponse("Invalid application data", 400);
+          }
+
+          const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
+            userId,
+            validatedData.jobBoard,
+          );
+
+          // Create the job application
+          const application = await applicationService.createApplication({
+            userId,
+            companyName: validatedData.companyName,
+            roleName: validatedData.roleName,
+            jobPostingUrl: validatedData.jobPostingUrl || undefined,
+            jobBoard: {
+              id: jobBoardRecord._id!.toString(),
+              name: jobBoardRecord.name,
+            },
+            workflow: {
+              id: defaultWorkflow._id!.toString(),
+              name: defaultWorkflow.name,
+            },
+            applicationType: validatedData.applicationType as "cold" | "warm",
+            roleType: validatedData.roleType as "manager" | "engineer",
+            locationType: validatedData.locationType as
+              | "on-site"
+              | "hybrid"
+              | "remote",
+            events: [
+              {
+                id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                title: "Application submitted",
+                description: validatedData.notes || "Applied to position",
+                date: validatedData.appliedDate,
+              },
+            ],
+            currentStatus: {
+              id: appliedStatus._id!.toString(),
+              name: appliedStatus.name,
+            },
+          });
+
+          return createSuccessResponse(
+            {
+              application: {
+                id: application._id!.toString(),
+                companyName: application.companyName,
+                roleName: application.roleName,
+                currentStatus: application.currentStatus,
+                createdAt: application.createdAt,
+              },
+            },
+            201,
+          );
+        }
       } catch (error: any) {
         console.error("Error creating application:", error);
         return createErrorResponse("Failed to create application");

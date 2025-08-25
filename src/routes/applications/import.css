@@ -1,0 +1,395 @@
+.import-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Instructions Section */
+.instructions-section {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.instructions-section h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.instructions-section p {
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+.format-table-container {
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.format-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+}
+
+.format-table th {
+  background-color: #2196f3;
+  color: white;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.format-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.format-table code {
+  background-color: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: "Courier New", monospace;
+  color: #c53030;
+}
+
+.required {
+  color: #e53e3e;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.optional {
+  color: #38a169;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.sample-download {
+  text-align: center;
+}
+
+.download-sample-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.download-sample-button:hover {
+  background-color: #1976d2;
+}
+
+/* Upload Section */
+.upload-section {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.upload-section h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.file-drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background-color: white;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.file-drop-zone.drag-over {
+  border-color: #4caf50;
+  background-color: #f0f8f0;
+}
+
+.file-drop-zone.file-selected {
+  border-color: #4caf50;
+  background-color: #f8fff8;
+}
+
+.file-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.drop-icon {
+  font-size: 3rem;
+}
+
+.drop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.drop-text strong {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.drop-text span {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.file-selected-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #4caf50;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.file-icon {
+  font-size: 2rem;
+}
+
+.file-info {
+  flex: 1;
+  text-align: left;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.file-size {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.remove-file:hover {
+  color: #e53e3e;
+}
+
+.file-input-label {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.preview-table-container {
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.preview-table th {
+  background-color: #4caf50;
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.preview-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.preview-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.editable-cell {
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  display: block;
+  min-height: 1.2em;
+}
+
+.editable-cell:hover {
+  background-color: #e3f2fd;
+}
+
+.cell-editor {
+  width: 100%;
+  border: 2px solid #2196f3;
+  border-radius: 3px;
+  padding: 0.25rem;
+  font-size: inherit;
+  font-family: inherit;
+  background-color: white;
+}
+
+.cell-editor:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.validation-valid {
+  color: #4caf50;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.validation-error {
+  color: #f44336;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.validation-warning {
+  color: #ff9800;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.import-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
+.import-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.import-button:hover {
+  background-color: #45a049;
+}
+
+.import-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.continue-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.continue-button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.continue-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
+@media (max-width: 768px) {
+  .import-container {
+    margin: 0 1rem;
+  }
+
+  .preview-section {
+    padding: 1rem;
+  }
+
+  .preview-table-container {
+    font-size: 0.875rem;
+  }
+
+  .preview-table th,
+  .preview-table td {
+    padding: 0.75rem;
+  }
+
+  .import-actions {
+    flex-direction: column;
+  }
+
+  .cancel-button,
+  .import-button {
+    width: 100%;
+  }
+}
