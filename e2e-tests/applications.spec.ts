@@ -215,9 +215,10 @@ test.describe.serial("Applications", () => {
       page.getByRole("heading", { name: "Add New Job" }),
     ).toBeVisible();
 
-    // Fill in only required fields
-    await page.fill("#companyName", "TestCorp Inc");
-    await page.fill("#roleName", "Senior Software Engineer");
+    // Fill in only required fields with unique values to avoid conflicts
+    const timestamp = Date.now();
+    await page.fill("#companyName", `TestCorp-${timestamp}`);
+    await page.fill("#roleName", `Senior Software Engineer ${timestamp}`);
 
     // Submit the form
     await page.getByRole("button", { name: "Add Job" }).click();
@@ -236,8 +237,8 @@ test.describe.serial("Applications", () => {
     // Verify new application appears in the list using specific filter
     const applicationCard = page
       .locator('[data-testid="application-card"]')
-      .filter({ hasText: "TestCorp Inc" })
-      .filter({ hasText: "Senior Software Engineer" });
+      .filter({ hasText: `TestCorp-${timestamp}` })
+      .filter({ hasText: `Senior Software Engineer ${timestamp}` });
 
     await expect(applicationCard).toBeVisible();
   });
@@ -251,8 +252,9 @@ test.describe.serial("Applications", () => {
     // Navigate to new application page
     await page.goto("/applications/new");
 
-    // Fill in required fields only
-    await page.fill("#companyName", "Future Opportunity Corp");
+    // Fill in required fields only - use unique names to avoid test conflicts
+    const timestamp = Date.now();
+    await page.fill("#companyName", `Future Opportunity Corp ${timestamp}`);
     await page.fill("#roleName", "Staff Engineer");
     await page.fill("#notes", "Great company culture, want to apply later");
 
@@ -265,12 +267,14 @@ test.describe.serial("Applications", () => {
 
     // Find the new application and verify status
     const applicationCard = page.locator(".application-card", {
-      has: page.getByText("Future Opportunity Corp"),
+      has: page.getByText(`Future Opportunity Corp ${timestamp}`),
     });
     await expect(applicationCard).toBeVisible();
 
     // Should show "Not Applied" status since no appliedDate was provided
-    await expect(applicationCard.getByText("Not Applied")).toBeVisible();
+    await expect(applicationCard.locator(".status-badge")).toContainText(
+      "Not Applied",
+    );
   });
 
   test("Creates event and sets status when applied date is provided", async ({
@@ -282,8 +286,9 @@ test.describe.serial("Applications", () => {
     // Navigate to new application page
     await page.goto("/applications/new");
 
-    // Fill in required fields and applied date
-    await page.fill("#companyName", "Applied Corp");
+    // Fill in required fields and applied date - use unique names to avoid test conflicts
+    const timestamp = Date.now();
+    await page.fill("#companyName", `Applied Corp ${timestamp}`);
     await page.fill("#roleName", "Frontend Developer");
 
     // Set an applied date
@@ -299,12 +304,14 @@ test.describe.serial("Applications", () => {
 
     // Find the new application and verify status
     const applicationCard = page.locator(".application-card", {
-      has: page.getByText("Applied Corp"),
+      has: page.getByText(`Applied Corp ${timestamp}`),
     });
     await expect(applicationCard).toBeVisible();
 
     // Should show "Applied" status since appliedDate was provided
-    await expect(applicationCard.getByText("Applied")).toBeVisible();
+    await expect(applicationCard.locator(".status-badge")).toContainText(
+      "Applied",
+    );
   });
 
   test("Form validation works for required fields", async ({ page }) => {
@@ -322,7 +329,8 @@ test.describe.serial("Applications", () => {
     expect(page.url()).toContain("/applications/new");
 
     // Fill in one required field but leave the other empty
-    await page.fill("#companyName", "TestCorp");
+    const timestamp = Date.now();
+    await page.fill("#companyName", `TestCorp-${timestamp}`);
     // Leave roleName empty
 
     // Try to submit again
@@ -352,7 +360,8 @@ test.describe.serial("Applications", () => {
     await page.goto("/applications/new");
 
     // Use unique company name to avoid conflicts with existing test data
-    const uniqueCompany = `NotAppliedCorp-${Date.now()}`;
+    const timestamp = Date.now();
+    const uniqueCompany = `NotAppliedCorp-${timestamp}`;
 
     // Fill in required fields only (no applied date)
     await page.fill("#companyName", uniqueCompany);
@@ -377,7 +386,9 @@ test.describe.serial("Applications", () => {
     await expect(applicationCard).toContainText("Software Engineer");
 
     // Now verify the status - check if it contains "Not Applied"
-    await expect(applicationCard).toContainText("Not Applied");
+    await expect(applicationCard.locator(".status-badge")).toContainText(
+      "Not Applied",
+    );
   });
 
   test("New job with applied date shows 'Applied' status", async ({ page }) => {
@@ -388,7 +399,8 @@ test.describe.serial("Applications", () => {
     await page.goto("/applications/new");
 
     // Use unique company name to avoid conflicts with existing test data
-    const uniqueCompany = `AppliedCorp-${Date.now()}`;
+    const timestamp = Date.now();
+    const uniqueCompany = `AppliedCorp-${timestamp}`;
 
     // Fill in required fields and applied date
     await page.fill("#companyName", uniqueCompany);
@@ -414,6 +426,8 @@ test.describe.serial("Applications", () => {
     await expect(applicationCard).toContainText("Senior Engineer");
 
     // Verify it shows "Applied" status
-    await expect(applicationCard).toContainText("Applied");
+    await expect(applicationCard.locator(".status-badge")).toContainText(
+      "Applied",
+    );
   });
 }); // Close test.describe.serial
