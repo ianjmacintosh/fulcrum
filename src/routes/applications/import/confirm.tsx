@@ -14,6 +14,7 @@ type ImportApplication = {
   companyName: string;
   roleName: string;
   validationStatus: "valid" | "error";
+  shouldImport: boolean;
 };
 
 function ConfirmImportApplications() {
@@ -38,7 +39,12 @@ function ConfirmImportApplications() {
       if (storedData) {
         try {
           const parsedData = JSON.parse(storedData);
-          setImportData(parsedData);
+          // Add shouldImport flag to each item, defaulting to true for valid items and false for errors
+          const dataWithImportFlags = parsedData.map((item: any) => ({
+            ...item,
+            shouldImport: item.validationStatus === "valid",
+          }));
+          setImportData(dataWithImportFlags);
         } catch (error) {
           console.error("Failed to parse stored CSV data:", error);
           setImportError(
@@ -92,11 +98,12 @@ function ConfirmImportApplications() {
 
       if (isDryRun) {
         // Dry run mode - simulate success without actually creating applications
+        const selectedApps = importData.filter((app) => app.shouldImport);
         console.log(
           "Dry run mode: Would import",
-          importData.length,
+          selectedApps.length,
           "applications:",
-          importData,
+          selectedApps,
         );
 
         // Simulate network delay
@@ -116,19 +123,21 @@ function ConfirmImportApplications() {
       }
 
       // Production mode - actual API call
-      // Prepare applications for submission (remove validation status)
-      const applicationsToSubmit = importData.map((app) => ({
-        companyName: app.companyName,
-        roleName: app.roleName,
-        // Set default values for required fields
-        jobPostingUrl: "",
-        appliedDate: new Date().toISOString().split("T")[0], // Today's date
-        jobBoard: "Unknown",
-        applicationType: "cold" as const,
-        roleType: "engineer" as const,
-        locationType: "remote" as const,
-        notes: "",
-      }));
+      // Prepare applications for submission (only include checked items)
+      const applicationsToSubmit = importData
+        .filter((app) => app.shouldImport)
+        .map((app) => ({
+          companyName: app.companyName,
+          roleName: app.roleName,
+          // Set default values for required fields
+          jobPostingUrl: "",
+          appliedDate: new Date().toISOString().split("T")[0], // Today's date
+          jobBoard: "Unknown",
+          applicationType: "cold" as const,
+          roleType: "engineer" as const,
+          locationType: "remote" as const,
+          notes: "",
+        }));
 
       // Create form data for bulk submission
       const submitFormData = new FormData();
@@ -180,6 +189,14 @@ function ConfirmImportApplications() {
     setImportData((prevData) =>
       prevData.map((app, index) =>
         index === rowIndex ? { ...app, [field]: value } : app,
+      ),
+    );
+  };
+
+  const handleImportToggle = (rowIndex: number) => {
+    setImportData((prevData) =>
+      prevData.map((app, index) =>
+        index === rowIndex ? { ...app, shouldImport: !app.shouldImport } : app,
       ),
     );
   };
@@ -243,6 +260,7 @@ function ConfirmImportApplications() {
               <table className="preview-table">
                 <thead>
                   <tr>
+                    <th className="import-checkbox-header">Import</th>
                     <th className="row-number-header">#</th>
                     <th className="company-header">Company</th>
                     <th className="role-header">Role</th>
@@ -252,6 +270,14 @@ function ConfirmImportApplications() {
                 <tbody>
                   {importData.map((app, index) => (
                     <tr key={index} className={`row-${app.validationStatus}`}>
+                      <td className="import-checkbox-cell">
+                        <input
+                          type="checkbox"
+                          checked={app.shouldImport}
+                          onChange={() => handleImportToggle(index)}
+                          className="import-checkbox"
+                        />
+                      </td>
                       <td className="row-number">{index + 1}</td>
                       <td className="company-cell">
                         {renderEditableCell(
@@ -302,13 +328,19 @@ function ConfirmImportApplications() {
                 type="button"
                 className="import-button"
                 onClick={handleImport}
-                disabled={isImporting || !csrfTokens}
+                disabled={
+                  isImporting ||
+                  !csrfTokens ||
+                  importData.filter((app) => app.shouldImport).length === 0
+                }
               >
                 {isImporting
                   ? "Importing..."
                   : !csrfTokens
                     ? "Loading..."
-                    : `Import ${importData.length} Applications`}
+                    : importData.filter((app) => app.shouldImport).length === 0
+                      ? "No Applications Selected"
+                      : `Import ${importData.filter((app) => app.shouldImport).length} Applications`}
               </button>
             </div>
           </div>

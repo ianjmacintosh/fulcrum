@@ -112,6 +112,17 @@
 }
 
 /* Table column sizing */
+.import-checkbox-header,
+.import-checkbox-cell {
+  width: 60px;
+  text-align: center;
+}
+
+.import-checkbox {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
 .row-number-header,
 .row-number {
   width: 50px;
