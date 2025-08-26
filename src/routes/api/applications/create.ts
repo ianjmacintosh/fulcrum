@@ -143,22 +143,6 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           });
         }
 
-        // Get or create initial "Applied" status
-        let appliedStatus = await workflowService
-          .getStatuses(userId)
-          .then((statuses) =>
-            statuses.find((status) => status.name.toLowerCase() === "applied"),
-          );
-
-        if (!appliedStatus) {
-          appliedStatus = await workflowService.createStatus({
-            userId,
-            name: "Applied",
-            description: "Application submitted",
-            isTerminal: false,
-          });
-        }
-
         if (isBulkOperation) {
           // Handle bulk creation
           const createdApplications: Array<{
@@ -213,10 +197,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 : [],
               appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               notes: appData.notes || undefined,
-              currentStatus: {
-                id: appliedStatus._id!.toString(),
-                name: appliedStatus.name,
-              },
+              currentStatus: applicationService.calculateCurrentStatus({
+                appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+              }),
             });
 
             createdApplications.push({
@@ -256,8 +239,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             validatedData.appliedDate &&
             validatedData.appliedDate.trim() !== "";
 
-          // Create the job application
-          const application = await applicationService.createApplication({
+          // Create application data without currentStatus first
+          const applicationData = {
             userId,
             companyName: validatedData.companyName,
             roleName: validatedData.roleName,
@@ -285,11 +268,16 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               : [],
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
-            currentStatus: {
-              id: appliedStatus._id!.toString(),
-              name: appliedStatus.name,
-            },
-          });
+            currentStatus: applicationService.calculateCurrentStatus({
+              appliedDate: hasAppliedDate
+                ? validatedData.appliedDate
+                : undefined,
+            }),
+          };
+
+          // Create the job application
+          const application =
+            await applicationService.createApplication(applicationData);
 
           return createSuccessResponse(
             {

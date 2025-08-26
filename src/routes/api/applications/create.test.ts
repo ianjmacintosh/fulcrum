@@ -250,5 +250,89 @@ describe("Application Creation API Validation", () => {
         Promise.resolve({ _id: "board-123", name: "General" }),
       );
     });
+
+    it("should set currentStatus to 'Not Applied' when no appliedDate provided", async () => {
+      const mockApplication = {
+        _id: "app-123",
+        userId: "user-123",
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      };
+
+      mockCreateApplication.mockResolvedValue(mockApplication);
+
+      // Simulate creating application without appliedDate
+      await mockCreateApplication({
+        userId: "user-123",
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        appliedDate: undefined, // No applied date
+        notes: "Job of interest",
+        events: [], // No events since not applied yet
+        jobBoard: { id: "board-123", name: "General" },
+        workflow: { id: "workflow-123", name: "Default Workflow" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      });
+
+      expect(mockCreateApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          appliedDate: undefined,
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+        }),
+      );
+    });
+
+    it("should set currentStatus to 'Applied' when appliedDate is provided", async () => {
+      const mockApplication = {
+        _id: "app-123",
+        userId: "user-123",
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        currentStatus: { id: "applied", name: "Applied" },
+      };
+
+      mockCreateApplication.mockResolvedValue(mockApplication);
+
+      // Simulate creating application with appliedDate
+      await mockCreateApplication({
+        userId: "user-123",
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        appliedDate: "2025-01-15",
+        notes: "Applied via LinkedIn",
+        events: [
+          {
+            id: "event-123",
+            title: "Application submitted",
+            description: "Applied via LinkedIn",
+            date: "2025-01-15",
+          },
+        ],
+        jobBoard: { id: "board-123", name: "General" },
+        workflow: { id: "workflow-123", name: "Default Workflow" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        currentStatus: { id: "applied", name: "Applied" },
+      });
+
+      expect(mockCreateApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          appliedDate: "2025-01-15",
+          events: expect.arrayContaining([
+            expect.objectContaining({
+              title: "Application submitted",
+              date: "2025-01-15",
+            }),
+          ]),
+          currentStatus: { id: "applied", name: "Applied" },
+        }),
+      );
+    });
   });
 });

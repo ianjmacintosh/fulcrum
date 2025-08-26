@@ -180,7 +180,7 @@ test.describe.serial("Applications", () => {
     // Verify optional fields do NOT have asterisks
     await expect(page.getByText("Job URL")).toBeVisible();
     await expect(page.getByText("Applied Date")).toBeVisible(); // No asterisk
-    await expect(page.getByText("Job Board")).toBeVisible(); // No asterisk
+    await expect(page.getByText("Job Board", { exact: true })).toBeVisible(); // No asterisk
     await expect(page.getByText("Role Type")).toBeVisible(); // No asterisk
     await expect(page.getByText("Application Type")).toBeVisible(); // No asterisk
     await expect(page.getByText("Location Type")).toBeVisible(); // No asterisk
@@ -230,9 +230,13 @@ test.describe.serial("Applications", () => {
       page.getByRole("heading", { name: "Applications" }),
     ).toBeVisible();
 
-    // Verify new application appears in the list
-    await expect(page.getByText("TestCorp Inc")).toBeVisible();
-    await expect(page.getByText("Senior Software Engineer")).toBeVisible();
+    // Verify new application appears in the list using specific filter
+    const applicationCard = page
+      .locator('[data-testid="application-card"]')
+      .filter({ hasText: "TestCorp Inc" })
+      .filter({ hasText: "Senior Software Engineer" });
+
+    await expect(applicationCard).toBeVisible();
   });
 
   test("Shows 'Not Applied' status for jobs without applied date", async ({
@@ -333,5 +337,80 @@ test.describe.serial("Applications", () => {
     // Should succeed and redirect
     await expect(page.getByText("Job added successfully!")).toBeVisible();
     await page.waitForURL("/applications");
+  });
+
+  test("New job without applied date shows 'Not Applied' status", async ({
+    page,
+  }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Navigate to new application page
+    await page.goto("/applications/new");
+
+    // Use unique company name to avoid conflicts with existing test data
+    const uniqueCompany = `NotAppliedCorp-${Date.now()}`;
+
+    // Fill in required fields only (no applied date)
+    await page.fill("#companyName", uniqueCompany);
+    await page.fill("#roleName", "Software Engineer");
+    // Leave Applied Date empty
+
+    // Submit the form
+    await page.getByRole("button", { name: "Add Job" }).click();
+
+    // Wait for success message and redirect
+    await expect(page.getByText("Job added successfully!")).toBeVisible();
+    await page.waitForURL("/applications");
+
+    // First verify the application card with our unique company exists
+    const applicationCard = page
+      .locator(".application-card")
+      .filter({ hasText: uniqueCompany });
+
+    await expect(applicationCard).toBeVisible();
+
+    // Verify it contains the expected role
+    await expect(applicationCard).toContainText("Software Engineer");
+
+    // Now verify the status - check if it contains "Not Applied"
+    await expect(applicationCard).toContainText("Not Applied");
+  });
+
+  test("New job with applied date shows 'Applied' status", async ({ page }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Navigate to new application page
+    await page.goto("/applications/new");
+
+    // Use unique company name to avoid conflicts with existing test data
+    const uniqueCompany = `AppliedCorp-${Date.now()}`;
+
+    // Fill in required fields and applied date
+    await page.fill("#companyName", uniqueCompany);
+    await page.fill("#roleName", "Senior Engineer");
+    await page.fill("#appliedDate", "2025-01-15");
+
+    // Submit the form
+    await page.getByRole("button", { name: "Add Job" }).click();
+
+    // Wait for success message and redirect
+    await expect(page.getByText("Job added successfully!")).toBeVisible();
+    await page.waitForURL("/applications");
+
+    // Find the application card with our unique company
+    const applicationCard = page
+      .locator(".application-card")
+      .filter({ hasText: uniqueCompany });
+
+    // Verify the application card exists
+    await expect(applicationCard).toBeVisible();
+
+    // Verify it contains the expected role
+    await expect(applicationCard).toContainText("Senior Engineer");
+
+    // Verify it shows "Applied" status
+    await expect(applicationCard).toContainText("Applied");
   });
 }); // Close test.describe.serial
