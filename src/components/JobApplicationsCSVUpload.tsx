@@ -23,13 +23,13 @@ export default function JobApplicationsCSVUpload({
 
   return (
     <div className="job-applications-csv-upload">
+      <label htmlFor="csv-file-input">{label}</label>
       <input
         type="file"
         accept=".csv"
         onChange={handleFileSelect}
         id="csv-file-input"
       />
-      <label htmlFor="csv-file-input">{label}</label>
       <div className="file-size-limit">Max file size: 5 MB</div>
 
       {selectedFile && (

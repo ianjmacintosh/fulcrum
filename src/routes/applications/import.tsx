@@ -52,21 +52,6 @@ function ImportApplications() {
     }
   };
 
-  const downloadSampleCSV = () => {
-    const csvContent = `Company,Job Title
-TechCorp Inc.,Senior Software Engineer
-StartupXYZ,Frontend Developer
-BigCorp,Engineering Manager`;
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "sample-applications.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="page">
       {!hasActiveChildRoute && (
@@ -78,64 +63,16 @@ BigCorp,Engineering Manager`;
 
           <main className="page-content">
             <div className="import-container">
-              {/* CSV Format Instructions */}
-              <div className="instructions-section">
-                <h2>CSV Format Instructions</h2>
-                <p>
-                  Your CSV file should have data in the first two columns.{" "}
-                  <strong>Column headings don't matter</strong> - we only look
-                  at column position:
-                </p>
-
-                <div className="format-table-container">
-                  <table className="format-table">
-                    <thead>
-                      <tr>
-                        <th>Column Position</th>
-                        <th>Required</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <code>First column</code>
-                        </td>
-                        <td>
-                          <span className="required">Required</span>
-                        </td>
-                        <td>Company name</td>
-                        <td>TechCorp Inc.</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <code>Second column</code>
-                        </td>
-                        <td>
-                          <span className="required">Required</span>
-                        </td>
-                        <td>Job title or role</td>
-                        <td>Senior Software Engineer</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="sample-download">
-                  <button
-                    type="button"
-                    onClick={downloadSampleCSV}
-                    className="download-sample-button"
-                  >
-                    Download Sample CSV
-                  </button>
-                </div>
-              </div>
-
               {/* File Upload Section */}
               <div className="upload-section">
                 <h2>Upload Your CSV File</h2>
+                <p className="upload-instructions">
+                  Upload your CSV of companies and jobs. Make sure the first
+                  column stores the company name and the second column stores
+                  the job title. After submitting it, the next page will give
+                  you a chance to review the data before it&apos;s added to your
+                  account.
+                </p>
                 <JobApplicationsCSVUpload
                   onFileSelect={setSelectedFile}
                   selectedFile={selectedFile}
