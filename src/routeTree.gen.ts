@@ -21,9 +21,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
 import { Route as ApplicationsNewRouteImport } from './routes/applications/new'
+import { Route as ApplicationsImportRouteImport } from './routes/applications/import'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminLogoutRouteImport } from './routes/admin/logout'
 import { Route as AdminChangePasswordRouteImport } from './routes/admin/change-password'
+import { Route as ApplicationsImportConfirmRouteImport } from './routes/applications/import/confirm'
 import { Route as ApplicationsIdDetailsRouteImport } from './routes/applications/$id/details'
 import { ServerRoute as ApiJobBoardsIndexServerRouteImport } from './routes/api/job-boards/index'
 import { ServerRoute as ApiApplicationsIndexServerRouteImport } from './routes/api/applications/index'
@@ -97,6 +99,11 @@ const ApplicationsNewRoute = ApplicationsNewRouteImport.update({
   path: '/applications/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationsImportRoute = ApplicationsImportRouteImport.update({
+  id: '/applications/import',
+  path: '/applications/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -112,6 +119,12 @@ const AdminChangePasswordRoute = AdminChangePasswordRouteImport.update({
   path: '/admin/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplicationsImportConfirmRoute =
+  ApplicationsImportConfirmRouteImport.update({
+    id: '/confirm',
+    path: '/confirm',
+    getParentRoute: () => ApplicationsImportRoute,
+  } as any)
 const ApplicationsIdDetailsRoute = ApplicationsIdDetailsRouteImport.update({
   id: '/applications/$id/details',
   path: '/applications/$id/details',
@@ -236,9 +249,11 @@ export interface FileRoutesByFullPath {
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
+  '/applications/import': typeof ApplicationsImportRouteWithChildren
   '/applications/new': typeof ApplicationsNewRoute
   '/applications': typeof ApplicationsIndexRoute
   '/applications/$id/details': typeof ApplicationsIdDetailsRoute
+  '/applications/import/confirm': typeof ApplicationsImportConfirmRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -252,9 +267,11 @@ export interface FileRoutesByTo {
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
+  '/applications/import': typeof ApplicationsImportRouteWithChildren
   '/applications/new': typeof ApplicationsNewRoute
   '/applications': typeof ApplicationsIndexRoute
   '/applications/$id/details': typeof ApplicationsIdDetailsRoute
+  '/applications/import/confirm': typeof ApplicationsImportConfirmRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -269,9 +286,11 @@ export interface FileRoutesById {
   '/admin/change-password': typeof AdminChangePasswordRoute
   '/admin/logout': typeof AdminLogoutRoute
   '/admin/users': typeof AdminUsersRoute
+  '/applications/import': typeof ApplicationsImportRouteWithChildren
   '/applications/new': typeof ApplicationsNewRoute
   '/applications/': typeof ApplicationsIndexRoute
   '/applications/$id/details': typeof ApplicationsIdDetailsRoute
+  '/applications/import/confirm': typeof ApplicationsImportConfirmRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,9 +306,11 @@ export interface FileRouteTypes {
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
+    | '/applications/import'
     | '/applications/new'
     | '/applications'
     | '/applications/$id/details'
+    | '/applications/import/confirm'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -303,9 +324,11 @@ export interface FileRouteTypes {
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
+    | '/applications/import'
     | '/applications/new'
     | '/applications'
     | '/applications/$id/details'
+    | '/applications/import/confirm'
   id:
     | '__root__'
     | '/'
@@ -319,9 +342,11 @@ export interface FileRouteTypes {
     | '/admin/change-password'
     | '/admin/logout'
     | '/admin/users'
+    | '/applications/import'
     | '/applications/new'
     | '/applications/'
     | '/applications/$id/details'
+    | '/applications/import/confirm'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -336,6 +361,7 @@ export interface RootRouteChildren {
   AdminChangePasswordRoute: typeof AdminChangePasswordRoute
   AdminLogoutRoute: typeof AdminLogoutRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  ApplicationsImportRoute: typeof ApplicationsImportRouteWithChildren
   ApplicationsNewRoute: typeof ApplicationsNewRoute
   ApplicationsIndexRoute: typeof ApplicationsIndexRoute
   ApplicationsIdDetailsRoute: typeof ApplicationsIdDetailsRoute
@@ -560,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplicationsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/applications/import': {
+      id: '/applications/import'
+      path: '/applications/import'
+      fullPath: '/applications/import'
+      preLoaderRoute: typeof ApplicationsImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -580,6 +613,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/change-password'
       preLoaderRoute: typeof AdminChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/applications/import/confirm': {
+      id: '/applications/import/confirm'
+      path: '/confirm'
+      fullPath: '/applications/import/confirm'
+      preLoaderRoute: typeof ApplicationsImportConfirmRouteImport
+      parentRoute: typeof ApplicationsImportRoute
     }
     '/applications/$id/details': {
       id: '/applications/$id/details'
@@ -728,6 +768,17 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
+interface ApplicationsImportRouteChildren {
+  ApplicationsImportConfirmRoute: typeof ApplicationsImportConfirmRoute
+}
+
+const ApplicationsImportRouteChildren: ApplicationsImportRouteChildren = {
+  ApplicationsImportConfirmRoute: ApplicationsImportConfirmRoute,
+}
+
+const ApplicationsImportRouteWithChildren =
+  ApplicationsImportRoute._addFileChildren(ApplicationsImportRouteChildren)
+
 interface ApiAdminUsersIdServerRouteChildren {
   ApiAdminUsersIdDataSummaryServerRoute: typeof ApiAdminUsersIdDataSummaryServerRoute
   ApiAdminUsersIdResetServerRoute: typeof ApiAdminUsersIdResetServerRoute
@@ -768,6 +819,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChangePasswordRoute: AdminChangePasswordRoute,
   AdminLogoutRoute: AdminLogoutRoute,
   AdminUsersRoute: AdminUsersRoute,
+  ApplicationsImportRoute: ApplicationsImportRouteWithChildren,
   ApplicationsNewRoute: ApplicationsNewRoute,
   ApplicationsIndexRoute: ApplicationsIndexRoute,
   ApplicationsIdDetailsRoute: ApplicationsIdDetailsRoute,

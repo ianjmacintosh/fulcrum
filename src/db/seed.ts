@@ -449,8 +449,9 @@ export async function seedDatabase(forceReseed: boolean = false) {
   }
 }
 
-// Run seed
-seedDatabase()
+// Run seed - check for --force flag
+const forceReseed = process.argv.includes("--force");
+seedDatabase(forceReseed)
   .then(() => process.exit(0))
   .catch((error) => {
     console.error("Seed failed:", error);

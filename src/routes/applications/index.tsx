@@ -83,11 +83,23 @@ function Applications() {
           </div>
         </section>
 
+        <section className="add-application">
+          <Link to="/applications/new" className="add-button">
+            + Add New Application
+          </Link>
+          <Link to="/applications/import" className="import-button">
+            Import from CSV
+          </Link>
+        </section>
+
         <JobApplicationCardsList applications={applications} />
 
         <section className="add-application">
           <Link to="/applications/new" className="add-button">
             + Add New Application
+          </Link>
+          <Link to="/applications/import" className="import-button">
+            Import from CSV
           </Link>
         </section>
       </main>

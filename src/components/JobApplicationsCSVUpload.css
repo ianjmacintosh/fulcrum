@@ -1,0 +1,50 @@
+.job-applications-csv-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-size-limit {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.file-name {
+  font-weight: 600;
+}
+
+.file-size {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.remove-file {
+  background-color: #f8f9fa;
+  border: 1px solid #d6d8db;
+  color: #495057;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.remove-file:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: #343a40;
+}
+
+.remove-file:active {
+  background-color: #dee2e6;
+}

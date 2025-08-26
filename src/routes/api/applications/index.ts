@@ -19,6 +19,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/")
       try {
         const applications = await applicationService.getApplications(
           auth.user.id,
+          {},
+          0, // No limit - get all applications
         );
 
         return createSuccessResponse({ applications });

@@ -14,13 +14,20 @@ const CreateApplicationSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   roleName: z.string().min(1, "Job title is required"),
   jobPostingUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  appliedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-  jobBoard: z.string().min(1, "Job board is required"),
-  applicationType: z.enum(["cold", "warm"]),
-  roleType: z.enum(["manager", "engineer"]),
-  locationType: z.enum(["on-site", "hybrid", "remote"]),
+  appliedDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+    .optional()
+    .or(z.literal("")),
+  jobBoard: z.string().optional().or(z.literal("")),
+  applicationType: z.enum(["cold", "warm"]).optional(),
+  roleType: z.enum(["manager", "engineer"]).optional(),
+  locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
   notes: z.string().optional().or(z.literal("")),
 });
+
+// Schema for bulk application creation
+const BulkCreateApplicationSchema = z.array(CreateApplicationSchema);
 
 export const ServerRoute = createServerFileRoute("/api/applications/create")
   .middleware([requireUserAuth])
@@ -58,43 +65,64 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           );
         }
 
-        // Extract form fields
-        const companyName = formData.get("companyName") as string;
-        const roleName = formData.get("roleName") as string;
-        const jobPostingUrl = formData.get("jobPostingUrl") as string;
-        const appliedDate = formData.get("appliedDate") as string;
-        const jobBoard = formData.get("jobBoard") as string;
-        const applicationType = formData.get("applicationType") as string;
-        const roleType = formData.get("roleType") as string;
-        const locationType = formData.get("locationType") as string;
-        const notes = formData.get("notes") as string;
+        // Check if this is a bulk operation
+        const applicationsData = formData.get("applications");
+        let validatedData: z.infer<typeof CreateApplicationSchema> | undefined;
+        let isBulkOperation = false;
+        let bulkValidatedData: z.infer<typeof BulkCreateApplicationSchema> = [];
 
-        // Validate input
-        const validation = CreateApplicationSchema.safeParse({
-          companyName,
-          roleName,
-          jobPostingUrl,
-          appliedDate,
-          jobBoard,
-          applicationType,
-          roleType,
-          locationType,
-          notes,
-        });
+        if (applicationsData) {
+          // Bulk operation - parse JSON array
+          isBulkOperation = true;
+          try {
+            const parsedApplications = JSON.parse(applicationsData as string);
+            const bulkValidation =
+              BulkCreateApplicationSchema.safeParse(parsedApplications);
 
-        if (!validation.success) {
-          return createErrorResponse(validation.error.issues[0].message, 400);
+            if (!bulkValidation.success) {
+              return createErrorResponse(
+                bulkValidation.error.issues[0].message,
+                400,
+              );
+            }
+
+            bulkValidatedData = bulkValidation.data;
+          } catch {
+            return createErrorResponse("Invalid application data format", 400);
+          }
+        } else {
+          // Single operation - extract form fields
+          const companyName = formData.get("companyName") as string;
+          const roleName = formData.get("roleName") as string;
+          const jobPostingUrl = formData.get("jobPostingUrl") as string;
+          const appliedDate = formData.get("appliedDate") as string;
+          const jobBoard = formData.get("jobBoard") as string;
+          const applicationType = formData.get("applicationType") as string;
+          const roleType = formData.get("roleType") as string;
+          const locationType = formData.get("locationType") as string;
+          const notes = formData.get("notes") as string;
+
+          // Validate input
+          const validation = CreateApplicationSchema.safeParse({
+            companyName,
+            roleName,
+            jobPostingUrl,
+            appliedDate,
+            jobBoard,
+            applicationType,
+            roleType,
+            locationType,
+            notes,
+          });
+
+          if (!validation.success) {
+            return createErrorResponse(validation.error.issues[0].message, 400);
+          }
+
+          validatedData = validation.data;
         }
 
-        const validatedData = validation.data;
-
-        // Get or create job board
-        const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
-          userId,
-          validatedData.jobBoard,
-        );
-
-        // Get default workflow for user
+        // Get default workflow and status for user (shared for both single and bulk)
         let defaultWorkflow = await workflowService.getDefaultWorkflow(userId);
 
         if (!defaultWorkflow) {
@@ -115,68 +143,163 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           });
         }
 
-        // Get or create initial "Applied" status
-        let appliedStatus = await workflowService
-          .getStatuses(userId)
-          .then((statuses) =>
-            statuses.find((status) => status.name.toLowerCase() === "applied"),
+        if (isBulkOperation) {
+          // Handle bulk creation using optimized batch operations
+          // Get unique job board names for batch processing
+          const uniqueJobBoardNames = applicationService.getUniqueJobBoards(
+            bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
           );
 
-        if (!appliedStatus) {
-          appliedStatus = await workflowService.createStatus({
+          // Batch get/create all job boards at once
+          const jobBoardsMap = await jobBoardService.getOrCreateJobBoardsBatch(
             userId,
-            name: "Applied",
-            description: "Application submitted",
-            isTerminal: false,
+            uniqueJobBoardNames,
+          );
+
+          // Prepare all applications for batch creation
+          const applicationsToCreate = bulkValidatedData.map((appData) => {
+            const jobBoardName = appData.jobBoard || "General";
+            const jobBoardRecord = jobBoardsMap.get(jobBoardName)!;
+
+            // Set defaults for optional fields
+            const applicationType = appData.applicationType || "cold";
+            const roleType = appData.roleType || "engineer";
+            const locationType = appData.locationType || "remote";
+            const hasAppliedDate =
+              appData.appliedDate && appData.appliedDate.trim() !== "";
+
+            return {
+              userId,
+              companyName: appData.companyName,
+              roleName: appData.roleName,
+              jobPostingUrl: appData.jobPostingUrl || undefined,
+              jobBoard: {
+                id: jobBoardRecord._id!.toString(),
+                name: jobBoardRecord.name,
+              },
+              workflow: {
+                id: defaultWorkflow._id!.toString(),
+                name: defaultWorkflow.name,
+              },
+              applicationType: applicationType as "cold" | "warm",
+              roleType: roleType as "manager" | "engineer",
+              locationType: locationType as "on-site" | "hybrid" | "remote",
+              events: hasAppliedDate
+                ? [
+                    {
+                      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                      title: "Application submitted",
+                      description: appData.notes || "Applied to position",
+                      date: appData.appliedDate!,
+                    },
+                  ]
+                : [],
+              appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+              notes: appData.notes || undefined,
+              currentStatus: applicationService.calculateCurrentStatus({
+                appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+              }),
+            };
           });
-        }
 
-        // Create the job application
-        const application = await applicationService.createApplication({
-          userId,
-          companyName: validatedData.companyName,
-          roleName: validatedData.roleName,
-          jobPostingUrl: validatedData.jobPostingUrl || undefined,
-          jobBoard: {
-            id: jobBoardRecord._id!.toString(),
-            name: jobBoardRecord.name,
-          },
-          workflow: {
-            id: defaultWorkflow._id!.toString(),
-            name: defaultWorkflow.name,
-          },
-          applicationType: validatedData.applicationType as "cold" | "warm",
-          roleType: validatedData.roleType as "manager" | "engineer",
-          locationType: validatedData.locationType as
-            | "on-site"
-            | "hybrid"
-            | "remote",
-          events: [
-            {
-              id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              title: "Application submitted",
-              description: validatedData.notes || "Applied to position",
-              date: validatedData.appliedDate,
-            },
-          ],
-          currentStatus: {
-            id: appliedStatus._id!.toString(),
-            name: appliedStatus.name,
-          },
-        });
+          // Batch create all applications at once
+          const createdApplications =
+            await applicationService.createApplicationsBatch(
+              applicationsToCreate,
+            );
 
-        return createSuccessResponse(
-          {
-            application: {
+          // Format response
+          const formattedApplications = createdApplications.map(
+            (application) => ({
               id: application._id!.toString(),
               companyName: application.companyName,
               roleName: application.roleName,
               currentStatus: application.currentStatus,
               createdAt: application.createdAt,
+            }),
+          );
+
+          return createSuccessResponse(
+            {
+              applications: formattedApplications,
+              count: formattedApplications.length,
             },
-          },
-          201,
-        );
+            201,
+          );
+        } else {
+          // Handle single creation (existing logic)
+          if (!validatedData) {
+            return createErrorResponse("Invalid application data", 400);
+          }
+
+          // Get or create job board - use default if not provided
+          const jobBoardName = validatedData.jobBoard || "General";
+          const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
+            userId,
+            jobBoardName,
+          );
+
+          // Set defaults for optional fields
+          const applicationType = validatedData.applicationType || "cold";
+          const roleType = validatedData.roleType || "engineer";
+          const locationType = validatedData.locationType || "remote";
+          const hasAppliedDate =
+            validatedData.appliedDate &&
+            validatedData.appliedDate.trim() !== "";
+
+          // Create application data without currentStatus first
+          const applicationData = {
+            userId,
+            companyName: validatedData.companyName,
+            roleName: validatedData.roleName,
+            jobPostingUrl: validatedData.jobPostingUrl || undefined,
+            jobBoard: {
+              id: jobBoardRecord._id!.toString(),
+              name: jobBoardRecord.name,
+            },
+            workflow: {
+              id: defaultWorkflow._id!.toString(),
+              name: defaultWorkflow.name,
+            },
+            applicationType: applicationType as "cold" | "warm",
+            roleType: roleType as "manager" | "engineer",
+            locationType: locationType as "on-site" | "hybrid" | "remote",
+            events: hasAppliedDate
+              ? [
+                  {
+                    id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    title: "Application submitted",
+                    description: validatedData.notes || "Applied to position",
+                    date: validatedData.appliedDate!,
+                  },
+                ]
+              : [],
+            appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
+            notes: validatedData.notes || undefined,
+            currentStatus: applicationService.calculateCurrentStatus({
+              appliedDate: hasAppliedDate
+                ? validatedData.appliedDate
+                : undefined,
+            }),
+          };
+
+          // Create the job application
+          const application =
+            await applicationService.createApplication(applicationData);
+
+          return createSuccessResponse(
+            {
+              application: {
+                id: application._id!.toString(),
+                companyName: application.companyName,
+                roleName: application.roleName,
+                currentStatus: application.currentStatus,
+                createdAt: application.createdAt,
+              },
+            },
+            201,
+          );
+        }
       } catch (error: any) {
         console.error("Error creating application:", error);
         return createErrorResponse("Failed to create application");

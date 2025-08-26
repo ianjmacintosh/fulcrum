@@ -4,7 +4,11 @@ import { JobApplication } from "../schemas";
 export class AnalyticsService {
   async getDashboardMetrics(userId: string) {
     // Get all applications for user
-    const applications = await applicationService.getApplications(userId);
+    const applications = await applicationService.getApplications(
+      userId,
+      {},
+      0,
+    );
     const totalApplications = applications.length;
 
     if (totalApplications === 0) {
@@ -42,7 +46,11 @@ export class AnalyticsService {
   }
 
   async getJobProjection(userId: string) {
-    const applications = await applicationService.getApplications(userId);
+    const applications = await applicationService.getApplications(
+      userId,
+      {},
+      0,
+    );
 
     if (applications.length === 0) {
       return this.getDefaultProjection();

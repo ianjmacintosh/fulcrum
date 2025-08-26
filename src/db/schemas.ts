@@ -43,6 +43,7 @@ export const JobApplicationSchema = z.object({
   round2Date: z.string().optional(), // ISO date string
   acceptedDate: z.string().optional(), // ISO date string
   declinedDate: z.string().optional(), // ISO date string
+  notes: z.string().optional(), // Additional notes about the application
   currentStatus: CurrentStatusSchema,
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -137,6 +138,7 @@ export interface JobApplication {
   round2Date?: string; // ISO date string
   acceptedDate?: string; // ISO date string
   declinedDate?: string; // ISO date string
+  notes?: string; // Additional notes about the application
   currentStatus: CurrentStatus;
   createdAt: Date;
   updatedAt: Date;

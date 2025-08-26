@@ -9,6 +9,7 @@
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:force": "tsx src/db/seed.ts --force",
     "db:migrate": "tsx src/db/migrations/migration-runner.ts",
     "db:backup": "node scripts/backup-db.js",
     "db:restore": "node scripts/restore-db.js",
@@ -18,8 +19,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "format": "prettier --write",
-    "format:check": "prettier --check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky"
   },
   "lint-staged": {

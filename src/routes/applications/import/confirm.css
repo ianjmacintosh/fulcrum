@@ -1,0 +1,337 @@
+/* Import shared styles from parent directory */
+@import "../import.css";
+
+/* Confirm page specific styles */
+.preview-section {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.preview-section h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.preview-description {
+  margin-bottom: 1.5rem;
+  color: #555;
+  font-style: italic;
+}
+
+.preview-table-container {
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.preview-table th {
+  background-color: #4caf50;
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.preview-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.preview-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.editable-cell {
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  display: block;
+  min-height: 1.2em;
+}
+
+.editable-cell:hover {
+  background-color: #e3f2fd;
+}
+
+.cell-editor {
+  width: 100%;
+  border: 2px solid #2196f3;
+  border-radius: 3px;
+  padding: 0.25rem;
+  font-size: inherit;
+  font-family: inherit;
+  background-color: white;
+}
+
+.cell-editor:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.validation-valid {
+  color: #4caf50;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.validation-error {
+  color: #f44336;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.validation-warning {
+  color: #ff9800;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Row styling */
+.row-error {
+  background-color: #ffebee !important;
+  border-left: 4px solid #f44336;
+}
+
+.row-error:hover {
+  background-color: #ffcdd2 !important;
+}
+
+/* Table column sizing */
+.import-checkbox-header,
+.import-checkbox-cell {
+  width: 60px;
+  text-align: center;
+}
+
+.import-checkbox {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.row-number-header,
+.row-number {
+  width: 50px;
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+}
+
+.status-header,
+.status-cell {
+  width: 100px;
+  text-align: center;
+}
+
+.company-header,
+.company-cell {
+  width: 30%;
+  min-width: 150px;
+}
+
+.role-header,
+.role-cell {
+  width: auto;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.role-cell .editable-cell {
+  word-break: break-word;
+  white-space: normal;
+  max-width: 300px;
+  overflow-wrap: break-word;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.import-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.import-actions .back-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.import-actions .back-button:hover {
+  background-color: #5a6268;
+}
+
+.import-actions .import-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.import-actions .import-button:hover {
+  background-color: #45a049;
+}
+
+@media (max-width: 768px) {
+  .import-container {
+    margin: 0 1rem;
+  }
+
+  .preview-section {
+    padding: 1rem;
+  }
+
+  .preview-table-container {
+    font-size: 0.875rem;
+  }
+
+  .preview-table th,
+  .preview-table td {
+    padding: 0.75rem;
+  }
+
+  .import-actions {
+    flex-direction: column;
+  }
+
+  .back-button,
+  .import-button {
+    width: 100%;
+  }
+}
+
+/* Enhanced feedback messages */
+.loading-message,
+.success-message,
+.error-message {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.loading-message {
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+}
+
+.success-message {
+  background-color: #e8f5e8;
+  border: 1px solid #4caf50;
+}
+
+.error-message {
+  background-color: #ffebee;
+  border: 1px solid #f44336;
+}
+
+.loading-spinner,
+.success-icon,
+.error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.loading-text,
+.success-text,
+.error-content {
+  flex: 1;
+}
+
+.loading-text strong,
+.success-text strong,
+.error-text {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.loading-text p,
+.success-text p {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+}
+
+.error-actions {
+  margin-top: 1rem;
+}
+
+.retry-button,
+.refresh-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover,
+.refresh-button:hover {
+  background-color: #d32f2f;
+}
+
+.retry-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Loading animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner {
+  animation: spin 2s linear infinite;
+}

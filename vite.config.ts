@@ -13,6 +13,9 @@ export default defineConfig({
     tanstackStart({
       target: "node-server",
       customViteReactPlugin: true,
+      tsr: {
+        routeFileIgnorePattern: "\\.test\\.",
+      },
     }),
     viteReact(),
   ],

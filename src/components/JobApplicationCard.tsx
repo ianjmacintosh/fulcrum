@@ -36,7 +36,7 @@ export function JobApplicationCard({ application }: JobApplicationCardProps) {
   // Don't render link if _id is missing
   if (!application._id) {
     return (
-      <div className="application-card">
+      <div className="application-card" data-testid="application-card">
         <div className="card-content">
           <div className="card-header">
             <h3 className="company-name">{application.companyName}</h3>
@@ -62,7 +62,7 @@ export function JobApplicationCard({ application }: JobApplicationCardProps) {
       params={{ id: application._id.toString() }}
       className="application-card-link"
     >
-      <div className="application-card">
+      <div className="application-card" data-testid="application-card">
         <div className="card-content">
           <div className="card-header">
             <h3 className="company-name">{application.companyName}</h3>
