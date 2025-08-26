@@ -44,12 +44,12 @@ export function transformToAPIFormat(
     companyName: app.companyName,
     roleName: app.roleName,
     jobPostingUrl: "",
-    appliedDate: new Date().toISOString().split("T")[0], // Today's date
-    jobBoard: "Unknown",
+    appliedDate: "", // Empty - keep as "Not Applied" status
+    jobBoard: "", // Empty - we don't know where they found the job
     applicationType: "cold" as const,
     roleType: "engineer" as const,
     locationType: "remote" as const,
-    notes: "",
+    notes: "Imported from CSV",
   }));
 }
 

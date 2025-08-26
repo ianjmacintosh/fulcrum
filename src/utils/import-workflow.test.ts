@@ -97,12 +97,12 @@ describe("Import Workflow Logic", () => {
         companyName: "TechCorp",
         roleName: "Software Engineer",
         jobPostingUrl: "",
-        appliedDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), // Today's date
-        jobBoard: "Unknown",
+        appliedDate: "", // Empty to keep as "Not Applied"
+        jobBoard: "", // Empty - we don't know the job board
         applicationType: "cold",
         roleType: "engineer",
         locationType: "remote",
-        notes: "",
+        notes: "Imported from CSV",
       });
     });
 
@@ -127,7 +127,7 @@ describe("Import Workflow Logic", () => {
       expect(result).toHaveLength(0);
     });
 
-    test("should set today's date as applied date", () => {
+    test("should set empty applied date to keep as 'Not Applied' status", () => {
       const inputData: ImportApplication[] = [
         {
           companyName: "TechCorp",
@@ -138,9 +138,10 @@ describe("Import Workflow Logic", () => {
       ];
 
       const result = transformToAPIFormat(inputData);
-      const today = new Date().toISOString().split("T")[0];
 
-      expect(result[0].appliedDate).toBe(today);
+      expect(result[0].appliedDate).toBe("");
+      expect(result[0].jobBoard).toBe("");
+      expect(result[0].notes).toBe("Imported from CSV");
     });
   });
 
