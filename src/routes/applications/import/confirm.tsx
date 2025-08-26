@@ -243,15 +243,17 @@ function ConfirmImportApplications() {
               <table className="preview-table">
                 <thead>
                   <tr>
-                    <th>Company</th>
-                    <th>Role</th>
-                    <th>Status</th>
+                    <th className="row-number-header">#</th>
+                    <th className="company-header">Company</th>
+                    <th className="role-header">Role</th>
+                    <th className="status-header">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {importData.map((app, index) => (
-                    <tr key={index}>
-                      <td>
+                    <tr key={index} className={`row-${app.validationStatus}`}>
+                      <td className="row-number">{index + 1}</td>
+                      <td className="company-cell">
                         {renderEditableCell(
                           app,
                           index,
@@ -259,7 +261,7 @@ function ConfirmImportApplications() {
                           app.companyName,
                         )}
                       </td>
-                      <td>
+                      <td className="role-cell">
                         {renderEditableCell(
                           app,
                           index,
@@ -267,7 +269,9 @@ function ConfirmImportApplications() {
                           app.roleName,
                         )}
                       </td>
-                      <td className={`validation-${app.validationStatus}`}>
+                      <td
+                        className={`status-cell validation-${app.validationStatus}`}
+                      >
                         {app.validationStatus}
                       </td>
                     </tr>

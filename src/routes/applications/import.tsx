@@ -6,6 +6,8 @@ import {
   useMatches,
 } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
+import JobApplicationsCSVUpload from "../../components/JobApplicationsCSVUpload";
+import { parseJobApplicationsCSV } from "../../utils/csv-parser";
 import "./import.css";
 
 export const Route = createFileRoute("/applications/import")({
@@ -17,7 +19,6 @@ function ImportApplications() {
   const router = useRouter();
   const matches = useMatches();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
 
   // Check if a child route is active (like /confirm)
   const hasActiveChildRoute = matches.some(
@@ -30,39 +31,12 @@ function ImportApplications() {
     router.navigate({ to: "/applications" });
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragOver(false);
-
-    const file = event.dataTransfer.files[0];
-    if (file && file.type === "text/csv") {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragOver(false);
-  };
-
   const handleContinue = async () => {
     if (selectedFile) {
       try {
         // Parse CSV file
         const csvText = await selectedFile.text();
-        const parsedData = parseCSV(csvText);
+        const parsedData = parseJobApplicationsCSV(csvText);
 
         // Store parsed data in sessionStorage for the confirmation page
         sessionStorage.setItem("csvImportData", JSON.stringify(parsedData));
@@ -78,59 +52,8 @@ function ImportApplications() {
     }
   };
 
-  const parseCSV = (
-    csvText: string,
-  ): Array<{
-    companyName: string;
-    roleName: string;
-    validationStatus: "valid" | "error";
-  }> => {
-    const lines = csvText.trim().split("\n");
-    if (lines.length < 2) {
-      throw new Error(
-        "CSV file must have a header row and at least one data row",
-      );
-    }
-
-    const header = lines[0]
-      .split(",")
-      .map((col) => col.trim().replace(/"/g, ""));
-    const data: Array<{
-      companyName: string;
-      roleName: string;
-      validationStatus: "valid" | "error";
-    }> = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i]
-        .split(",")
-        .map((val) => val.trim().replace(/"/g, ""));
-      const row: Record<string, string> = {};
-
-      header.forEach((col, index) => {
-        row[col] = values[index] || "";
-      });
-
-      // Validate required fields
-      if (!row.companyName || !row.roleName) {
-        throw new Error(
-          `Row ${i}: Missing required fields (companyName, roleName)`,
-        );
-      }
-
-      // Add parsed row with proper typing
-      data.push({
-        companyName: row.companyName,
-        roleName: row.roleName,
-        validationStatus: "valid",
-      });
-    }
-
-    return data;
-  };
-
   const downloadSampleCSV = () => {
-    const csvContent = `companyName,roleName
+    const csvContent = `Company,Job Title
 TechCorp Inc.,Senior Software Engineer
 StartupXYZ,Frontend Developer
 BigCorp,Engineering Manager`;
@@ -158,13 +81,17 @@ BigCorp,Engineering Manager`;
               {/* CSV Format Instructions */}
               <div className="instructions-section">
                 <h2>CSV Format Instructions</h2>
-                <p>Your CSV file should contain the following columns:</p>
+                <p>
+                  Your CSV file should have data in the first two columns.{" "}
+                  <strong>Column headings don't matter</strong> - we only look
+                  at column position:
+                </p>
 
                 <div className="format-table-container">
                   <table className="format-table">
                     <thead>
                       <tr>
-                        <th>Column Name</th>
+                        <th>Column Position</th>
                         <th>Required</th>
                         <th>Description</th>
                         <th>Example</th>
@@ -173,17 +100,17 @@ BigCorp,Engineering Manager`;
                     <tbody>
                       <tr>
                         <td>
-                          <code>companyName</code>
+                          <code>First column</code>
                         </td>
                         <td>
                           <span className="required">Required</span>
                         </td>
-                        <td>Name of the company</td>
+                        <td>Company name</td>
                         <td>TechCorp Inc.</td>
                       </tr>
                       <tr>
                         <td>
-                          <code>roleName</code>
+                          <code>Second column</code>
                         </td>
                         <td>
                           <span className="required">Required</span>
@@ -209,55 +136,11 @@ BigCorp,Engineering Manager`;
               {/* File Upload Section */}
               <div className="upload-section">
                 <h2>Upload Your CSV File</h2>
-
-                <div
-                  className={`file-drop-zone ${isDragOver ? "drag-over" : ""} ${selectedFile ? "file-selected" : ""}`}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                >
-                  {selectedFile ? (
-                    <div className="file-selected-content">
-                      <div className="file-icon">📄</div>
-                      <div className="file-info">
-                        <div className="file-name">{selectedFile.name}</div>
-                        <div className="file-size">
-                          {(selectedFile.size / 1024).toFixed(1)} KB
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="remove-file"
-                        onClick={() => setSelectedFile(null)}
-                        title="Remove file"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="file-drop-content">
-                      <div className="drop-icon">📁</div>
-                      <div className="drop-text">
-                        <strong>Drag and drop your CSV file here</strong>
-                        <span>or click to browse files</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    className="file-input"
-                    style={{ display: "none" }}
-                    id="csvFile"
-                  />
-                  {!selectedFile && (
-                    <label htmlFor="csvFile" className="file-input-label">
-                      Choose File
-                    </label>
-                  )}
-                </div>
+                <JobApplicationsCSVUpload
+                  onFileSelect={setSelectedFile}
+                  selectedFile={selectedFile}
+                  label="Choose CSV file"
+                />
               </div>
 
               {/* Action Buttons */}

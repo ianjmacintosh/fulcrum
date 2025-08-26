@@ -103,22 +103,18 @@ test.describe.serial("CSV Import", () => {
     await expect(
       page.getByRole("heading", { name: "CSV Format Instructions" }),
     ).toBeVisible();
-    await expect(
-      page.getByText("Your CSV file should contain the following columns:"),
-    ).toBeVisible();
+    await expect(page.getByText("Column headings don't matter")).toBeVisible();
 
     // Check that format table is present
-    await expect(page.getByText("Column Name")).toBeVisible();
-    await expect(page.getByText("companyName")).toBeVisible();
-    await expect(page.getByText("roleName")).toBeVisible();
+    await expect(page.getByText("Column Position")).toBeVisible();
+    await expect(page.getByText("First column")).toBeVisible();
+    await expect(page.getByText("Second column")).toBeVisible();
 
     // Check that upload section is visible
     await expect(
       page.getByRole("heading", { name: "Upload Your CSV File" }),
     ).toBeVisible();
-    await expect(
-      page.getByText("Drag and drop your CSV file here"),
-    ).toBeVisible();
+    await expect(page.getByText("Choose CSV file")).toBeVisible();
 
     // Check action buttons are present
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
@@ -185,10 +181,8 @@ test.describe.serial("CSV Import", () => {
 
     // Check file upload zone
     await expect(page.getByText("Upload Your CSV File")).toBeVisible();
-    await expect(
-      page.getByText("Drag and drop your CSV file here"),
-    ).toBeVisible();
-    await expect(page.getByText("or click to browse files")).toBeVisible();
+    await expect(page.getByText("Choose CSV file")).toBeVisible();
+    await expect(page.getByText("Max file size: 5 MB")).toBeVisible();
 
     // Check file input exists and has correct attributes
     const fileInput = page.locator('input[type="file"]');
@@ -212,7 +206,7 @@ test.describe.serial("CSV Import", () => {
     // Check format table structure
     const formatTable = page.locator(".format-table");
     await expect(
-      formatTable.locator("th", { hasText: "Column Name" }),
+      formatTable.locator("th", { hasText: "Column Position" }),
     ).toBeVisible();
     await expect(
       formatTable.locator("th", { hasText: "Required" }),
@@ -225,8 +219,8 @@ test.describe.serial("CSV Import", () => {
     ).toBeVisible();
 
     // Check specific field examples
-    await expect(page.getByText("companyName")).toBeVisible();
-    await expect(page.getByText("roleName")).toBeVisible();
+    await expect(page.getByText("First column")).toBeVisible();
+    await expect(page.getByText("Second column")).toBeVisible();
     await expect(page.getByText("TechCorp Inc.")).toBeVisible();
     await expect(page.getByText("Senior Software Engineer")).toBeVisible();
   });
@@ -300,8 +294,8 @@ test.describe.serial("CSV Import", () => {
     ).toBeVisible();
 
     // Verify format table is visible on mobile
-    await expect(page.getByText("Column Name")).toBeVisible();
-    await expect(page.getByText("companyName")).toBeVisible();
+    await expect(page.getByText("Column Position")).toBeVisible();
+    await expect(page.getByText("First column")).toBeVisible();
 
     // Navigate back to applications page to test mobile navigation
     await page.goto("/applications");
@@ -329,9 +323,7 @@ test.describe.serial("CSV Import", () => {
 
     // Check that all instruction sections are present
     await expect(page.getByText("CSV Format Instructions")).toBeVisible();
-    await expect(
-      page.getByText("Your CSV file should contain the following columns:"),
-    ).toBeVisible();
+    await expect(page.getByText("Column headings don't matter")).toBeVisible();
 
     // Check download sample button
     await expect(
@@ -641,7 +633,7 @@ test.describe("CSV File Upload and Import Workflow", () => {
       { companyName: `BigTest-${uniqueId}`, roleName: `Manager ${uniqueId}` },
     ];
 
-    const csvContent = `companyName,roleName
+    const csvContent = `Company,Job Title
 ${csvData.map((row) => `${row.companyName},${row.roleName}`).join("\n")}`;
 
     // Navigate to import page
@@ -714,7 +706,7 @@ ${csvData.map((row) => `${row.companyName},${row.roleName}`).join("\n")}`;
     await loginAsUser(page);
 
     // Create CSV with missing required fields
-    const csvContent = `companyName,roleName
+    const csvContent = `Company,Job Title
 ValidCorp,Valid Role
 ,Missing Company Role
 InvalidCorp,`;
@@ -738,7 +730,7 @@ InvalidCorp,`;
 
     // Wait for and handle the alert dialog
     const dialog = await dialogPromise;
-    expect(dialog.message()).toContain("Missing required fields");
+    expect(dialog.message()).toContain("Missing required data");
     await dialog.accept();
   });
 
@@ -748,7 +740,7 @@ InvalidCorp,`;
 
     // Create test CSV data
     const uniqueId = Date.now();
-    const csvContent = `companyName,roleName
+    const csvContent = `Company,Job Title
 TestCorp-${uniqueId},Original Role`;
 
     // Navigate to import page and upload CSV
@@ -792,6 +784,67 @@ TestCorp-${uniqueId},Original Role`;
     await expect(importButton).toBeEnabled({ timeout: 10000 });
   });
 
+  test("CSV works with natural column headers (position-based parsing)", async ({
+    page,
+  }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Create CSV with various natural header combinations
+    const uniqueId = Date.now();
+    const testCases = [
+      {
+        headers: "Company,Job Title",
+        name: `NaturalTest1-${uniqueId}`,
+        role: `Role1 ${uniqueId}`,
+      },
+      {
+        headers: "Organization,Position",
+        name: `NaturalTest2-${uniqueId}`,
+        role: `Role2 ${uniqueId}`,
+      },
+      {
+        headers: "Employer,Job",
+        name: `NaturalTest3-${uniqueId}`,
+        role: `Role3 ${uniqueId}`,
+      },
+    ];
+
+    for (const testCase of testCases) {
+      const csvContent = `${testCase.headers}
+${testCase.name},${testCase.role}`;
+
+      // Navigate to import page
+      await page.goto("/applications/import");
+
+      // Upload CSV with natural headers
+      const csvBuffer = Buffer.from(csvContent, "utf8");
+      await page.setInputFiles('input[type="file"]', {
+        name: `natural-headers-test-${uniqueId}.csv`,
+        mimeType: "text/csv",
+        buffer: csvBuffer,
+      });
+
+      // Continue to preview - should work without errors
+      await page.getByRole("button", { name: "Continue to Preview" }).click();
+
+      // Wait for confirmation page to load
+      await expect(
+        page.getByRole("heading", { name: "Confirm Import" }),
+      ).toBeVisible();
+
+      // Verify the data was parsed correctly regardless of headers
+      await expect(page.getByText(testCase.name)).toBeVisible();
+      await expect(page.getByText(testCase.role)).toBeVisible();
+
+      // Go back to test next case
+      await page.getByRole("button", { name: "← Back to Upload" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Import Applications" }),
+      ).toBeVisible();
+    }
+  });
+
   test("Dry run mode prevents actual data creation", async ({ page }) => {
     // Log in first
     await loginAsUser(page);
@@ -804,7 +857,7 @@ TestCorp-${uniqueId},Original Role`;
 
     // Create unique test data
     const uniqueId = Date.now();
-    const csvContent = `companyName,roleName
+    const csvContent = `Company,Job Title
 DryRunTest-${uniqueId},Test Role ${uniqueId}`;
 
     // Navigate to import and upload CSV

@@ -101,6 +101,51 @@
   text-transform: capitalize;
 }
 
+/* Row styling */
+.row-error {
+  background-color: #ffebee !important;
+  border-left: 4px solid #f44336;
+}
+
+.row-error:hover {
+  background-color: #ffcdd2 !important;
+}
+
+/* Table column sizing */
+.row-number-header,
+.row-number {
+  width: 50px;
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+}
+
+.status-header,
+.status-cell {
+  width: 100px;
+  text-align: center;
+}
+
+.company-header,
+.company-cell {
+  width: 30%;
+  min-width: 150px;
+}
+
+.role-header,
+.role-cell {
+  width: auto;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.role-cell .editable-cell {
+  word-break: break-word;
+  white-space: normal;
+  max-width: 300px;
+  overflow-wrap: break-word;
+}
+
 .success-message {
   background-color: #d4edda;
   color: #155724;
