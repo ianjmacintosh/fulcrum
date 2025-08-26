@@ -19,46 +19,6 @@ vi.mock("../../utils/route-guards", () => ({
   requireUserAuth: vi.fn(),
 }));
 
-// Mock data representing "happy path" CSV data - matches what's in the component
-const mockImportData = [
-  {
-    companyName: "TechCorp Inc.",
-    roleName: "Senior Software Engineer",
-    jobPostingUrl: "https://techcorp.com/careers/123",
-    appliedDate: "2025-01-15",
-    jobBoard: "LinkedIn",
-    applicationType: "cold" as const,
-    roleType: "engineer" as const,
-    locationType: "remote" as const,
-    notes: "Applied through LinkedIn",
-    validationStatus: "valid",
-  },
-  {
-    companyName: "StartupXYZ",
-    roleName: "Frontend Developer",
-    jobPostingUrl: "https://startupxyz.com/jobs/456",
-    appliedDate: "2025-01-16",
-    jobBoard: "Indeed",
-    applicationType: "warm" as const,
-    roleType: "engineer" as const,
-    locationType: "hybrid" as const,
-    notes: "Referral from John",
-    validationStatus: "valid",
-  },
-  {
-    companyName: "BigCorp",
-    roleName: "Engineering Manager",
-    jobPostingUrl: "",
-    appliedDate: "2025-01-17",
-    jobBoard: "Company Site",
-    applicationType: "cold" as const,
-    roleType: "manager" as const,
-    locationType: "on-site" as const,
-    notes: "",
-    validationStatus: "valid",
-  },
-];
-
 // Mock component for testing - matches new upload UI
 function ImportApplications() {
   const router = { navigate: mockNavigate };

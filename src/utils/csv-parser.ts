@@ -4,6 +4,50 @@ export interface ParsedJobApplication {
   validationStatus: "valid" | "error";
 }
 
+/**
+ * Parses a single CSV line, properly handling quoted fields with commas
+ */
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+
+    if (char === '"') {
+      // Handle escaped quotes (double quotes)
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        current += '"';
+        i += 2; // Skip both quotes
+        continue;
+      }
+      // Toggle quote state
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      // Field separator outside of quotes
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += char;
+    }
+
+    i++;
+  }
+
+  // Add the last field
+  result.push(current.trim());
+
+  // Remove surrounding quotes from all fields
+  return result.map((field) => {
+    if (field.startsWith('"') && field.endsWith('"')) {
+      return field.slice(1, -1);
+    }
+    return field;
+  });
+}
+
 export function parseJobApplicationsCSV(
   csvText: string,
 ): ParsedJobApplication[] {
@@ -25,7 +69,7 @@ export function parseJobApplicationsCSV(
       continue;
     }
 
-    const values = line.split(",").map((val) => val.trim().replace(/"/g, ""));
+    const values = parseCSVLine(line);
 
     // Position-based parsing: first column = company, second column = role
     const companyName = (values[0] || "").trim();

@@ -2,20 +2,27 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { requireUserAuth } from "../../../utils/route-guards";
 import { fetchCSRFTokens, CSRFTokens } from "../../../utils/csrf-client";
+import {
+  filterImportableApplications,
+  transformToAPIFormat,
+  createImportFormData,
+  calculateImportSummary,
+  ImportApplication,
+} from "../../../utils/import-workflow";
+import {
+  handleImportResponse,
+  handleImportError,
+  getErrorDisplayMessage,
+  isRetryableError,
+  requiresRefresh,
+  ImportErrorInfo,
+} from "../../../utils/import-error-handling";
 import "./confirm.css";
 
 export const Route = createFileRoute("/applications/import/confirm")({
   beforeLoad: requireUserAuth,
   component: ConfirmImportApplications,
 });
-
-// Type for import data - simplified to only required fields
-type ImportApplication = {
-  companyName: string;
-  roleName: string;
-  validationStatus: "valid" | "error";
-  shouldImport: boolean;
-};
 
 function ConfirmImportApplications() {
   const router = useRouter();
@@ -28,7 +35,7 @@ function ConfirmImportApplications() {
 
   // Import loading states
   const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState("");
+  const [importError, setImportError] = useState<ImportErrorInfo | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
 
   // Load CSV data and fetch CSRF tokens on component mount
@@ -47,9 +54,12 @@ function ConfirmImportApplications() {
           setImportData(dataWithImportFlags);
         } catch (error) {
           console.error("Failed to parse stored CSV data:", error);
-          setImportError(
-            "Failed to load import data. Please go back and re-upload your CSV file.",
-          );
+          setImportError({
+            type: "unknown",
+            message:
+              "Failed to load import data. Please go back and re-upload your CSV file.",
+            details: error,
+          });
         }
       } else {
         // No data found - redirect back to import page
@@ -63,9 +73,11 @@ function ConfirmImportApplications() {
         setCsrfTokens(tokens);
       } catch (error) {
         console.error("Failed to load CSRF tokens:", error);
-        setImportError(
-          "Failed to load security tokens. Please refresh the page.",
-        );
+        setImportError({
+          type: "csrf",
+          message: "Failed to load security tokens. Please refresh the page.",
+          details: error,
+        });
       }
     };
 
@@ -79,26 +91,30 @@ function ConfirmImportApplications() {
 
   const handleImport = async () => {
     // Reset any previous errors
-    setImportError("");
+    setImportError(null);
 
     // Check if CSRF tokens are available
     if (!csrfTokens) {
-      setImportError("Security tokens not loaded. Please refresh the page.");
+      setImportError({
+        type: "csrf",
+        message: "Security tokens not loaded. Please refresh the page.",
+      });
       return;
     }
 
     setIsImporting(true);
 
     try {
-      // Check if we're in dry run mode (testing phase)
+      // Check if dry run mode is explicitly enabled
+      // - via URL parameter for manual testing
+      // - via testing flag for automated tests
       const isDryRun =
-        process.env.NODE_ENV === "test" ||
-        window.location.hostname === "localhost" ||
-        window.location.search.includes("dryrun=true");
+        window.location.search.includes("dryrun=true") ||
+        (window as any).__TESTING_DRY_RUN_MODE__;
 
       if (isDryRun) {
         // Dry run mode - simulate success without actually creating applications
-        const selectedApps = importData.filter((app) => app.shouldImport);
+        const selectedApps = filterImportableApplications(importData);
         console.log(
           "Dry run mode: Would import",
           selectedApps.length,
@@ -123,55 +139,40 @@ function ConfirmImportApplications() {
       }
 
       // Production mode - actual API call
-      // Prepare applications for submission (only include checked items)
-      const applicationsToSubmit = importData
-        .filter((app) => app.shouldImport)
-        .map((app) => ({
-          companyName: app.companyName,
-          roleName: app.roleName,
-          // Set default values for required fields
-          jobPostingUrl: "",
-          appliedDate: new Date().toISOString().split("T")[0], // Today's date
-          jobBoard: "Unknown",
-          applicationType: "cold" as const,
-          roleType: "engineer" as const,
-          locationType: "remote" as const,
-          notes: "",
-        }));
+      // Prepare applications for submission using utility functions
+      const importableApps = filterImportableApplications(importData);
+      const applicationsToSubmit = transformToAPIFormat(importableApps);
 
       // Create form data for bulk submission
-      const submitFormData = new FormData();
-      submitFormData.append(
-        "applications",
-        JSON.stringify(applicationsToSubmit),
+      const submitFormData = createImportFormData(
+        applicationsToSubmit,
+        csrfTokens.csrfToken,
+        csrfTokens.csrfHash,
       );
-      submitFormData.append("csrf_token", csrfTokens.csrfToken);
-      submitFormData.append("csrf_hash", csrfTokens.csrfHash);
 
-      // Submit to API
+      // Submit to API with proper error handling
       const response = await fetch("/api/applications/create", {
         method: "POST",
         body: submitFormData,
       });
 
-      const result = await response.json();
+      // Handle response using error handling utilities
+      await handleImportResponse(response);
 
-      if (result.success) {
-        setImportSuccess(true);
+      // Success case
+      setImportSuccess(true);
 
-        // Clear stored CSV data
-        sessionStorage.removeItem("csvImportData");
+      // Clear stored CSV data
+      sessionStorage.removeItem("csvImportData");
 
-        // Redirect to applications list after a brief delay
-        setTimeout(() => {
-          router.navigate({ to: "/applications" });
-        }, 1500);
-      } else {
-        setImportError(result.error || "Failed to import applications");
-      }
+      // Redirect to applications list after a brief delay
+      setTimeout(() => {
+        router.navigate({ to: "/applications" });
+      }, 1500);
     } catch (error) {
       console.error("Error importing applications:", error);
-      setImportError("Failed to import applications. Please try again.");
+      const structuredError = handleImportError(error);
+      setImportError(structuredError);
     } finally {
       setIsImporting(false);
     }
@@ -183,7 +184,7 @@ function ConfirmImportApplications() {
 
   const handleCellChange = (
     rowIndex: number,
-    field: keyof ImportApplication,
+    field: "companyName" | "roleName",
     value: string,
   ) => {
     setImportData((prevData) =>
@@ -208,7 +209,7 @@ function ConfirmImportApplications() {
   const renderEditableCell = (
     app: ImportApplication,
     rowIndex: number,
-    field: keyof ImportApplication,
+    field: "companyName" | "roleName",
     displayValue: string,
   ) => {
     const isEditing =
@@ -238,6 +239,9 @@ function ConfirmImportApplications() {
       </span>
     );
   };
+
+  // Calculate import summary for button states and display
+  const summary = calculateImportSummary(importData);
 
   return (
     <div className="page">
@@ -306,14 +310,73 @@ function ConfirmImportApplications() {
               </table>
             </div>
 
-            {/* Success/Error Messages */}
-            {importSuccess && (
-              <div className="success-message">
-                Applications imported successfully! Redirecting to applications
-                page...
+            {/* Loading/Success/Error Messages */}
+            {isImporting && !importSuccess && !importError && (
+              <div className="loading-message">
+                <div className="loading-spinner">⏳</div>
+                <div className="loading-text">
+                  <strong>Importing Applications...</strong>
+                  <p>
+                    Creating {summary.selected} new applications in your
+                    account.
+                  </p>
+                </div>
               </div>
             )}
-            {importError && <div className="error-message">{importError}</div>}
+
+            {importSuccess && (
+              <div className="success-message">
+                <div className="success-icon">✅</div>
+                <div className="success-text">
+                  <strong>Import Successful!</strong>
+                  <p>
+                    Successfully imported {summary.selected} of {summary.total}{" "}
+                    applications.
+                    {summary.invalid > 0 && (
+                      <span>
+                        {" "}
+                        ({summary.invalid} rows were skipped due to validation
+                        errors.)
+                      </span>
+                    )}
+                  </p>
+                  <p>Redirecting to applications page...</p>
+                </div>
+              </div>
+            )}
+            {importError && (
+              <div className="error-message">
+                <div className="error-icon">❌</div>
+                <div className="error-content">
+                  <div className="error-text">
+                    {getErrorDisplayMessage(importError)}
+                  </div>
+                  {isRetryableError(importError) && (
+                    <div className="error-actions">
+                      <button
+                        type="button"
+                        className="retry-button"
+                        onClick={handleImport}
+                        disabled={isImporting}
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  )}
+                  {requiresRefresh(importError) && (
+                    <div className="error-actions">
+                      <button
+                        type="button"
+                        className="refresh-button"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="import-actions">
               <button
@@ -328,19 +391,15 @@ function ConfirmImportApplications() {
                 type="button"
                 className="import-button"
                 onClick={handleImport}
-                disabled={
-                  isImporting ||
-                  !csrfTokens ||
-                  importData.filter((app) => app.shouldImport).length === 0
-                }
+                disabled={isImporting || !csrfTokens || summary.selected === 0}
               >
                 {isImporting
                   ? "Importing..."
                   : !csrfTokens
                     ? "Loading..."
-                    : importData.filter((app) => app.shouldImport).length === 0
+                    : summary.selected === 0
                       ? "No Applications Selected"
-                      : `Import ${importData.filter((app) => app.shouldImport).length} Applications`}
+                      : `Import ${summary.selected} Applications`}
               </button>
             </div>
           </div>

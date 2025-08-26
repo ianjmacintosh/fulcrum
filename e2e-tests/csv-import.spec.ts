@@ -99,22 +99,16 @@ test.describe.serial("CSV Import", () => {
       page.getByText("Upload job applications from a CSV file"),
     ).toBeVisible();
 
-    // Check that CSV format instructions are visible
-    await expect(
-      page.getByRole("heading", { name: "CSV Format Instructions" }),
-    ).toBeVisible();
-    await expect(page.getByText("Column headings don't matter")).toBeVisible();
-
-    // Check that format table is present
-    await expect(page.getByText("Column Position")).toBeVisible();
-    await expect(page.getByText("First column")).toBeVisible();
-    await expect(page.getByText("Second column")).toBeVisible();
-
     // Check that upload section is visible
     await expect(
       page.getByRole("heading", { name: "Upload Your CSV File" }),
     ).toBeVisible();
     await expect(page.getByText("Choose CSV file")).toBeVisible();
+
+    // Check that upload instructions are present
+    await expect(
+      page.getByText("Upload your CSV of companies and jobs"),
+    ).toBeVisible();
 
     // Check action buttons are present
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
@@ -126,24 +120,6 @@ test.describe.serial("CSV Import", () => {
     await expect(
       page.getByRole("button", { name: "Continue to Preview" }),
     ).toBeDisabled();
-  });
-
-  test("Download sample CSV button works", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
-    // Navigate to the import page
-    await page.goto("/applications/import");
-
-    // Wait for the page to load
-    await expect(
-      page.getByRole("heading", { name: "Import Applications" }),
-    ).toBeVisible();
-
-    // Check download sample button
-    await expect(
-      page.getByRole("button", { name: "Download Sample CSV" }),
-    ).toBeVisible();
   });
 
   test("Continue to Preview button navigation (without file)", async ({
@@ -187,42 +163,6 @@ test.describe.serial("CSV Import", () => {
     // Check file input exists and has correct attributes
     const fileInput = page.locator('input[type="file"]');
     await expect(fileInput).toHaveAttribute("accept", ".csv");
-  });
-
-  test("CSV format table displays all required information", async ({
-    page,
-  }) => {
-    // Log in first
-    await loginAsUser(page);
-
-    // Navigate to the import page
-    await page.goto("/applications/import");
-
-    // Wait for the page to load
-    await expect(
-      page.getByRole("heading", { name: "Import Applications" }),
-    ).toBeVisible();
-
-    // Check format table structure
-    const formatTable = page.locator(".format-table");
-    await expect(
-      formatTable.locator("th", { hasText: "Column Position" }),
-    ).toBeVisible();
-    await expect(
-      formatTable.locator("th", { hasText: "Required" }),
-    ).toBeVisible();
-    await expect(
-      formatTable.locator("th", { hasText: "Description" }),
-    ).toBeVisible();
-    await expect(
-      formatTable.locator("th", { hasText: "Example" }),
-    ).toBeVisible();
-
-    // Check specific field examples
-    await expect(page.getByText("First column")).toBeVisible();
-    await expect(page.getByText("Second column")).toBeVisible();
-    await expect(page.getByText("TechCorp Inc.")).toBeVisible();
-    await expect(page.getByText("Senior Software Engineer")).toBeVisible();
   });
 
   test("Cancel button navigates back to applications page", async ({
@@ -286,16 +226,16 @@ test.describe.serial("CSV Import", () => {
     ).toBeVisible();
 
     // Verify key elements are still visible on mobile
-    await expect(page.getByText("CSV Format Instructions")).toBeVisible();
     await expect(page.getByText("Upload Your CSV File")).toBeVisible();
     await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Continue to Preview" }),
     ).toBeVisible();
 
-    // Verify format table is visible on mobile
-    await expect(page.getByText("Column Position")).toBeVisible();
-    await expect(page.getByText("First column")).toBeVisible();
+    // Verify upload instructions are visible on mobile
+    await expect(
+      page.getByText("Upload your CSV of companies and jobs"),
+    ).toBeVisible();
 
     // Navigate back to applications page to test mobile navigation
     await page.goto("/applications");
@@ -321,18 +261,14 @@ test.describe.serial("CSV Import", () => {
       page.getByRole("heading", { name: "Import Applications" }),
     ).toBeVisible();
 
-    // Check that all instruction sections are present
-    await expect(page.getByText("CSV Format Instructions")).toBeVisible();
-    await expect(page.getByText("Column headings don't matter")).toBeVisible();
-
-    // Check download sample button
-    await expect(
-      page.getByRole("button", { name: "Download Sample CSV" }),
-    ).toBeVisible();
-
-    // Check upload section description
+    // Check that upload section description is present
     await expect(
       page.getByText("Upload job applications from a CSV file"),
+    ).toBeVisible();
+
+    // Check upload instructions are clear
+    await expect(
+      page.getByText("Upload your CSV of companies and jobs"),
     ).toBeVisible();
   });
 });
@@ -532,7 +468,9 @@ test.describe.serial("CSV Import Confirmation Page", () => {
     await expect(
       page.getByRole("heading", { name: "Import Applications" }),
     ).toBeVisible();
-    await expect(page.getByText("CSV Format Instructions")).toBeVisible();
+    await expect(
+      page.getByText("Upload your CSV of companies and jobs"),
+    ).toBeVisible();
   });
 
   test("Import button displays correct count", async ({ page }) => {
@@ -619,6 +557,11 @@ test.describe("CSV File Upload and Import Workflow", () => {
     // Log in first
     await loginAsUser(page);
 
+    // Enable dry run mode for testing (to avoid creating actual data)
+    await page.addInitScript(() => {
+      (window as any).__TESTING_DRY_RUN_MODE__ = true;
+    });
+
     // Create unique test CSV data
     const uniqueId = Date.now();
     const csvData = [
@@ -688,9 +631,9 @@ ${csvData.map((row) => `${row.companyName},${row.roleName}`).join("\n")}`;
     await importButton.click();
 
     // Verify success message appears
-    await expect(
-      page.getByText("Applications imported successfully!"),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Import Successful!")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Verify redirect to applications page
     await expect(page).toHaveURL(/.*\/applications$/, { timeout: 10000 });
@@ -722,21 +665,38 @@ InvalidCorp,`;
       buffer: csvBuffer,
     });
 
-    // Listen for alert dialog
-    const dialogPromise = page.waitForEvent("dialog");
-
-    // Try to continue - should show error
+    // Continue to preview - should navigate successfully
     await page.getByRole("button", { name: "Continue to Preview" }).click();
 
-    // Wait for and handle the alert dialog
-    const dialog = await dialogPromise;
-    expect(dialog.message()).toContain("Missing required data");
-    await dialog.accept();
+    // Wait for confirmation page to load
+    await expect(
+      page.getByRole("heading", { name: "Confirm Import" }),
+    ).toBeVisible();
+
+    // Verify that only the valid row is checked for import
+    const checkboxes = page.locator(".import-checkbox");
+    await expect(checkboxes).toHaveCount(3);
+
+    // First row (ValidCorp) should be checked
+    await expect(checkboxes.nth(0)).toBeChecked();
+
+    // Second and third rows (missing data) should be unchecked
+    await expect(checkboxes.nth(1)).not.toBeChecked();
+    await expect(checkboxes.nth(2)).not.toBeChecked();
+
+    // Verify validation status indicators
+    await expect(page.locator(".validation-valid")).toHaveCount(1);
+    await expect(page.locator(".validation-error")).toHaveCount(2);
   });
 
   test("Editable cells work with uploaded CSV data", async ({ page }) => {
     // Log in first
     await loginAsUser(page);
+
+    // Enable dry run mode for testing (to avoid creating actual data)
+    await page.addInitScript(() => {
+      (window as any).__TESTING_DRY_RUN_MODE__ = true;
+    });
 
     // Create test CSV data
     const uniqueId = Date.now();
@@ -845,9 +805,63 @@ ${testCase.name},${testCase.role}`;
     }
   });
 
+  test("Production import mode creates actual applications", async ({
+    page,
+  }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Create unique test data to avoid conflicts
+    const uniqueId = Date.now();
+    const csvContent = `Company,Job Title
+ProdTest-${uniqueId},Production Role ${uniqueId}`;
+
+    // Navigate to import and upload CSV
+    await page.goto("/applications/import");
+
+    const csvBuffer = Buffer.from(csvContent, "utf8");
+    await page.setInputFiles('input[type="file"]', {
+      name: `prod-test-${uniqueId}.csv`,
+      mimeType: "text/csv",
+      buffer: csvBuffer,
+    });
+
+    await page.getByRole("button", { name: "Continue to Preview" }).click();
+
+    // Import the application (production mode - no dry run flag)
+    const importButton = page.getByRole("button", {
+      name: /Import 1 Applications/,
+    });
+    await expect(importButton).toBeEnabled({ timeout: 10000 });
+    await importButton.click();
+
+    // Verify success and redirect
+    await expect(page.getByText("Import Successful!")).toBeVisible({
+      timeout: 5000,
+    });
+
+    await expect(page).toHaveURL(/.*\/applications$/, { timeout: 10000 });
+
+    // Verify the test data DOES appear (production mode creates actual data)
+    await expect(page.getByText(`ProdTest-${uniqueId}`)).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.getByText(`Production Role ${uniqueId}`)).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Clean up: we should delete the test data to avoid pollution
+    // For now, using unique IDs should be sufficient
+  });
+
   test("Dry run mode prevents actual data creation", async ({ page }) => {
     // Log in first
     await loginAsUser(page);
+
+    // Enable dry run mode for testing
+    await page.addInitScript(() => {
+      (window as any).__TESTING_DRY_RUN_MODE__ = true;
+    });
 
     // Get count of existing applications
     await page.goto("/applications");
@@ -880,9 +894,9 @@ DryRunTest-${uniqueId},Test Role ${uniqueId}`;
     await importButton.click();
 
     // Verify success and redirect
-    await expect(
-      page.getByText("Applications imported successfully!"),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Import Successful!")).toBeVisible({
+      timeout: 5000,
+    });
 
     await expect(page).toHaveURL(/.*\/applications$/, { timeout: 10000 });
 
