@@ -102,17 +102,19 @@ export class ApplicationService {
   async getApplications(
     userId: string,
     filter: any = {},
-    limit: number = 100,
+    limit: number = 1000,
     skip: number = 0,
   ): Promise<JobApplication[]> {
     const collection = await this.getCollection();
     const userFilter = { ...filter, userId };
-    return await collection
-      .find(userFilter)
-      .limit(limit)
-      .skip(skip)
-      .sort({ createdAt: -1 })
-      .toArray();
+    const query = collection.find(userFilter);
+
+    // If limit is 0, don't apply limit (get all results)
+    if (limit > 0) {
+      query.limit(limit);
+    }
+
+    return await query.skip(skip).sort({ createdAt: -1 }).toArray();
   }
 
   async getApplicationById(
