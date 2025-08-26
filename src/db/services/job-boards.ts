@@ -124,6 +124,73 @@ export class JobBoardService {
     });
   }
 
+  // Batch helper method to get or create multiple job boards efficiently
+  async getOrCreateJobBoardsBatch(
+    userId: string,
+    names: string[],
+  ): Promise<Map<string, JobBoard>> {
+    const result = new Map<string, JobBoard>();
+
+    if (names.length === 0) {
+      return result;
+    }
+
+    // Deduplicate names
+    const uniqueNames = [...new Set(names)];
+
+    // First, try to find existing job boards with a single query
+    const collection = await this.getCollection();
+    const existingJobBoards = await collection
+      .find({
+        userId,
+        name: { $in: uniqueNames },
+      })
+      .toArray();
+
+    // Map existing job boards by name
+    for (const jobBoard of existingJobBoards) {
+      result.set(jobBoard.name, jobBoard);
+    }
+
+    // Find names that need to be created
+    const namesToCreate = uniqueNames.filter((name) => !result.has(name));
+
+    if (namesToCreate.length > 0) {
+      // Create missing job boards in a single batch insert
+      const newJobBoards = namesToCreate.map((name) => ({
+        userId,
+        name,
+        url: `https://${name.toLowerCase().replace(/\s+/g, "")}.com`,
+        description: `Job board: ${name}`,
+        createdAt: new Date(),
+      }));
+
+      // Validate all job boards before inserting
+      for (const jobBoard of newJobBoards) {
+        const validationResult = JobBoardSchema.safeParse(jobBoard);
+        if (!validationResult.success) {
+          throw new Error(
+            `Validation error for job board "${jobBoard.name}": ${validationResult.error.message}`,
+          );
+        }
+      }
+
+      // Insert all new job boards at once
+      const insertResult = await collection.insertMany(newJobBoards);
+
+      // Add the newly created job boards to the result map
+      namesToCreate.forEach((name, index) => {
+        const insertedId = insertResult.insertedIds[index];
+        result.set(name, {
+          ...newJobBoards[index],
+          _id: insertedId,
+        });
+      });
+    }
+
+    return result;
+  }
+
   // Admin methods (bypass user scoping)
   async getAllJobBoardsForUser(userId: string): Promise<JobBoard[]> {
     const collection = await this.getCollection();

@@ -144,22 +144,22 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
         }
 
         if (isBulkOperation) {
-          // Handle bulk creation
-          const createdApplications: Array<{
-            id: string;
-            companyName: string;
-            roleName: string;
-            currentStatus: any;
-            createdAt: Date;
-          }> = [];
+          // Handle bulk creation using optimized batch operations
+          // Get unique job board names for batch processing
+          const uniqueJobBoardNames = applicationService.getUniqueJobBoards(
+            bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
+          );
 
-          for (const appData of bulkValidatedData) {
-            // Get or create job board for each application - use default if not provided
+          // Batch get/create all job boards at once
+          const jobBoardsMap = await jobBoardService.getOrCreateJobBoardsBatch(
+            userId,
+            uniqueJobBoardNames,
+          );
+
+          // Prepare all applications for batch creation
+          const applicationsToCreate = bulkValidatedData.map((appData) => {
             const jobBoardName = appData.jobBoard || "General";
-            const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
-              userId,
-              jobBoardName,
-            );
+            const jobBoardRecord = jobBoardsMap.get(jobBoardName)!;
 
             // Set defaults for optional fields
             const applicationType = appData.applicationType || "cold";
@@ -168,8 +168,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             const hasAppliedDate =
               appData.appliedDate && appData.appliedDate.trim() !== "";
 
-            // Create the job application
-            const application = await applicationService.createApplication({
+            return {
               userId,
               companyName: appData.companyName,
               roleName: appData.roleName,
@@ -200,21 +199,30 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               currentStatus: applicationService.calculateCurrentStatus({
                 appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               }),
-            });
+            };
+          });
 
-            createdApplications.push({
+          // Batch create all applications at once
+          const createdApplications =
+            await applicationService.createApplicationsBatch(
+              applicationsToCreate,
+            );
+
+          // Format response
+          const formattedApplications = createdApplications.map(
+            (application) => ({
               id: application._id!.toString(),
               companyName: application.companyName,
               roleName: application.roleName,
               currentStatus: application.currentStatus,
               createdAt: application.createdAt,
-            });
-          }
+            }),
+          );
 
           return createSuccessResponse(
             {
-              applications: createdApplications,
-              count: createdApplications.length,
+              applications: formattedApplications,
+              count: formattedApplications.length,
             },
             201,
           );

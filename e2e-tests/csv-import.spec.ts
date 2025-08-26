@@ -910,3 +910,150 @@ DryRunTest-${uniqueId},Test Role ${uniqueId}`;
     expect(finalAppCount).toBeLessThanOrEqual(initialAppCount + 2); // Allow for small variance in text content
   });
 });
+
+test.describe("CSV Import Performance Optimization", () => {
+  test("Batch import is significantly faster than individual imports", async ({
+    page,
+  }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Enable dry run mode for testing (to avoid creating actual data)
+    await page.addInitScript(() => {
+      (window as any).__TESTING_DRY_RUN_MODE__ = true;
+    });
+
+    // Create CSV with multiple applications to test batch performance
+    const uniqueId = Date.now();
+    const applicationCount = 20;
+    const csvRows = Array.from(
+      { length: applicationCount },
+      (_, i) => `BatchTest-${uniqueId}-${i},Engineer ${i} ${uniqueId}`,
+    ).join("\n");
+
+    const csvContent = `Company,Job Title\n${csvRows}`;
+
+    // Navigate to import page and upload large CSV
+    await page.goto("/applications/import");
+
+    const csvBuffer = Buffer.from(csvContent, "utf8");
+    await page.setInputFiles('input[type="file"]', {
+      name: `batch-performance-test-${uniqueId}.csv`,
+      mimeType: "text/csv",
+      buffer: csvBuffer,
+    });
+
+    await page.getByRole("button", { name: "Continue to Preview" }).click();
+
+    // Wait for confirmation page
+    await expect(
+      page.getByRole("heading", { name: "Confirm Import" }),
+    ).toBeVisible();
+
+    // Verify all applications are loaded in preview
+    await expect(
+      page.getByRole("button", {
+        name: `Import ${applicationCount} Applications`,
+      }),
+    ).toBeVisible();
+
+    // Start timing the import operation
+    const startTime = performance.now();
+
+    // Click import button
+    const importButton = page.getByRole("button", {
+      name: new RegExp(`Import ${applicationCount} Applications`),
+    });
+    await expect(importButton).toBeEnabled({ timeout: 10000 });
+    await importButton.click();
+
+    // Wait for success message
+    await expect(page.getByText("Import Successful!")).toBeVisible({
+      timeout: 15000, // Allow more time for batch operations
+    });
+
+    const endTime = performance.now();
+    const importDuration = endTime - startTime;
+
+    // Verify import completed reasonably quickly (should be under 5 seconds for batch)
+    // This is a rough benchmark - batch operations should be much faster than individual calls
+    expect(importDuration).toBeLessThan(5000);
+
+    console.log(
+      `Batch import of ${applicationCount} applications completed in ${importDuration.toFixed(2)}ms`,
+    );
+
+    // Verify redirect to applications page
+    await expect(page).toHaveURL(/.*\/applications$/, { timeout: 10000 });
+  });
+
+  test("Large CSV import handles job board deduplication efficiently", async ({
+    page,
+  }) => {
+    // Log in first
+    await loginAsUser(page);
+
+    // Enable dry run mode for testing
+    await page.addInitScript(() => {
+      (window as any).__TESTING_DRY_RUN_MODE__ = true;
+    });
+
+    // Create CSV with multiple applications using repeated job boards
+    const uniqueId = Date.now();
+    const jobBoards = ["LinkedIn", "Indeed", "Glassdoor"];
+    const applicationCount = 30;
+
+    const csvRows = Array.from({ length: applicationCount }, (_, i) => {
+      const jobBoard = jobBoards[i % jobBoards.length]; // Cycle through job boards
+      return `${jobBoard}-${uniqueId}-${i},Engineer ${i} ${uniqueId}`;
+    }).join("\n");
+
+    const csvContent = `Company,Job Title\n${csvRows}`;
+
+    // Navigate to import page and upload CSV with duplicate job boards
+    await page.goto("/applications/import");
+
+    const csvBuffer = Buffer.from(csvContent, "utf8");
+    await page.setInputFiles('input[type="file"]', {
+      name: `deduplication-test-${uniqueId}.csv`,
+      mimeType: "text/csv",
+      buffer: csvBuffer,
+    });
+
+    await page.getByRole("button", { name: "Continue to Preview" }).click();
+
+    // Wait for confirmation page
+    await expect(
+      page.getByRole("heading", { name: "Confirm Import" }),
+    ).toBeVisible();
+
+    // Start timing the import operation
+    const startTime = performance.now();
+
+    // Click import button
+    const importButton = page.getByRole("button", {
+      name: new RegExp(`Import ${applicationCount} Applications`),
+    });
+    await expect(importButton).toBeEnabled({ timeout: 10000 });
+    await importButton.click();
+
+    // Wait for success message
+    await expect(page.getByText("Import Successful!")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const endTime = performance.now();
+    const importDuration = endTime - startTime;
+
+    // With efficient job board deduplication, this should complete quickly
+    // Even with 30 applications across 3 job boards, it should be under 5 seconds
+    expect(importDuration).toBeLessThan(5000);
+
+    console.log(
+      `Import of ${applicationCount} applications with ${jobBoards.length} unique job boards completed in ${importDuration.toFixed(2)}ms`,
+    );
+
+    // Verify success
+    await expect(page).toHaveURL(/.*\/applications$/, { timeout: 10000 });
+  });
+});

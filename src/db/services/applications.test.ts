@@ -325,3 +325,92 @@ describe("ApplicationService Status Calculation", () => {
     });
   });
 });
+
+describe("ApplicationService Batch Operations", () => {
+  describe("createApplicationsBatch", () => {
+    it("should batch create multiple applications in single operation", async () => {
+      const applications = [
+        {
+          userId: "user123",
+          companyName: "Company A",
+          roleName: "Engineer A",
+          jobBoard: { id: "board1", name: "LinkedIn" },
+          workflow: { id: "workflow1", name: "Default" },
+          applicationType: "cold" as const,
+          roleType: "engineer" as const,
+          locationType: "remote" as const,
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+        },
+        {
+          userId: "user123",
+          companyName: "Company B",
+          roleName: "Engineer B",
+          jobBoard: { id: "board1", name: "LinkedIn" },
+          workflow: { id: "workflow1", name: "Default" },
+          applicationType: "warm" as const,
+          roleType: "manager" as const,
+          locationType: "hybrid" as const,
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+        },
+      ];
+
+      // Should now work - method exists
+      const result =
+        await applicationService.createApplicationsBatch(applications);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        companyName: "Company A",
+        roleName: "Engineer A",
+        applicationType: "cold",
+      });
+      expect(result[1]).toMatchObject({
+        companyName: "Company B",
+        roleName: "Engineer B",
+        applicationType: "warm",
+      });
+      expect(result[0]._id).toBeDefined();
+      expect(result[1]._id).toBeDefined();
+    });
+
+    it("should get unique job boards from application data", () => {
+      const applications = [
+        { jobBoard: "LinkedIn", userId: "user123" },
+        { jobBoard: "Indeed", userId: "user123" },
+        { jobBoard: "LinkedIn", userId: "user123" }, // Duplicate
+        { jobBoard: "Glassdoor", userId: "user123" },
+      ];
+
+      const result = applicationService.getUniqueJobBoards(applications);
+
+      expect(result).toHaveLength(3);
+      expect(result).toContain("LinkedIn");
+      expect(result).toContain("Indeed");
+      expect(result).toContain("Glassdoor");
+    });
+
+    it("should handle empty applications array", async () => {
+      const applications: any[] = [];
+
+      const result =
+        await applicationService.createApplicationsBatch(applications);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should handle empty job board names with default", () => {
+      const applications = [
+        { userId: "user123" }, // No jobBoard
+        { jobBoard: "", userId: "user123" }, // Empty string
+        { jobBoard: "LinkedIn", userId: "user123" },
+      ];
+
+      const result = applicationService.getUniqueJobBoards(applications);
+
+      expect(result).toContain("General"); // Default board name
+      expect(result).toContain("LinkedIn");
+    });
+  });
+});

@@ -44,6 +44,61 @@ export class ApplicationService {
     return { ...newApplication, _id: result.insertedId };
   }
 
+  // Batch create multiple applications efficiently
+  async createApplicationsBatch(
+    applications: Array<
+      Omit<JobApplication, "_id" | "createdAt" | "updatedAt">
+    >,
+  ): Promise<JobApplication[]> {
+    if (applications.length === 0) {
+      return [];
+    }
+
+    const collection = await this.getCollection();
+    const now = new Date();
+
+    const newApplications: JobApplication[] = applications.map(
+      (application) => ({
+        ...application,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    // Validate all applications before inserting
+    for (const [index, application] of newApplications.entries()) {
+      const validationResult = JobApplicationSchema.safeParse({
+        ...application,
+        createdAt: application.createdAt,
+        updatedAt: application.updatedAt,
+      });
+
+      if (!validationResult.success) {
+        throw new Error(
+          `Validation error for application ${index} (${application.companyName} - ${application.roleName}): ${validationResult.error.message}`,
+        );
+      }
+    }
+
+    // Insert all applications at once
+    const result = await collection.insertMany(newApplications);
+
+    // Return applications with their generated IDs
+    return newApplications.map((application, index) => ({
+      ...application,
+      _id: result.insertedIds[index],
+    }));
+  }
+
+  // Helper to extract unique job board names from application data
+  getUniqueJobBoards(applications: Array<{ jobBoard?: string }>): string[] {
+    const jobBoardNames = applications
+      .map((app) => app.jobBoard || "General")
+      .filter((name) => name.trim() !== "");
+
+    return [...new Set(jobBoardNames)];
+  }
+
   async getApplications(
     userId: string,
     filter: any = {},
