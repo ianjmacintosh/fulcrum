@@ -26,10 +26,12 @@ test.describe.serial("Applications", () => {
     await expect(page.getByText("Open Applications")).toBeVisible();
     await expect(page.getByText("Closed/Rejected")).toBeVisible();
 
-    // Check that the add new application button is present
-    await expect(
-      page.getByRole("link", { name: "+ Add New Application" }),
-    ).toBeVisible();
+    // Check that the add new application buttons are present (should be 2 now)
+    const addButtons = page.getByRole("link", {
+      name: "+ Add New Application",
+    });
+    await expect(addButtons).toHaveCount(2);
+    await expect(addButtons.first()).toBeVisible();
   });
 
   test("Applications page displays application cards when data exists", async ({
@@ -88,13 +90,14 @@ test.describe.serial("Applications", () => {
       page.getByRole("heading", { name: "Applications" }),
     ).toBeVisible();
 
-    // Wait for the Add New Application button to be visible
-    await expect(
-      page.getByRole("link", { name: "+ Add New Application" }),
-    ).toBeVisible();
+    // Wait for the Add New Application buttons to be visible (there should be 2 now)
+    const addButtons = page.getByRole("link", {
+      name: "+ Add New Application",
+    });
+    await expect(addButtons.first()).toBeVisible();
 
-    // Click on Add New Application
-    await page.getByRole("link", { name: "+ Add New Application" }).click();
+    // Click on the first Add New Application button
+    await addButtons.first().click();
 
     // Verify we're on the new application page
     expect(page.url()).toContain("/applications/new");

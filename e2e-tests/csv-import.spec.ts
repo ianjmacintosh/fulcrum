@@ -37,17 +37,26 @@ test.describe.serial("CSV Import", () => {
       page.getByRole("heading", { name: "Applications" }),
     ).toBeVisible();
 
-    // Verify both navigation buttons are present
-    await expect(
-      page.getByRole("link", { name: "+ Add New Application" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Import from CSV" }),
-    ).toBeVisible();
+    // Verify both navigation buttons are present (should have 2 of each now)
+    const addButtons = page.getByRole("link", {
+      name: "+ Add New Application",
+    });
+    const importButtons = page.getByRole("link", { name: "Import from CSV" });
 
-    // Verify the import button has correct styling class
-    const importButton = page.getByRole("link", { name: "Import from CSV" });
-    await expect(importButton).toHaveClass(/import-button/);
+    await expect(addButtons).toHaveCount(2);
+    await expect(importButtons).toHaveCount(2);
+
+    // Verify both add buttons are visible
+    await expect(addButtons.first()).toBeVisible();
+    await expect(addButtons.last()).toBeVisible();
+
+    // Verify both import buttons are visible
+    await expect(importButtons.first()).toBeVisible();
+    await expect(importButtons.last()).toBeVisible();
+
+    // Verify the import buttons have correct styling class
+    await expect(importButtons.first()).toHaveClass(/import-button/);
+    await expect(importButtons.last()).toHaveClass(/import-button/);
   });
 
   test("Import from CSV button navigates to import page", async ({ page }) => {
@@ -62,13 +71,12 @@ test.describe.serial("CSV Import", () => {
       page.getByRole("heading", { name: "Applications" }),
     ).toBeVisible();
 
-    // Wait for the Import from CSV button to be visible
-    await expect(
-      page.getByRole("link", { name: "Import from CSV" }),
-    ).toBeVisible();
+    // Wait for the Import from CSV buttons to be visible (there should be 2 now)
+    const importButtons = page.getByRole("link", { name: "Import from CSV" });
+    await expect(importButtons.first()).toBeVisible();
 
-    // Click on Import from CSV
-    await page.getByRole("link", { name: "Import from CSV" }).click();
+    // Click on the first Import from CSV button
+    await importButtons.first().click();
 
     // Wait for navigation to complete
     await page.waitForURL("**/applications/import", { timeout: 10000 });
@@ -240,13 +248,18 @@ test.describe.serial("CSV Import", () => {
     // Navigate back to applications page to test mobile navigation
     await page.goto("/applications");
 
-    // Verify both buttons are visible on mobile (should stack vertically)
-    await expect(
-      page.getByRole("link", { name: "+ Add New Application" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Import from CSV" }),
-    ).toBeVisible();
+    // Verify both buttons are visible on mobile (should have 2 of each, stacking vertically)
+    const addButtons = page.getByRole("link", {
+      name: "+ Add New Application",
+    });
+    const importButtons = page.getByRole("link", { name: "Import from CSV" });
+
+    await expect(addButtons).toHaveCount(2);
+    await expect(importButtons).toHaveCount(2);
+
+    // Verify all buttons are visible on mobile
+    await expect(addButtons.first()).toBeVisible();
+    await expect(importButtons.first()).toBeVisible();
   });
 
   test("Upload instructions are comprehensive and clear", async ({ page }) => {
