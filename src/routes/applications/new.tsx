@@ -15,11 +15,11 @@ function NewApplication() {
     companyName: "",
     roleName: "",
     jobPostingUrl: "",
-    appliedDate: new Date().toISOString().split("T")[0], // Today's date in YYYY-MM-DD format
+    appliedDate: "", // No default date - user can add this later when they actually apply
     jobBoard: "",
     applicationType: "cold" as "cold" | "warm",
-    roleType: "",
-    locationType: "on-site" as "on-site" | "hybrid" | "remote",
+    roleType: "engineer" as "manager" | "engineer",
+    locationType: "remote" as "on-site" | "hybrid" | "remote",
     notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,7 +126,7 @@ function NewApplication() {
       const result = await response.json();
 
       if (result.success) {
-        setSuccessMessage("Application submitted successfully!");
+        setSuccessMessage("Job added successfully!");
 
         // Redirect to applications list after a brief delay
         setTimeout(() => {
@@ -150,8 +150,11 @@ function NewApplication() {
   return (
     <div className="page">
       <header className="page-header">
-        <h1>Add New Application</h1>
-        <p>Record a new job application to track your progress</p>
+        <h1>Add New Job</h1>
+        <p>
+          Add a job you&apos;re interested in or have applied to. Only company
+          name and job title are required.
+        </p>
       </header>
 
       <main className="page-content">
@@ -202,31 +205,30 @@ function NewApplication() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="appliedDate">Applied Date *</label>
+                <label htmlFor="appliedDate">Applied Date</label>
                 <input
                   type="date"
                   id="appliedDate"
                   name="appliedDate"
                   value={formData.appliedDate}
                   onChange={handleInputChange}
-                  required
                   disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  placeholder="Leave empty if not yet applied"
                 />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="jobBoard">Job Board *</label>
+                <label htmlFor="jobBoard">Job Board</label>
                 <select
                   id="jobBoard"
                   name="jobBoard"
                   value={formData.jobBoard}
                   onChange={handleInputChange}
-                  required
                   disabled={isSubmitting || !csrfTokens || isLoadingData}
                 >
-                  <option value="">Select job board...</option>
+                  <option value="">Select job board (optional)...</option>
                   {jobBoards.map((board) => (
                     <option key={board.id} value={board.name}>
                       {board.name}
@@ -236,25 +238,23 @@ function NewApplication() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="roleType">Role Type *</label>
+                <label htmlFor="roleType">Role Type</label>
                 <select
                   id="roleType"
                   name="roleType"
                   value={formData.roleType}
                   onChange={handleInputChange}
-                  required
                   disabled={isSubmitting || !csrfTokens || isLoadingData}
                 >
-                  <option value="">Select role type...</option>
+                  <option value="engineer">Engineer (default)</option>
                   <option value="manager">Manager</option>
-                  <option value="engineer">Engineer</option>
                 </select>
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label>Application Type *</label>
+                <label>Application Type</label>
                 <div className="radio-group">
                   <label className="radio-option">
                     <input
@@ -282,7 +282,7 @@ function NewApplication() {
               </div>
 
               <div className="form-group">
-                <label>Location Type *</label>
+                <label>Location Type</label>
                 <div className="radio-group">
                   <label className="radio-option">
                     <input
@@ -357,10 +357,10 @@ function NewApplication() {
                 disabled={isSubmitting || !csrfTokens || isLoadingData}
               >
                 {isSubmitting
-                  ? "Submitting..."
+                  ? "Adding..."
                   : !csrfTokens || isLoadingData
                     ? "Loading..."
-                    : "Add Application"}
+                    : "Add Job"}
               </button>
             </div>
           </form>

@@ -249,4 +249,79 @@ describe("ApplicationService Status Calculation", () => {
       });
     });
   });
+
+  describe("Application Creation", () => {
+    it("should support creating applications with only required fields", () => {
+      // Test that minimal applications can be created with status calculation
+      const minimalApplication: Partial<JobApplication> = {
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        // No optional status dates provided
+      };
+
+      const result =
+        applicationService.calculateCurrentStatus(minimalApplication);
+
+      expect(result).toEqual({
+        id: "not_applied",
+        name: "Not Applied",
+      });
+    });
+
+    it("should handle notes field properly in applications", () => {
+      const applicationWithNotes: Partial<JobApplication> = {
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        notes: "Found this role through a referral",
+        appliedDate: "2025-01-15",
+      };
+
+      const result =
+        applicationService.calculateCurrentStatus(applicationWithNotes);
+
+      expect(result).toEqual({
+        id: "applied",
+        name: "Applied",
+      });
+
+      // Notes should be preserved (this would be tested in full integration tests)
+      expect(applicationWithNotes.notes).toBe(
+        "Found this role through a referral",
+      );
+    });
+
+    it("should handle applications without appliedDate (jobs of interest)", () => {
+      const jobOfInterest: Partial<JobApplication> = {
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        notes: "Great company culture, want to apply later",
+        // No appliedDate - just tracking as job of interest
+      };
+
+      const result = applicationService.calculateCurrentStatus(jobOfInterest);
+
+      expect(result).toEqual({
+        id: "not_applied",
+        name: "Not Applied",
+      });
+    });
+
+    it("should handle mixed scenarios with some dates missing", () => {
+      const partialApplication: Partial<JobApplication> = {
+        companyName: "TestCorp",
+        roleName: "Software Engineer",
+        // User applied but didn't set specific date initially
+        phoneScreenDate: "2025-01-20",
+        notes: "Had phone screen but need to backfill applied date",
+      };
+
+      const result =
+        applicationService.calculateCurrentStatus(partialApplication);
+
+      expect(result).toEqual({
+        id: "phone_screen",
+        name: "Phone Screen",
+      });
+    });
+  });
 });

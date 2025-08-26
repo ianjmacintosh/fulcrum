@@ -14,11 +14,15 @@ const CreateApplicationSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   roleName: z.string().min(1, "Job title is required"),
   jobPostingUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  appliedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-  jobBoard: z.string().min(1, "Job board is required"),
-  applicationType: z.enum(["cold", "warm"]),
-  roleType: z.enum(["manager", "engineer"]),
-  locationType: z.enum(["on-site", "hybrid", "remote"]),
+  appliedDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
+    .optional()
+    .or(z.literal("")),
+  jobBoard: z.string().optional().or(z.literal("")),
+  applicationType: z.enum(["cold", "warm"]).optional(),
+  roleType: z.enum(["manager", "engineer"]).optional(),
+  locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
   notes: z.string().optional().or(z.literal("")),
 });
 
@@ -83,7 +87,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             }
 
             bulkValidatedData = bulkValidation.data;
-          } catch (error) {
+          } catch {
             return createErrorResponse("Invalid application data format", 400);
           }
         } else {
@@ -166,11 +170,19 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           }> = [];
 
           for (const appData of bulkValidatedData) {
-            // Get or create job board for each application
+            // Get or create job board for each application - use default if not provided
+            const jobBoardName = appData.jobBoard || "General";
             const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
               userId,
-              appData.jobBoard,
+              jobBoardName,
             );
+
+            // Set defaults for optional fields
+            const applicationType = appData.applicationType || "cold";
+            const roleType = appData.roleType || "engineer";
+            const locationType = appData.locationType || "remote";
+            const hasAppliedDate =
+              appData.appliedDate && appData.appliedDate.trim() !== "";
 
             // Create the job application
             const application = await applicationService.createApplication({
@@ -186,20 +198,21 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 id: defaultWorkflow._id!.toString(),
                 name: defaultWorkflow.name,
               },
-              applicationType: appData.applicationType as "cold" | "warm",
-              roleType: appData.roleType as "manager" | "engineer",
-              locationType: appData.locationType as
-                | "on-site"
-                | "hybrid"
-                | "remote",
-              events: [
-                {
-                  id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                  title: "Application submitted",
-                  description: appData.notes || "Applied to position",
-                  date: appData.appliedDate,
-                },
-              ],
+              applicationType: applicationType as "cold" | "warm",
+              roleType: roleType as "manager" | "engineer",
+              locationType: locationType as "on-site" | "hybrid" | "remote",
+              events: hasAppliedDate
+                ? [
+                    {
+                      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                      title: "Application submitted",
+                      description: appData.notes || "Applied to position",
+                      date: appData.appliedDate!,
+                    },
+                  ]
+                : [],
+              appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+              notes: appData.notes || undefined,
               currentStatus: {
                 id: appliedStatus._id!.toString(),
                 name: appliedStatus.name,
@@ -228,10 +241,20 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             return createErrorResponse("Invalid application data", 400);
           }
 
+          // Get or create job board - use default if not provided
+          const jobBoardName = validatedData.jobBoard || "General";
           const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
             userId,
-            validatedData.jobBoard,
+            jobBoardName,
           );
+
+          // Set defaults for optional fields
+          const applicationType = validatedData.applicationType || "cold";
+          const roleType = validatedData.roleType || "engineer";
+          const locationType = validatedData.locationType || "remote";
+          const hasAppliedDate =
+            validatedData.appliedDate &&
+            validatedData.appliedDate.trim() !== "";
 
           // Create the job application
           const application = await applicationService.createApplication({
@@ -247,20 +270,21 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               id: defaultWorkflow._id!.toString(),
               name: defaultWorkflow.name,
             },
-            applicationType: validatedData.applicationType as "cold" | "warm",
-            roleType: validatedData.roleType as "manager" | "engineer",
-            locationType: validatedData.locationType as
-              | "on-site"
-              | "hybrid"
-              | "remote",
-            events: [
-              {
-                id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                title: "Application submitted",
-                description: validatedData.notes || "Applied to position",
-                date: validatedData.appliedDate,
-              },
-            ],
+            applicationType: applicationType as "cold" | "warm",
+            roleType: roleType as "manager" | "engineer",
+            locationType: locationType as "on-site" | "hybrid" | "remote",
+            events: hasAppliedDate
+              ? [
+                  {
+                    id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    title: "Application submitted",
+                    description: validatedData.notes || "Applied to position",
+                    date: validatedData.appliedDate!,
+                  },
+                ]
+              : [],
+            appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
+            notes: validatedData.notes || undefined,
             currentStatus: {
               id: appliedStatus._id!.toString(),
               name: appliedStatus.name,
