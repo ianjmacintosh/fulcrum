@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import "./JobApplicationsCSVUpload.css";
 
 interface JobApplicationsCSVUploadProps {
@@ -12,12 +12,18 @@ export default function JobApplicationsCSVUpload({
   selectedFile = null,
   label = "Choose CSV file",
 }: JobApplicationsCSVUploadProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     onFileSelect(file);
   };
 
   const handleRemoveFile = () => {
+    // Reset the file input value so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     onFileSelect(null);
   };
 
@@ -25,6 +31,7 @@ export default function JobApplicationsCSVUpload({
     <div className="job-applications-csv-upload">
       <label htmlFor="csv-file-input">{label}</label>
       <input
+        ref={fileInputRef}
         type="file"
         accept=".csv"
         onChange={handleFileSelect}

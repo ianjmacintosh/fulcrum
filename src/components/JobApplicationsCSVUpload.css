@@ -28,14 +28,23 @@
 }
 
 .remove-file {
-  background: none;
-  border: 1px solid #ccc;
-  padding: 0.25rem 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #d6d8db;
+  color: #495057;
+  padding: 0.25rem 0.75rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .remove-file:hover {
-  background-color: #f0f0f0;
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: #343a40;
+}
+
+.remove-file:active {
+  background-color: #dee2e6;
 }

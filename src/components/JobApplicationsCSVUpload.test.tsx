@@ -35,6 +35,30 @@ describe("JobApplicationsCSVUpload", () => {
     expect(screen.getByText("(1.0 KB)")).toBeInTheDocument();
     expect(screen.getByText("Remove")).toBeInTheDocument();
   });
+
+  it("calls onFileSelect with null when remove button is clicked", () => {
+    const mockOnFileSelect = vi.fn();
+    const mockFile = new File(["content"], "unique-test.csv", {
+      type: "text/csv",
+    });
+
+    const { container } = render(
+      <JobApplicationsCSVUpload
+        onFileSelect={mockOnFileSelect}
+        selectedFile={mockFile}
+      />,
+    );
+
+    // Click the remove button specifically in this container
+    const removeButton = container.querySelector(
+      ".remove-file",
+    ) as HTMLButtonElement;
+    expect(removeButton).toBeInTheDocument();
+    fireEvent.click(removeButton);
+
+    // Should call onFileSelect with null
+    expect(mockOnFileSelect).toHaveBeenCalledWith(null);
+  });
 });
 
 describe("CSV Parsing with actual parsing function", () => {
