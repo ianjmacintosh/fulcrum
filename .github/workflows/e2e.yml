@@ -3,6 +3,7 @@ on:
   deployment_status:
 jobs:
   e2e-test:
+    name: Run tests
     if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
     timeout-minutes: 60
     runs-on: ubuntu-latest
