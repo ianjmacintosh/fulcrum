@@ -42,6 +42,11 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: "prospective user tests",
+      testMatch: "**/prospect/*.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "user setup",
       testMatch: "**/user/*.setup.ts",
     },
