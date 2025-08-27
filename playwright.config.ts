@@ -2,7 +2,19 @@ import { defineConfig, devices } from "@playwright/test";
 
 import dotenv from "dotenv";
 
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
+
+export const USER_STORAGE_STATE = path.join(
+  __dirname,
+  "playwright/.auth/user.json",
+);
+// const ADMIN_STORAGE_STATE = "playwright/.auth/admin.json";
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -31,39 +43,15 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "user setup",
+      testMatch: "**/user/*.setup.ts",
     },
-
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    {
+      name: "user tests",
+      testMatch: "**/user/*.spec.ts",
+      dependencies: ["user setup"],
+      use: { ...devices["Desktop Chrome"], storageState: USER_STORAGE_STATE },
+    },
   ],
 
   /* Run your local dev server before starting the tests */
