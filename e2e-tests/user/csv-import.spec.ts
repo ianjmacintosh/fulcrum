@@ -258,8 +258,11 @@ test.describe("CSV Import", () => {
   });
 });
 
-test.describe.skip("CSV Import Confirmation Page", () => {
+test.describe("CSV Import Confirmation Page", () => {
   test.beforeEach(async ({ page }) => {
+    // Navigate to a page first to ensure proper context, then set up mock CSV data
+    await page.goto("/applications/import");
+
     // Set up mock CSV data in sessionStorage for all confirmation page tests
     await page.evaluate(() => {
       const mockData = [
