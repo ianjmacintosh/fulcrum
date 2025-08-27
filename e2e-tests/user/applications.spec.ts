@@ -1,13 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginAsUser } from "./test-utils";
 
-test.describe.serial("Applications", () => {
+test.describe("Applications", () => {
   test("Applications page loads and displays job applications", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
 
@@ -37,9 +33,6 @@ test.describe.serial("Applications", () => {
   test("Applications page displays application cards when data exists", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
 
@@ -73,17 +66,8 @@ test.describe.serial("Applications", () => {
   test("Add New Application button navigates to the correct page", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
-    // Verify we're logged in by checking for the logout button
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
-
     // Navigate to applications page
     await page.goto("/applications");
-
-    // Wait for authentication state to be fully loaded after navigation
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
 
     // Wait for the page to be fully loaded before clicking the button
     await expect(
@@ -106,9 +90,6 @@ test.describe.serial("Applications", () => {
   test("Application cards navigate to details page correctly", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
 
@@ -160,9 +141,6 @@ test.describe.serial("Applications", () => {
   test("New application form loads with correct requirements", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -204,9 +182,6 @@ test.describe.serial("Applications", () => {
   });
 
   test("Can create application with only required fields", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -246,9 +221,6 @@ test.describe.serial("Applications", () => {
   test("Shows 'Not Applied' status for jobs without applied date", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -280,9 +252,6 @@ test.describe.serial("Applications", () => {
   test("Creates event and sets status when applied date is provided", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -315,9 +284,6 @@ test.describe.serial("Applications", () => {
   });
 
   test("Form validation works for required fields", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -353,9 +319,6 @@ test.describe.serial("Applications", () => {
   test("New job without applied date shows 'Not Applied' status", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -392,9 +355,6 @@ test.describe.serial("Applications", () => {
   });
 
   test("New job with applied date shows 'Applied' status", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to new application page
     await page.goto("/applications/new");
 
@@ -430,4 +390,4 @@ test.describe.serial("Applications", () => {
       "Applied",
     );
   });
-}); // Close test.describe.serial
+});

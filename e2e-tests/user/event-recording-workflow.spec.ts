@@ -1,16 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { loginAsUser } from "./test-utils";
 
 test.describe("Event Recording Workflow", () => {
   test.beforeEach(async ({ page }) => {
-    // Login as user first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
-
-    // Wait for page to load
-    await expect(page.locator("h1")).toContainText("Applications");
   });
 
   test("should complete full event recording workflow", async ({ page }) => {

@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { loginAsUser } from "./test-utils";
 
 /**
  * E2E Tests for CSV Import Functionality
@@ -22,13 +21,10 @@ import { loginAsUser } from "./test-utils";
  * - Progress indicators
  * - Success/error feedback
  */
-test.describe.serial("CSV Import", () => {
+test.describe("CSV Import", () => {
   test("Import from CSV button is visible on applications page", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
 
@@ -60,9 +56,6 @@ test.describe.serial("CSV Import", () => {
   });
 
   test("Import from CSV button navigates to import page", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to applications page
     await page.goto("/applications");
 
@@ -90,9 +83,6 @@ test.describe.serial("CSV Import", () => {
   test("CSV import page loads and displays expected UI elements", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate directly to the import page
     await page.goto("/applications/import");
 
@@ -133,9 +123,6 @@ test.describe.serial("CSV Import", () => {
   test("Continue to Preview button navigation (without file)", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to the import page
     await page.goto("/applications/import");
 
@@ -152,9 +139,6 @@ test.describe.serial("CSV Import", () => {
   });
 
   test("File upload section displays correctly", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to the import page
     await page.goto("/applications/import");
 
@@ -176,9 +160,6 @@ test.describe.serial("CSV Import", () => {
   test("Cancel button navigates back to applications page", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to the import page
     await page.goto("/applications/import");
 
@@ -200,9 +181,6 @@ test.describe.serial("CSV Import", () => {
   test("Continue button navigation when file is not uploaded", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to the import page
     await page.goto("/applications/import");
 
@@ -221,9 +199,6 @@ test.describe.serial("CSV Import", () => {
   test("UI is responsive and works on mobile viewport", async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-
-    // Log in first
-    await loginAsUser(page);
 
     // Navigate to the import page
     await page.goto("/applications/import");
@@ -263,9 +238,6 @@ test.describe.serial("CSV Import", () => {
   });
 
   test("Upload instructions are comprehensive and clear", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Navigate to the import page
     await page.goto("/applications/import");
 
@@ -286,10 +258,10 @@ test.describe.serial("CSV Import", () => {
   });
 });
 
-test.describe.serial("CSV Import Confirmation Page", () => {
+test.describe("CSV Import Confirmation Page", () => {
   test.beforeEach(async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
+    // Navigate to a page first to ensure proper context, then set up mock CSV data
+    await page.goto("/applications/import");
 
     // Set up mock CSV data in sessionStorage for all confirmation page tests
     await page.evaluate(() => {
@@ -567,9 +539,6 @@ test.describe("CSV File Upload and Import Workflow", () => {
   test("Complete CSV import workflow with unique test data", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Enable dry run mode for testing (to avoid creating actual data)
     await page.addInitScript(() => {
       (window as any).__TESTING_DRY_RUN_MODE__ = true;
@@ -658,9 +627,6 @@ ${csvData.map((row) => `${row.companyName},${row.roleName}`).join("\n")}`;
   });
 
   test("CSV parsing handles validation errors", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Create CSV with missing required fields
     const csvContent = `Company,Job Title
 ValidCorp,Valid Role
@@ -703,9 +669,6 @@ InvalidCorp,`;
   });
 
   test("Editable cells work with uploaded CSV data", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Enable dry run mode for testing (to avoid creating actual data)
     await page.addInitScript(() => {
       (window as any).__TESTING_DRY_RUN_MODE__ = true;
@@ -760,9 +723,6 @@ TestCorp-${uniqueId},Original Role`;
   test("CSV works with natural column headers (position-based parsing)", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Create CSV with various natural header combinations
     const uniqueId = Date.now();
     const testCases = [
@@ -821,9 +781,6 @@ ${testCase.name},${testCase.role}`;
   test("Production import mode creates actual applications", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Create unique test data to avoid conflicts
     const uniqueId = Date.now();
     const csvContent = `Company,Job Title
@@ -868,9 +825,6 @@ ProdTest-${uniqueId},Production Role ${uniqueId}`;
   });
 
   test("Dry run mode prevents actual data creation", async ({ page }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Enable dry run mode for testing
     await page.addInitScript(() => {
       (window as any).__TESTING_DRY_RUN_MODE__ = true;
@@ -928,9 +882,6 @@ test.describe("CSV Import Performance Optimization", () => {
   test("Batch import is significantly faster than individual imports", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Enable dry run mode for testing (to avoid creating actual data)
     await page.addInitScript(() => {
       (window as any).__TESTING_DRY_RUN_MODE__ = true;
@@ -1003,9 +954,6 @@ test.describe("CSV Import Performance Optimization", () => {
   test("Large CSV import handles job board deduplication efficiently", async ({
     page,
   }) => {
-    // Log in first
-    await loginAsUser(page);
-
     // Enable dry run mode for testing
     await page.addInitScript(() => {
       (window as any).__TESTING_DRY_RUN_MODE__ = true;

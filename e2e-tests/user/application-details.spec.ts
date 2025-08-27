@@ -1,11 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { loginAsUser } from "./test-utils";
 
-test.describe.serial("Application Details Page", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsUser(page);
-  });
-
+test.describe("Application Details Page", () => {
   test("should load application details page from applications list", async ({
     page,
   }) => {
