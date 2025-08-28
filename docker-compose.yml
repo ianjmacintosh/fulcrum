@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    volumes:
+      - fulcrum-workspace:/workspaces/fulcrum
+    working_dir: /workspaces/fulcrum
+    command: sleep infinity
+    ports:
+      - "3000:3000"
+      - "9323:9323"
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/fulcrum
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - fulcrum-network
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: fulcrum
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - fulcrum-network
+
+volumes:
+  fulcrum-workspace:
+    driver: local
+  mongodb-data:
+    driver: local
+
+networks:
+  fulcrum-network:
+    driver: bridge
