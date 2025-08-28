@@ -1,10 +1,10 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
     volumes:
-      - ..:/workspaces:cached  # Mount parent directory
+      - ..:/workspaces:cached # Mount parent directory
     working_dir: /workspaces/fulcrum
     command: sleep infinity
     ports:
