@@ -4,8 +4,8 @@ services:
   app:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
     volumes:
-      - fulcrum-workspace:/workspaces/fulcrum
-    working_dir: /workspaces/fulcrum
+      - ..:/workspaces:cached  # Mount parent directory
+    working_dir: /workspaces/${localWorkspaceFolderBasename}
     command: sleep infinity
     ports:
       - "3000:3000"
