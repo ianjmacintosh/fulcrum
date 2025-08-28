@@ -3,6 +3,7 @@ node_modules
 .output
 .tanstack
 
+# Secrets may be stored in .env
 .env
 
 # Database backups
@@ -14,3 +15,6 @@ node_modules
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Personal Claude Code settings don't need to be shared
+.claude/
