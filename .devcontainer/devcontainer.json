@@ -2,7 +2,7 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
   "name": "Fulcrum Job Search Tracker",
-  
+
   // Use Docker Compose to define multi-container setup
   "dockerComposeFile": "../docker-compose.yml",
   "service": "app",

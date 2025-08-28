@@ -25,6 +25,7 @@ The application features:
 ## Development Environment
 
 The project uses a multi-container development setup with:
+
 - **App container**: Node.js/TypeScript dev environment
 - **MongoDB container**: Local MongoDB instance for development
 
