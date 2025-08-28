@@ -5,7 +5,7 @@ services:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
     volumes:
       - ..:/workspaces:cached  # Mount parent directory
-    working_dir: /workspaces/${localWorkspaceFolderBasename}
+    working_dir: /workspaces/fulcrum
     command: sleep infinity
     ports:
       - "3000:3000"
