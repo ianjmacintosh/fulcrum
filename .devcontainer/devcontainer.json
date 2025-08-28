@@ -7,6 +7,7 @@
   "dockerComposeFile": "../docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/fulcrum",
+  "postCreateCommand": "bash .devcontainer/setup.sh # Running dev container setup script, may take 1-2 minutes",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
