@@ -20,6 +20,16 @@ The application features:
 - **Router**: TanStack Router with file-based routing
 - **Build Tool**: Vite 6 with React plugin
 - **Server**: TanStack Start for full-stack capabilities
+- **Database**: MongoDB (containerized for development, Railway for deployment)
+
+## Development Environment
+
+The project uses a multi-container development setup with:
+
+- **App container**: Node.js/TypeScript dev environment
+- **MongoDB container**: Local MongoDB instance for development
+
+After making changes to `.devcontainer/devcontainer.json` or `docker-compose.yml`, you'll need to rebuild the dev container for changes to take effect.
 
 ## Code Standards and Conventions
 
