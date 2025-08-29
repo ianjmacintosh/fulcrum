@@ -326,12 +326,55 @@ ${uniqueCompanyName},${uniqueRoleName}`;
     // Wait for import completion and navigation back to applications
     await page.waitForURL("/applications", { timeout: 15000 });
 
-    // Find and click on the imported application by its unique company name
-    await expect(page.getByText(uniqueCompanyName)).toBeVisible();
-    await page.getByText(uniqueCompanyName).click();
-
-    // Wait for navigation to details page
+    // Wait for the page to fully load and ensure fresh data is fetched
     await page.waitForLoadState("networkidle");
+
+    // Wait for applications list to be loaded and find the imported application
+    // Use a more specific selector that targets the clickable application card
+    const applicationCard = page.locator(".application-card-link").filter({
+      hasText: uniqueCompanyName,
+    });
+
+    // Wait for the card to be visible and ensure it's clickable
+    // If the card is not clickable (no _id), it will appear as a plain div, not a link
+    await expect(applicationCard).toBeVisible({ timeout: 10000 });
+
+    // Fallback: if the clickable link is not found, try clicking on the company name text directly
+    // This could happen if there's a timing issue with _id assignment
+    const cardCount = await applicationCard.count();
+    if (cardCount === 0) {
+      console.warn(
+        `No clickable application card found for ${uniqueCompanyName}, trying fallback approach`,
+      );
+
+      // Wait a bit more and try to find any application card containing our company name
+      const anyCard = page.locator(".application-card").filter({
+        hasText: uniqueCompanyName,
+      });
+      await expect(anyCard).toBeVisible({ timeout: 5000 });
+
+      // Check if this card has an error message indicating missing ID
+      const errorMessage = anyCard.locator(".error-message");
+      const hasError = (await errorMessage.count()) > 0;
+
+      if (hasError) {
+        const errorText = await errorMessage.textContent();
+        throw new Error(
+          `Application card has an error: ${errorText}. This indicates the imported application is missing an _id field.`,
+        );
+      }
+
+      // If no error, try clicking anyway (this should not work but will provide better error info)
+      await anyCard.click();
+    } else {
+      // Click on the proper clickable card
+      await applicationCard.click();
+    }
+
+    // Wait for navigation to details page with proper URL pattern
+    await page.waitForURL(/\/applications\/[a-f0-9]{24}\/details/, {
+      timeout: 10000,
+    });
 
     // Verify we're on the application details page
     await expect(page.locator("h1")).toContainText("Application Details", {
