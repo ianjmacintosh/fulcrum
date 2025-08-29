@@ -393,10 +393,32 @@ describe("ApplicationService Automatic Event Creation", () => {
       );
 
       // Check for "Application submitted" event
+      const today = new Date().toISOString().split("T")[0];
       expect(updatedApp!.events).toContainEqual(
         expect.objectContaining({
           title: "Application submitted",
-          date: "2025-01-15",
+          date: today, // Event happened today
+          description: expect.stringContaining("2025-01-15"), // Description mentions scheduled date
+        }),
+      );
+
+      // Now change the applied date - should create "Application resubmitted" event
+      const resubmittedApp =
+        await applicationService.updateApplicationWithStatusCalculation(
+          "user123",
+          updatedApp!._id!,
+          { appliedDate: "2025-01-20" },
+        );
+
+      // Should have 3 events now
+      expect(resubmittedApp!.events).toHaveLength(3);
+
+      // Check for "Application resubmitted" event
+      expect(resubmittedApp!.events).toContainEqual(
+        expect.objectContaining({
+          title: "Application resubmitted",
+          date: today, // Event happened today
+          description: expect.stringContaining("2025-01-20"), // Description mentions scheduled date
         }),
       );
     });

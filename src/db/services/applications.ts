@@ -428,11 +428,34 @@ export class ApplicationService {
 
       // If we have a new date value that wasn't there before, create an event
       if (newValue && newValue !== oldValue) {
+        // Determine if this is a new date or a changed date
+        const isDateChange = oldValue && oldValue !== newValue;
+        const today = new Date().toISOString().split("T")[0];
+
+        let eventTitle = title;
+        let eventDescription = `${description} for ${newValue}`;
+
+        // Use different titles for date changes vs. new dates
+        if (isDateChange) {
+          // Map original titles to "rescheduled" versions
+          const rescheduleTitleMap: { [key: string]: string } = {
+            "Application submitted": "Application resubmitted",
+            "Phone screen scheduled": "Phone screen rescheduled",
+            "First interview scheduled": "First interview rescheduled",
+            "Second interview scheduled": "Second interview rescheduled",
+            "Offer accepted": "Offer acceptance updated",
+            "Application declined": "Application status updated",
+          };
+
+          eventTitle = rescheduleTitleMap[title] || `${title} (updated)`;
+          eventDescription = `${description} rescheduled to ${newValue}`;
+        }
+
         const newEvent: ApplicationEvent = {
           id: this.generateEventId(),
-          title,
-          description,
-          date: newValue,
+          title: eventTitle,
+          description: eventDescription,
+          date: today, // Event happened today, not the scheduled date
         };
         newEvents.push(newEvent);
       }
