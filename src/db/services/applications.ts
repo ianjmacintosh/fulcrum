@@ -5,6 +5,7 @@ import {
   JobApplicationSchema,
   CurrentStatus,
   ApplicationCreateData,
+  ApplicationEvent,
 } from "../schemas";
 
 export class ApplicationService {
@@ -24,10 +25,21 @@ export class ApplicationService {
   ): Promise<JobApplication> {
     const collection = await this.getCollection();
 
+    const now = new Date();
+
+    // Always generate "Application created" event
+    const createdEvent: ApplicationEvent = {
+      id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+      title: "Application created",
+      description: "Application tracking started",
+      date: now.toISOString().split("T")[0], // Use same date as createdAt, formatted as YYYY-MM-DD
+    };
+
     const newApplication: JobApplication = {
       ...application,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      events: [...application.events, createdEvent],
+      createdAt: now,
+      updatedAt: now,
     };
 
     // Validate with Zod (excluding _id since MongoDB will generate it)
@@ -57,11 +69,22 @@ export class ApplicationService {
     const now = new Date();
 
     const newApplications: JobApplication[] = applications.map(
-      (application) => ({
-        ...application,
-        createdAt: now,
-        updatedAt: now,
-      }),
+      (application) => {
+        // Always generate "Application created" event for batch operations too
+        const createdEvent: ApplicationEvent = {
+          id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          title: "Application created",
+          description: "Application tracking started",
+          date: now.toISOString().split("T")[0],
+        };
+
+        return {
+          ...application,
+          events: [...application.events, createdEvent],
+          createdAt: now,
+          updatedAt: now,
+        };
+      },
     );
 
     // Validate all applications before inserting
@@ -357,11 +380,66 @@ export class ApplicationService {
     // Merge current application with updates to get complete date fields
     const mergedApplication = { ...currentApplication, ...updates };
 
+    // Check for new status dates and generate events
+    const newEvents: ApplicationEvent[] = [];
+    const statusDateFields = [
+      {
+        field: "appliedDate",
+        title: "Application submitted",
+        description: "Applied to position",
+      },
+      {
+        field: "phoneScreenDate",
+        title: "Phone screen scheduled",
+        description: "Phone screening interview scheduled",
+      },
+      {
+        field: "round1Date",
+        title: "First interview scheduled",
+        description: "First round interview scheduled",
+      },
+      {
+        field: "round2Date",
+        title: "Second interview scheduled",
+        description: "Second round interview scheduled",
+      },
+      {
+        field: "acceptedDate",
+        title: "Offer accepted",
+        description: "Job offer accepted",
+      },
+      {
+        field: "declinedDate",
+        title: "Application declined",
+        description: "Application was declined or withdrawn",
+      },
+    ];
+
+    for (const { field, title, description } of statusDateFields) {
+      const oldValue = currentApplication[field];
+      const newValue = updates[field];
+
+      // If we have a new date value that wasn't there before, create an event
+      if (newValue && newValue !== oldValue) {
+        const newEvent: ApplicationEvent = {
+          id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          title,
+          description,
+          date: newValue,
+        };
+        newEvents.push(newEvent);
+      }
+    }
+
     // Calculate the new current status
     const newCurrentStatus = this.calculateCurrentStatus(mergedApplication);
 
     const updateDoc = {
       ...updates,
+      // Add new events to existing events if any were generated
+      ...(newEvents.length > 0 && {
+        events: [...currentApplication.events, ...newEvents],
+      }),
       currentStatus: newCurrentStatus,
       updatedAt: new Date(),
     };

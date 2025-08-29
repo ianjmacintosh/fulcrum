@@ -343,18 +343,62 @@ describe("ApplicationService Automatic Event Creation", () => {
         currentStatus: { id: "not_applied", name: "Not Applied" },
       };
 
-      try {
-        const result =
-          await applicationService.createApplication(applicationData);
+      const result =
+        await applicationService.createApplication(applicationData);
 
-        // Should always have at least one "Application created" event
-        expect(result.events).toHaveLength(1);
-        expect(result.events[0]).toMatchObject({
+      // Should always have at least one "Application created" event
+      expect(result.events).toHaveLength(1);
+      expect(result.events[0]).toMatchObject({
+        title: "Application created",
+      });
+    });
+
+    it("should create 'Application submitted' event when appliedDate is added to existing application", async () => {
+      // RED: This test should fail because updateApplicationWithStatusCalculation doesn't auto-generate events yet
+      const applicationData: ApplicationCreateData = {
+        userId: "user123",
+        companyName: "TechCorp",
+        roleName: "Software Engineer",
+        jobBoard: { id: "board1", name: "General" },
+        workflow: { id: "workflow1", name: "Default" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      };
+
+      // First create application without applied date
+      const createdApp =
+        await applicationService.createApplication(applicationData);
+      expect(createdApp.events).toHaveLength(1); // Just the "Application created" event
+      expect(createdApp.events[0].title).toBe("Application created");
+
+      // Then update with applied date - should create new event
+      const updatedApp =
+        await applicationService.updateApplicationWithStatusCalculation(
+          "user123",
+          createdApp._id!,
+          { appliedDate: "2025-01-15" },
+        );
+
+      // Should now have both "Application created" and "Application submitted" events
+      expect(updatedApp!.events).toHaveLength(2);
+
+      // Check for "Application created" event
+      expect(updatedApp!.events).toContainEqual(
+        expect.objectContaining({
           title: "Application created",
-        });
-      } catch (error) {
-        throw error;
-      }
+        }),
+      );
+
+      // Check for "Application submitted" event
+      expect(updatedApp!.events).toContainEqual(
+        expect.objectContaining({
+          title: "Application submitted",
+          date: "2025-01-15",
+        }),
+      );
     });
   });
 });
