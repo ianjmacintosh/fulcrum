@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { JobApplication, ApplicationCreateData } from "../schemas";
+
+// Import the real service - no mocking needed!
 import { applicationService } from "./applications";
-import { JobApplication } from "../schemas";
 
 describe("ApplicationService Status Calculation", () => {
   describe("calculateCurrentStatus", () => {
@@ -326,42 +328,116 @@ describe("ApplicationService Status Calculation", () => {
   });
 });
 
-describe("ApplicationService Batch Operations", () => {
-  // In-memory mock storage
-  let applications: any[] = [];
-  let nextId = 1;
-
-  const mockApplicationService = {
-    clear() {
-      applications = [];
-      nextId = 1;
-    },
-
-    async createApplicationsBatch(apps: any[]): Promise<any[]> {
-      if (apps.length === 0) return [];
-
-      const results = apps.map((app) => ({
-        ...app,
-        _id: `app-${nextId++}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
-
-      applications.push(...results);
-      return results;
-    },
-
-    getUniqueJobBoards(apps: any[]): string[] {
-      const jobBoardNames = apps
-        .map((app) => app.jobBoard || "General")
-        .filter((name) => name && name.trim() !== "");
-
-      return [...new Set(jobBoardNames)];
-    },
-  };
-
+describe("ApplicationService Automatic Event Creation", () => {
   beforeEach(() => {
-    mockApplicationService.clear();
+    // Enable test mode - no database connections
+    applicationService.enableTestMode();
+    applicationService.clearTestStorage();
+  });
+
+  describe("createApplication with automatic events", () => {
+    it("should automatically create 'Application created' event when creating any application", async () => {
+      // RED: This test should fail because createApplication doesn't auto-generate events yet
+      const applicationData: ApplicationCreateData = {
+        userId: "user123",
+        companyName: "TechCorp",
+        roleName: "Software Engineer",
+        jobBoard: { id: "board1", name: "General" },
+        workflow: { id: "workflow1", name: "Default" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      };
+
+      const result =
+        await applicationService.createApplication(applicationData);
+
+      // Should always have at least one "Application created" event
+      expect(result.events).toHaveLength(1);
+      expect(result.events[0]).toMatchObject({
+        title: "Application created",
+      });
+    });
+
+    it("should create 'Application submitted' event when appliedDate is added to existing application", async () => {
+      // RED: This test should fail because updateApplicationWithStatusCalculation doesn't auto-generate events yet
+      const applicationData: ApplicationCreateData = {
+        userId: "user123",
+        companyName: "TechCorp",
+        roleName: "Software Engineer",
+        jobBoard: { id: "board1", name: "General" },
+        workflow: { id: "workflow1", name: "Default" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      };
+
+      // First create application without applied date
+      const createdApp =
+        await applicationService.createApplication(applicationData);
+      expect(createdApp.events).toHaveLength(1); // Just the "Application created" event
+      expect(createdApp.events[0].title).toBe("Application created");
+
+      // Then update with applied date - should create new event
+      const updatedApp =
+        await applicationService.updateApplicationWithStatusCalculation(
+          "user123",
+          createdApp._id!,
+          { appliedDate: "2025-01-15" },
+        );
+
+      // Should now have both "Application created" and "Application submitted" events
+      expect(updatedApp!.events).toHaveLength(2);
+
+      // Check for "Application created" event
+      expect(updatedApp!.events).toContainEqual(
+        expect.objectContaining({
+          title: "Application created",
+        }),
+      );
+
+      // Check for "Application submitted" event
+      const today = new Date().toISOString().split("T")[0];
+      expect(updatedApp!.events).toContainEqual(
+        expect.objectContaining({
+          title: "Application submitted",
+          date: today, // Event happened today
+          description: "Applied to position on 2025-01-15",
+        }),
+      );
+
+      // Now change the applied date - should create "Application resubmitted" event
+      const resubmittedApp =
+        await applicationService.updateApplicationWithStatusCalculation(
+          "user123",
+          updatedApp!._id!,
+          { appliedDate: "2025-01-20" },
+        );
+
+      // Should have 3 events now
+      expect(resubmittedApp!.events).toHaveLength(3);
+
+      // Check for "Application resubmitted" event
+      expect(resubmittedApp!.events).toContainEqual(
+        expect.objectContaining({
+          title: "Application resubmitted",
+          date: today, // Event happened today
+          description: "Application resubmitted on 2025-01-20",
+        }),
+      );
+    });
+  });
+});
+
+describe("ApplicationService Batch Operations", () => {
+  beforeEach(() => {
+    // Enable test mode - no database connections
+    applicationService.enableTestMode();
+    applicationService.clearTestStorage();
   });
 
   describe("createApplicationsBatch", () => {
@@ -394,7 +470,7 @@ describe("ApplicationService Batch Operations", () => {
       ];
 
       const result =
-        await mockApplicationService.createApplicationsBatch(inputApplications);
+        await applicationService.createApplicationsBatch(inputApplications);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
@@ -409,7 +485,11 @@ describe("ApplicationService Batch Operations", () => {
       });
       expect(result[0]._id).toBeDefined();
       expect(result[1]._id).toBeDefined();
-      expect(applications).toHaveLength(2);
+      // Verify that the applications were created with automatic events
+      expect(result[0].events).toHaveLength(1);
+      expect(result[0].events[0].title).toBe("Application created");
+      expect(result[1].events).toHaveLength(1);
+      expect(result[1].events[0].title).toBe("Application created");
     });
 
     it("should get unique job boards from application data", () => {
@@ -420,8 +500,7 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "Glassdoor", userId: "user123" },
       ];
 
-      const result =
-        mockApplicationService.getUniqueJobBoards(testApplications);
+      const result = applicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toHaveLength(3);
       expect(result).toContain("LinkedIn");
@@ -433,10 +512,9 @@ describe("ApplicationService Batch Operations", () => {
       const inputApplications: any[] = [];
 
       const result =
-        await mockApplicationService.createApplicationsBatch(inputApplications);
+        await applicationService.createApplicationsBatch(inputApplications);
 
       expect(result).toHaveLength(0);
-      expect(applications).toHaveLength(0);
     });
 
     it("should handle empty job board names with default", () => {
@@ -446,8 +524,7 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "LinkedIn", userId: "user123" },
       ];
 
-      const result =
-        mockApplicationService.getUniqueJobBoards(testApplications);
+      const result = applicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toContain("General"); // Default board name
       expect(result).toContain("LinkedIn");

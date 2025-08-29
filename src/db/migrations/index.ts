@@ -4,6 +4,7 @@ import { addStatusDates } from "./002-add-status-dates";
 import { updateApplicationStatuses } from "./003-update-application-statuses";
 import { recalculateCurrentStatuses } from "./004-recalculate-current-statuses";
 import { fixEmptyEventTitles } from "./005-fix-empty-event-titles";
+import { addApplicationCreatedEvents } from "./006-add-application-created-events";
 
 /**
  * All available migrations in execution order
@@ -15,6 +16,7 @@ export function getAllMigrations(): Migration[] {
     updateApplicationStatuses,
     recalculateCurrentStatuses,
     fixEmptyEventTitles,
+    addApplicationCreatedEvents,
   ];
 }
 

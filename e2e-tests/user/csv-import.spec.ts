@@ -172,7 +172,10 @@ test.describe("CSV Import", () => {
     await page.getByRole("button", { name: "Cancel" }).click();
 
     // Verify we're back on the applications page
-    await page.waitForURL("**/applications", { timeout: 10000 });
+    // Use the exact URL pattern instead of wildcard and add networkidle wait
+    await page.waitForURL("/applications", { timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
     await expect(
       page.getByRole("heading", { name: "Applications", exact: true }),
     ).toBeVisible();

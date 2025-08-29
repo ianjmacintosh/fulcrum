@@ -4,11 +4,44 @@ import {
   JobApplication,
   JobApplicationSchema,
   CurrentStatus,
+  ApplicationCreateData,
+  ApplicationEvent,
 } from "../schemas";
 
 export class ApplicationService {
   private db: Db | null = null;
   private collection: Collection<JobApplication> | null = null;
+  private testMode: boolean = false;
+  private testStorage: JobApplication[] = [];
+  private testIdCounter: number = 1;
+
+  /**
+   * Enable test mode - uses in-memory storage instead of database
+   */
+  public enableTestMode(): void {
+    this.testMode = true;
+    this.testStorage = [];
+    this.testIdCounter = 1;
+  }
+
+  /**
+   * Disable test mode - returns to normal database operations
+   */
+  public disableTestMode(): void {
+    this.testMode = false;
+    this.testStorage = [];
+    this.testIdCounter = 1;
+  }
+
+  /**
+   * Clear test storage (only works in test mode)
+   */
+  public clearTestStorage(): void {
+    if (this.testMode) {
+      this.testStorage = [];
+      this.testIdCounter = 1;
+    }
+  }
 
   private async getCollection(): Promise<Collection<JobApplication>> {
     if (!this.collection) {
@@ -18,15 +51,31 @@ export class ApplicationService {
     return this.collection;
   }
 
+  /**
+   * Generate unique event ID
+   */
+  private generateEventId(): string {
+    return `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  }
+
   async createApplication(
-    application: Omit<JobApplication, "_id" | "createdAt" | "updatedAt">,
+    application: ApplicationCreateData,
   ): Promise<JobApplication> {
-    const collection = await this.getCollection();
+    const now = new Date();
+
+    // Always generate "Application created" event
+    const createdEvent: ApplicationEvent = {
+      id: this.generateEventId(),
+      title: "Application created",
+      description: "Application tracking started",
+      date: now.toISOString().split("T")[0],
+    };
 
     const newApplication: JobApplication = {
       ...application,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      events: [...application.events, createdEvent],
+      createdAt: now,
+      updatedAt: now,
     };
 
     // Validate with Zod (excluding _id since MongoDB will generate it)
@@ -40,29 +89,47 @@ export class ApplicationService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newApplication);
-    return { ...newApplication, _id: result.insertedId };
+    if (this.testMode) {
+      // In test mode, use in-memory storage
+      const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
+      const applicationWithId = { ...newApplication, _id: id };
+      this.testStorage.push(applicationWithId);
+      return applicationWithId;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      const result = await collection.insertOne(newApplication);
+      return { ...newApplication, _id: result.insertedId };
+    }
   }
 
   // Batch create multiple applications efficiently
   async createApplicationsBatch(
-    applications: Array<
-      Omit<JobApplication, "_id" | "createdAt" | "updatedAt">
-    >,
+    applications: Array<ApplicationCreateData>,
   ): Promise<JobApplication[]> {
     if (applications.length === 0) {
       return [];
     }
 
-    const collection = await this.getCollection();
     const now = new Date();
 
     const newApplications: JobApplication[] = applications.map(
-      (application) => ({
-        ...application,
-        createdAt: now,
-        updatedAt: now,
-      }),
+      (application) => {
+        // Always generate "Application created" event for batch operations too
+        const createdEvent: ApplicationEvent = {
+          id: this.generateEventId(),
+          title: "Application created",
+          description: "Application tracking started",
+          date: now.toISOString().split("T")[0],
+        };
+
+        return {
+          ...application,
+          events: [...application.events, createdEvent],
+          createdAt: now,
+          updatedAt: now,
+        };
+      },
     );
 
     // Validate all applications before inserting
@@ -80,14 +147,25 @@ export class ApplicationService {
       }
     }
 
-    // Insert all applications at once
-    const result = await collection.insertMany(newApplications);
+    if (this.testMode) {
+      // In test mode, use in-memory storage
+      const applicationsWithIds = newApplications.map((application) => {
+        const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
+        return { ...application, _id: id };
+      });
+      this.testStorage.push(...applicationsWithIds);
+      return applicationsWithIds;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      const result = await collection.insertMany(newApplications);
 
-    // Return applications with their generated IDs
-    return newApplications.map((application, index) => ({
-      ...application,
-      _id: result.insertedIds[index],
-    }));
+      // Return applications with their generated IDs
+      return newApplications.map((application, index) => ({
+        ...application,
+        _id: result.insertedIds[index],
+      }));
+    }
   }
 
   // Helper to extract unique job board names from application data
@@ -337,18 +415,29 @@ export class ApplicationService {
     id: string | ObjectId,
     updates: Partial<JobApplication>,
   ): Promise<JobApplication | null> {
-    const collection = await this.getCollection();
-
     // First get the current application to merge with updates
     let currentApplication: any = null;
 
-    try {
-      // Convert string to ObjectId if needed
-      const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      currentApplication = await collection.findOne({ _id: objectId, userId });
-    } catch {
-      // Return null if ObjectId conversion fails
-      return null;
+    if (this.testMode) {
+      // In test mode, find in memory storage
+      const searchId = typeof id === "string" ? id : id.toString();
+      currentApplication = this.testStorage.find(
+        (app) => app._id?.toString() === searchId && app.userId === userId,
+      );
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      try {
+        // Convert string to ObjectId if needed
+        const objectId = typeof id === "string" ? new ObjectId(id) : id;
+        currentApplication = await collection.findOne({
+          _id: objectId,
+          userId,
+        });
+      } catch {
+        // Return null if ObjectId conversion fails
+        return null;
+      }
     }
 
     if (!currentApplication) {
@@ -358,11 +447,118 @@ export class ApplicationService {
     // Merge current application with updates to get complete date fields
     const mergedApplication = { ...currentApplication, ...updates };
 
+    // Check for new status dates and generate events
+    const newEvents: ApplicationEvent[] = [];
+    const statusDateFields = [
+      {
+        field: "appliedDate",
+        title: "Application submitted",
+        description: "Applied to position",
+      },
+      {
+        field: "phoneScreenDate",
+        title: "Phone screen scheduled",
+        description: "Phone screening interview scheduled",
+      },
+      {
+        field: "round1Date",
+        title: "First interview scheduled",
+        description: "First round interview scheduled",
+      },
+      {
+        field: "round2Date",
+        title: "Second interview scheduled",
+        description: "Second round interview scheduled",
+      },
+      {
+        field: "acceptedDate",
+        title: "Offer accepted",
+        description: "Job offer accepted",
+      },
+      {
+        field: "declinedDate",
+        title: "Application declined",
+        description: "Application was declined or withdrawn",
+      },
+    ];
+
+    for (const { field, title } of statusDateFields) {
+      const oldValue = currentApplication[field];
+      const newValue = updates[field];
+
+      // If we have a new date value that wasn't there before, create an event
+      if (newValue && newValue !== oldValue) {
+        // Determine if this is a new date or a changed date
+        const isDateChange = oldValue && oldValue !== newValue;
+        const today = new Date().toISOString().split("T")[0];
+
+        let eventTitle = title;
+        let eventDescription;
+
+        // Create proper descriptions based on the field
+        if (field === "appliedDate") {
+          eventDescription = `Applied to position on ${newValue}`;
+        } else if (field === "phoneScreenDate") {
+          eventDescription = `Phone screening interview scheduled for ${newValue}`;
+        } else if (field === "round1Date") {
+          eventDescription = `First round interview scheduled for ${newValue}`;
+        } else if (field === "round2Date") {
+          eventDescription = `Second round interview scheduled for ${newValue}`;
+        } else if (field === "acceptedDate") {
+          eventDescription = `Job offer accepted on ${newValue}`;
+        } else if (field === "declinedDate") {
+          eventDescription = `Application declined on ${newValue}`;
+        }
+
+        // Use different titles for date changes vs. new dates
+        if (isDateChange) {
+          // Map original titles to "rescheduled" versions
+          const rescheduleTitleMap: { [key: string]: string } = {
+            "Application submitted": "Application resubmitted",
+            "Phone screen scheduled": "Phone screen rescheduled",
+            "First interview scheduled": "First interview rescheduled",
+            "Second interview scheduled": "Second interview rescheduled",
+            "Offer accepted": "Offer acceptance updated",
+            "Application declined": "Application status updated",
+          };
+
+          eventTitle = rescheduleTitleMap[title] || `${title} (updated)`;
+
+          // Update descriptions for rescheduled events
+          if (field === "appliedDate") {
+            eventDescription = `Application resubmitted on ${newValue}`;
+          } else if (field === "phoneScreenDate") {
+            eventDescription = `Phone screening interview rescheduled for ${newValue}`;
+          } else if (field === "round1Date") {
+            eventDescription = `First round interview rescheduled for ${newValue}`;
+          } else if (field === "round2Date") {
+            eventDescription = `Second round interview rescheduled for ${newValue}`;
+          } else if (field === "acceptedDate") {
+            eventDescription = `Job offer acceptance updated on ${newValue}`;
+          } else if (field === "declinedDate") {
+            eventDescription = `Application status updated on ${newValue}`;
+          }
+        }
+
+        const newEvent: ApplicationEvent = {
+          id: this.generateEventId(),
+          title: eventTitle,
+          description: eventDescription,
+          date: today, // Event happened today, not the scheduled date
+        };
+        newEvents.push(newEvent);
+      }
+    }
+
     // Calculate the new current status
     const newCurrentStatus = this.calculateCurrentStatus(mergedApplication);
 
     const updateDoc = {
       ...updates,
+      // Add new events to existing events if any were generated
+      ...(newEvents.length > 0 && {
+        events: [...currentApplication.events, ...newEvents],
+      }),
       currentStatus: newCurrentStatus,
       updatedAt: new Date(),
     };
@@ -370,21 +566,38 @@ export class ApplicationService {
     delete updateDoc._id; // Don't update the _id field
     delete updateDoc.userId; // Don't allow userId to be changed
 
-    // Now update using the same ID format that worked for finding
-    let result: any = null;
-
-    try {
-      // Convert string to ObjectId if needed
-      const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      result = await collection.findOneAndUpdate(
-        { _id: objectId, userId },
-        { $set: updateDoc },
-        { returnDocument: "after" },
+    if (this.testMode) {
+      // In test mode, update in memory storage
+      const searchId = typeof id === "string" ? id : id.toString();
+      const appIndex = this.testStorage.findIndex(
+        (app) => app._id?.toString() === searchId && app.userId === userId,
       );
-      return result;
-    } catch {
-      // Return null if ObjectId conversion fails or update fails
-      return null;
+
+      if (appIndex === -1) return null;
+
+      const updatedApp = {
+        ...currentApplication,
+        ...updateDoc,
+        updatedAt: new Date(),
+      };
+      this.testStorage[appIndex] = updatedApp;
+      return updatedApp;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      try {
+        // Convert string to ObjectId if needed
+        const objectId = typeof id === "string" ? new ObjectId(id) : id;
+        const result = await collection.findOneAndUpdate(
+          { _id: objectId, userId },
+          { $set: updateDoc },
+          { returnDocument: "after" },
+        );
+        return result;
+      } catch {
+        // Return null if ObjectId conversion fails or update fails
+        return null;
+      }
     }
   }
 
