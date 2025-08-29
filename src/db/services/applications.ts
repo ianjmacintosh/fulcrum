@@ -422,7 +422,7 @@ export class ApplicationService {
       },
     ];
 
-    for (const { field, title, description } of statusDateFields) {
+    for (const { field, title } of statusDateFields) {
       const oldValue = currentApplication[field];
       const newValue = updates[field];
 

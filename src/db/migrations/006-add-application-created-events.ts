@@ -65,8 +65,7 @@ export const addApplicationCreatedEvents: Migration = {
       ];
 
       for (const app of applications) {
-        const newEvents = [];
-        let eventCounter = 1;
+        const newEvents: any[] = [];
 
         // Helper to generate event IDs
         const generateEventId = () =>
@@ -88,7 +87,7 @@ export const addApplicationCreatedEvents: Migration = {
         }
 
         // 2. Add events for each populated status date field in order
-        for (const { field, title, description } of statusDateFields) {
+        for (const { field, title } of statusDateFields) {
           const statusDate = app[field];
 
           if (statusDate) {
