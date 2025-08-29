@@ -20,6 +20,13 @@ export class ApplicationService {
     return this.collection;
   }
 
+  /**
+   * Generate unique event ID
+   */
+  private generateEventId(): string {
+    return `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  }
+
   async createApplication(
     application: ApplicationCreateData,
   ): Promise<JobApplication> {
@@ -29,10 +36,10 @@ export class ApplicationService {
 
     // Always generate "Application created" event
     const createdEvent: ApplicationEvent = {
-      id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+      id: this.generateEventId(),
       title: "Application created",
       description: "Application tracking started",
-      date: now.toISOString().split("T")[0], // Use same date as createdAt, formatted as YYYY-MM-DD
+      date: now.toISOString().split("T")[0],
     };
 
     const newApplication: JobApplication = {
@@ -72,7 +79,7 @@ export class ApplicationService {
       (application) => {
         // Always generate "Application created" event for batch operations too
         const createdEvent: ApplicationEvent = {
-          id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          id: this.generateEventId(),
           title: "Application created",
           description: "Application tracking started",
           date: now.toISOString().split("T")[0],
@@ -422,7 +429,7 @@ export class ApplicationService {
       // If we have a new date value that wasn't there before, create an event
       if (newValue && newValue !== oldValue) {
         const newEvent: ApplicationEvent = {
-          id: `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+          id: this.generateEventId(),
           title,
           description,
           date: newValue,
