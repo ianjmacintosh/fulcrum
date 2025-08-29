@@ -429,17 +429,51 @@ export async function seedDatabase(forceReseed: boolean = false) {
       .insertMany(defaultJobBoards);
     console.log(`✅ Inserted ${jobBoardResult.insertedCount} job boards`);
 
-    // Insert sample applications with correct currentStatus calculation
-    const applicationsWithCorrectStatus = sampleApplications.map((app) => ({
-      ...app,
-      currentStatus: applicationService.calculateCurrentStatus(app),
-    }));
+    // Create sample applications using ApplicationService for automatic event creation
+    console.log("🔄 Creating sample applications...");
+    let createdCount = 0;
 
-    const appResult = await db
-      .collection("applications")
-      .insertMany(applicationsWithCorrectStatus);
+    for (const appData of sampleApplications) {
+      // Convert to ApplicationCreateData format (excluding createdAt/updatedAt)
+      const createData = {
+        userId: appData.userId,
+        companyName: appData.companyName,
+        roleName: appData.roleName,
+        jobPostingUrl: appData.jobPostingUrl || "",
+        jobBoard: appData.jobBoard,
+        workflow: appData.workflow,
+        applicationType: appData.applicationType,
+        roleType: appData.roleType,
+        locationType: appData.locationType,
+        events: appData.events,
+        appliedDate: appData.appliedDate,
+        phoneScreenDate: appData.phoneScreenDate,
+        round1Date: appData.round1Date,
+        round2Date: appData.round2Date,
+        acceptedDate: appData.acceptedDate,
+        declinedDate: appData.declinedDate,
+        currentStatus: appData.currentStatus,
+      };
+
+      // Create application through service (gets automatic "Application created" event)
+      const createdApp = await applicationService.createApplication(createData);
+
+      // Update timestamps to preserve historical dates
+      await db.collection("applications").updateOne(
+        { _id: createdApp._id },
+        {
+          $set: {
+            createdAt: appData.createdAt,
+            updatedAt: appData.updatedAt,
+          },
+        },
+      );
+
+      createdCount++;
+    }
+
     console.log(
-      `✅ Inserted ${appResult.insertedCount} sample applications with calculated status`,
+      `✅ Created ${createdCount} sample applications with automatic 'Application created' events`,
     );
 
     console.log("🎉 Database seeded successfully!");
