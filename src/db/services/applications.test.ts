@@ -398,7 +398,7 @@ describe("ApplicationService Automatic Event Creation", () => {
         expect.objectContaining({
           title: "Application submitted",
           date: today, // Event happened today
-          description: expect.stringContaining("2025-01-15"), // Description mentions scheduled date
+          description: "Applied to position on 2025-01-15",
         }),
       );
 
@@ -418,7 +418,7 @@ describe("ApplicationService Automatic Event Creation", () => {
         expect.objectContaining({
           title: "Application resubmitted",
           date: today, // Event happened today
-          description: expect.stringContaining("2025-01-20"), // Description mentions scheduled date
+          description: "Application resubmitted on 2025-01-20",
         }),
       );
     });

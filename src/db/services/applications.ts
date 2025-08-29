@@ -433,7 +433,22 @@ export class ApplicationService {
         const today = new Date().toISOString().split("T")[0];
 
         let eventTitle = title;
-        let eventDescription = `${description} for ${newValue}`;
+        let eventDescription;
+
+        // Create proper descriptions based on the field
+        if (field === "appliedDate") {
+          eventDescription = `Applied to position on ${newValue}`;
+        } else if (field === "phoneScreenDate") {
+          eventDescription = `Phone screening interview scheduled for ${newValue}`;
+        } else if (field === "round1Date") {
+          eventDescription = `First round interview scheduled for ${newValue}`;
+        } else if (field === "round2Date") {
+          eventDescription = `Second round interview scheduled for ${newValue}`;
+        } else if (field === "acceptedDate") {
+          eventDescription = `Job offer accepted on ${newValue}`;
+        } else if (field === "declinedDate") {
+          eventDescription = `Application declined on ${newValue}`;
+        }
 
         // Use different titles for date changes vs. new dates
         if (isDateChange) {
@@ -448,7 +463,21 @@ export class ApplicationService {
           };
 
           eventTitle = rescheduleTitleMap[title] || `${title} (updated)`;
-          eventDescription = `${description} rescheduled to ${newValue}`;
+
+          // Update descriptions for rescheduled events
+          if (field === "appliedDate") {
+            eventDescription = `Application resubmitted on ${newValue}`;
+          } else if (field === "phoneScreenDate") {
+            eventDescription = `Phone screening interview rescheduled for ${newValue}`;
+          } else if (field === "round1Date") {
+            eventDescription = `First round interview rescheduled for ${newValue}`;
+          } else if (field === "round2Date") {
+            eventDescription = `Second round interview rescheduled for ${newValue}`;
+          } else if (field === "acceptedDate") {
+            eventDescription = `Job offer acceptance updated on ${newValue}`;
+          } else if (field === "declinedDate") {
+            eventDescription = `Application status updated on ${newValue}`;
+          }
         }
 
         const newEvent: ApplicationEvent = {
