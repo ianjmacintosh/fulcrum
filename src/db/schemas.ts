@@ -95,6 +95,28 @@ export const AdminUserSchema = z.object({
   createdAt: z.date(),
 });
 
+// Application creation data (what the service expects)
+export interface ApplicationCreateData {
+  userId: string;
+  companyName: string;
+  roleName: string;
+  jobPostingUrl?: string;
+  jobBoard: JobBoardRef;
+  workflow: WorkflowRef;
+  applicationType: "cold" | "warm";
+  roleType: "manager" | "engineer";
+  locationType: "on-site" | "hybrid" | "remote";
+  events: ApplicationEvent[];
+  appliedDate?: string;
+  phoneScreenDate?: string;
+  round1Date?: string;
+  round2Date?: string;
+  acceptedDate?: string;
+  declinedDate?: string;
+  notes?: string;
+  currentStatus: CurrentStatus;
+}
+
 // TypeScript interfaces (for use in application code)
 export interface ApplicationEvent {
   id: string;

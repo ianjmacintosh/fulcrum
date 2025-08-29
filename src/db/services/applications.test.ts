@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { applicationService } from "./applications";
-import { JobApplication } from "../schemas";
+import { JobApplication, ApplicationCreateData } from "../schemas";
 
 describe("ApplicationService Status Calculation", () => {
   describe("calculateCurrentStatus", () => {
@@ -330,10 +330,17 @@ describe("ApplicationService Automatic Event Creation", () => {
   describe("createApplication with automatic events", () => {
     it("should automatically create 'Application created' event when creating any application", async () => {
       // RED: This test should fail because createApplication doesn't auto-generate events yet
-      const applicationData = {
+      const applicationData: ApplicationCreateData = {
         userId: "user123",
         companyName: "TechCorp",
         roleName: "Software Engineer",
+        jobBoard: { id: "board1", name: "General" },
+        workflow: { id: "workflow1", name: "Default" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
       };
 
       try {

@@ -4,6 +4,7 @@ import {
   JobApplication,
   JobApplicationSchema,
   CurrentStatus,
+  ApplicationCreateData,
 } from "../schemas";
 
 export class ApplicationService {
@@ -19,7 +20,7 @@ export class ApplicationService {
   }
 
   async createApplication(
-    application: Omit<JobApplication, "_id" | "createdAt" | "updatedAt">,
+    application: ApplicationCreateData,
   ): Promise<JobApplication> {
     const collection = await this.getCollection();
 
@@ -46,9 +47,7 @@ export class ApplicationService {
 
   // Batch create multiple applications efficiently
   async createApplicationsBatch(
-    applications: Array<
-      Omit<JobApplication, "_id" | "createdAt" | "updatedAt">
-    >,
+    applications: Array<ApplicationCreateData>,
   ): Promise<JobApplication[]> {
     if (applications.length === 0) {
       return [];
