@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { applicationService } from "./applications";
 import { JobApplication, ApplicationCreateData } from "../schemas";
+
+// Import the real service - no mocking needed!
+import { applicationService } from "./applications";
 
 describe("ApplicationService Status Calculation", () => {
   describe("calculateCurrentStatus", () => {
@@ -327,6 +329,12 @@ describe("ApplicationService Status Calculation", () => {
 });
 
 describe("ApplicationService Automatic Event Creation", () => {
+  beforeEach(() => {
+    // Enable test mode - no database connections
+    applicationService.enableTestMode();
+    applicationService.clearTestStorage();
+  });
+
   describe("createApplication with automatic events", () => {
     it("should automatically create 'Application created' event when creating any application", async () => {
       // RED: This test should fail because createApplication doesn't auto-generate events yet
@@ -426,41 +434,10 @@ describe("ApplicationService Automatic Event Creation", () => {
 });
 
 describe("ApplicationService Batch Operations", () => {
-  // In-memory mock storage
-  let applications: any[] = [];
-  let nextId = 1;
-
-  const mockApplicationService = {
-    clear() {
-      applications = [];
-      nextId = 1;
-    },
-
-    async createApplicationsBatch(apps: any[]): Promise<any[]> {
-      if (apps.length === 0) return [];
-
-      const results = apps.map((app) => ({
-        ...app,
-        _id: `app-${nextId++}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
-
-      applications.push(...results);
-      return results;
-    },
-
-    getUniqueJobBoards(apps: any[]): string[] {
-      const jobBoardNames = apps
-        .map((app) => app.jobBoard || "General")
-        .filter((name) => name && name.trim() !== "");
-
-      return [...new Set(jobBoardNames)];
-    },
-  };
-
   beforeEach(() => {
-    mockApplicationService.clear();
+    // Enable test mode - no database connections
+    applicationService.enableTestMode();
+    applicationService.clearTestStorage();
   });
 
   describe("createApplicationsBatch", () => {
@@ -493,7 +470,7 @@ describe("ApplicationService Batch Operations", () => {
       ];
 
       const result =
-        await mockApplicationService.createApplicationsBatch(inputApplications);
+        await applicationService.createApplicationsBatch(inputApplications);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
@@ -508,7 +485,11 @@ describe("ApplicationService Batch Operations", () => {
       });
       expect(result[0]._id).toBeDefined();
       expect(result[1]._id).toBeDefined();
-      expect(applications).toHaveLength(2);
+      // Verify that the applications were created with automatic events
+      expect(result[0].events).toHaveLength(1);
+      expect(result[0].events[0].title).toBe("Application created");
+      expect(result[1].events).toHaveLength(1);
+      expect(result[1].events[0].title).toBe("Application created");
     });
 
     it("should get unique job boards from application data", () => {
@@ -519,8 +500,7 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "Glassdoor", userId: "user123" },
       ];
 
-      const result =
-        mockApplicationService.getUniqueJobBoards(testApplications);
+      const result = applicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toHaveLength(3);
       expect(result).toContain("LinkedIn");
@@ -532,10 +512,9 @@ describe("ApplicationService Batch Operations", () => {
       const inputApplications: any[] = [];
 
       const result =
-        await mockApplicationService.createApplicationsBatch(inputApplications);
+        await applicationService.createApplicationsBatch(inputApplications);
 
       expect(result).toHaveLength(0);
-      expect(applications).toHaveLength(0);
     });
 
     it("should handle empty job board names with default", () => {
@@ -545,8 +524,7 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "LinkedIn", userId: "user123" },
       ];
 
-      const result =
-        mockApplicationService.getUniqueJobBoards(testApplications);
+      const result = applicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toContain("General"); // Default board name
       expect(result).toContain("LinkedIn");

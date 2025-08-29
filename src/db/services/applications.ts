@@ -11,6 +11,37 @@ import {
 export class ApplicationService {
   private db: Db | null = null;
   private collection: Collection<JobApplication> | null = null;
+  private testMode: boolean = false;
+  private testStorage: JobApplication[] = [];
+  private testIdCounter: number = 1;
+
+  /**
+   * Enable test mode - uses in-memory storage instead of database
+   */
+  public enableTestMode(): void {
+    this.testMode = true;
+    this.testStorage = [];
+    this.testIdCounter = 1;
+  }
+
+  /**
+   * Disable test mode - returns to normal database operations
+   */
+  public disableTestMode(): void {
+    this.testMode = false;
+    this.testStorage = [];
+    this.testIdCounter = 1;
+  }
+
+  /**
+   * Clear test storage (only works in test mode)
+   */
+  public clearTestStorage(): void {
+    if (this.testMode) {
+      this.testStorage = [];
+      this.testIdCounter = 1;
+    }
+  }
 
   private async getCollection(): Promise<Collection<JobApplication>> {
     if (!this.collection) {
@@ -30,8 +61,6 @@ export class ApplicationService {
   async createApplication(
     application: ApplicationCreateData,
   ): Promise<JobApplication> {
-    const collection = await this.getCollection();
-
     const now = new Date();
 
     // Always generate "Application created" event
@@ -60,8 +89,18 @@ export class ApplicationService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newApplication);
-    return { ...newApplication, _id: result.insertedId };
+    if (this.testMode) {
+      // In test mode, use in-memory storage
+      const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
+      const applicationWithId = { ...newApplication, _id: id };
+      this.testStorage.push(applicationWithId);
+      return applicationWithId;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      const result = await collection.insertOne(newApplication);
+      return { ...newApplication, _id: result.insertedId };
+    }
   }
 
   // Batch create multiple applications efficiently
@@ -72,7 +111,6 @@ export class ApplicationService {
       return [];
     }
 
-    const collection = await this.getCollection();
     const now = new Date();
 
     const newApplications: JobApplication[] = applications.map(
@@ -109,14 +147,25 @@ export class ApplicationService {
       }
     }
 
-    // Insert all applications at once
-    const result = await collection.insertMany(newApplications);
+    if (this.testMode) {
+      // In test mode, use in-memory storage
+      const applicationsWithIds = newApplications.map((application) => {
+        const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
+        return { ...application, _id: id };
+      });
+      this.testStorage.push(...applicationsWithIds);
+      return applicationsWithIds;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      const result = await collection.insertMany(newApplications);
 
-    // Return applications with their generated IDs
-    return newApplications.map((application, index) => ({
-      ...application,
-      _id: result.insertedIds[index],
-    }));
+      // Return applications with their generated IDs
+      return newApplications.map((application, index) => ({
+        ...application,
+        _id: result.insertedIds[index],
+      }));
+    }
   }
 
   // Helper to extract unique job board names from application data
@@ -366,18 +415,29 @@ export class ApplicationService {
     id: string | ObjectId,
     updates: Partial<JobApplication>,
   ): Promise<JobApplication | null> {
-    const collection = await this.getCollection();
-
     // First get the current application to merge with updates
     let currentApplication: any = null;
 
-    try {
-      // Convert string to ObjectId if needed
-      const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      currentApplication = await collection.findOne({ _id: objectId, userId });
-    } catch {
-      // Return null if ObjectId conversion fails
-      return null;
+    if (this.testMode) {
+      // In test mode, find in memory storage
+      const searchId = typeof id === "string" ? id : id.toString();
+      currentApplication = this.testStorage.find(
+        (app) => app._id?.toString() === searchId && app.userId === userId,
+      );
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      try {
+        // Convert string to ObjectId if needed
+        const objectId = typeof id === "string" ? new ObjectId(id) : id;
+        currentApplication = await collection.findOne({
+          _id: objectId,
+          userId,
+        });
+      } catch {
+        // Return null if ObjectId conversion fails
+        return null;
+      }
     }
 
     if (!currentApplication) {
@@ -506,21 +566,38 @@ export class ApplicationService {
     delete updateDoc._id; // Don't update the _id field
     delete updateDoc.userId; // Don't allow userId to be changed
 
-    // Now update using the same ID format that worked for finding
-    let result: any = null;
-
-    try {
-      // Convert string to ObjectId if needed
-      const objectId = typeof id === "string" ? new ObjectId(id) : id;
-      result = await collection.findOneAndUpdate(
-        { _id: objectId, userId },
-        { $set: updateDoc },
-        { returnDocument: "after" },
+    if (this.testMode) {
+      // In test mode, update in memory storage
+      const searchId = typeof id === "string" ? id : id.toString();
+      const appIndex = this.testStorage.findIndex(
+        (app) => app._id?.toString() === searchId && app.userId === userId,
       );
-      return result;
-    } catch {
-      // Return null if ObjectId conversion fails or update fails
-      return null;
+
+      if (appIndex === -1) return null;
+
+      const updatedApp = {
+        ...currentApplication,
+        ...updateDoc,
+        updatedAt: new Date(),
+      };
+      this.testStorage[appIndex] = updatedApp;
+      return updatedApp;
+    } else {
+      // Normal database operation
+      const collection = await this.getCollection();
+      try {
+        // Convert string to ObjectId if needed
+        const objectId = typeof id === "string" ? new ObjectId(id) : id;
+        const result = await collection.findOneAndUpdate(
+          { _id: objectId, userId },
+          { $set: updateDoc },
+          { returnDocument: "after" },
+        );
+        return result;
+      } catch {
+        // Return null if ObjectId conversion fails or update fails
+        return null;
+      }
     }
   }
 
