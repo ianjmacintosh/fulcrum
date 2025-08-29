@@ -326,6 +326,32 @@ describe("ApplicationService Status Calculation", () => {
   });
 });
 
+describe("ApplicationService Automatic Event Creation", () => {
+  describe("createApplication with automatic events", () => {
+    it("should automatically create 'Application created' event when creating any application", async () => {
+      // RED: This test should fail because createApplication doesn't auto-generate events yet
+      const applicationData = {
+        userId: "user123",
+        companyName: "TechCorp",
+        roleName: "Software Engineer",
+      };
+
+      try {
+        const result =
+          await applicationService.createApplication(applicationData);
+
+        // Should always have at least one "Application created" event
+        expect(result.events).toHaveLength(1);
+        expect(result.events[0]).toMatchObject({
+          title: "Application created",
+        });
+      } catch (error) {
+        throw error;
+      }
+    });
+  });
+});
+
 describe("ApplicationService Batch Operations", () => {
   // In-memory mock storage
   let applications: any[] = [];
