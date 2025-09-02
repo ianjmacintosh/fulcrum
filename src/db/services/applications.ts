@@ -7,10 +7,6 @@ import {
   ApplicationCreateData,
   ApplicationEvent,
 } from "../schemas";
-import {
-  getEncryptionMiddleware,
-  isEncryptionInitialized,
-} from "../../utils/encryption-middleware";
 
 export class ApplicationService {
   private collection: Collection<JobApplication> | null = null;
@@ -63,37 +59,10 @@ export class ApplicationService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    if (this.testMode) {
-      // In test mode, use in-memory storage
-      let applicationToStore = newApplication;
-      if (isEncryptionInitialized()) {
-        const encryptionMiddleware = getEncryptionMiddleware();
-        applicationToStore = await encryptionMiddleware.encryptForStorage(
-          newApplication,
-          "JobApplication",
-        );
-      }
-
-      const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
-      const applicationWithId = { ...applicationToStore, _id: id };
-      this.testStorage.push(applicationWithId);
-      return { ...newApplication, _id: id }; // Return original unencrypted data
-    } else {
-      // Normal database operation - encrypt before storing
-      const collection = await this.getCollection();
-
-      let applicationToStore = newApplication;
-      if (isEncryptionInitialized()) {
-        const encryptionMiddleware = getEncryptionMiddleware();
-        applicationToStore = await encryptionMiddleware.encryptForStorage(
-          newApplication,
-          "JobApplication",
-        );
-      }
-
-      const result = await collection.insertOne(applicationToStore);
-      return { ...newApplication, _id: result.insertedId };
-    }
+    // Store application as-is (client handles encryption)
+    const collection = this.getCollection();
+    const result = await collection.insertOne(newApplication);
+    return { ...newApplication, _id: result.insertedId };
   }
 
   // Batch create multiple applications efficiently
@@ -140,51 +109,15 @@ export class ApplicationService {
       }
     }
 
-    if (this.testMode) {
-      // In test mode, use in-memory storage
-      let applicationsToStore = newApplications;
-      if (isEncryptionInitialized()) {
-        const encryptionMiddleware = getEncryptionMiddleware();
-        applicationsToStore = await Promise.all(
-          newApplications.map((app) =>
-            encryptionMiddleware.encryptForStorage(app, "JobApplication"),
-          ),
-        );
-      }
+    // Store applications as-is (client handles encryption)
+    const collection = this.getCollection();
+    const result = await collection.insertMany(newApplications);
 
-      const applicationsWithIds = applicationsToStore.map((application) => {
-        const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
-        return { ...application, _id: id };
-      });
-      this.testStorage.push(...applicationsWithIds);
-
-      // Return original unencrypted data with IDs
-      return newApplications.map((application, index) => ({
-        ...application,
-        _id: applicationsWithIds[index]._id,
-      }));
-    } else {
-      // Normal database operation - encrypt before storing
-      const collection = await this.getCollection();
-
-      let applicationsToStore = newApplications;
-      if (isEncryptionInitialized()) {
-        const encryptionMiddleware = getEncryptionMiddleware();
-        applicationsToStore = await Promise.all(
-          newApplications.map((app) =>
-            encryptionMiddleware.encryptForStorage(app, "JobApplication"),
-          ),
-        );
-      }
-
-      const result = await collection.insertMany(applicationsToStore);
-
-      // Return applications with their generated IDs
-      return newApplications.map((application, index) => ({
-        ...application,
-        _id: result.insertedIds[index],
-      }));
-    }
+    // Return applications with their generated IDs
+    return newApplications.map((application, index) => ({
+      ...application,
+      _id: result.insertedIds[index],
+    }));
   }
 
   // Helper to extract unique job board names from application data
@@ -211,26 +144,11 @@ export class ApplicationService {
       query.limit(limit);
     }
 
+    // Return applications as-is (client handles decryption)
     const applications = await query
       .skip(skip)
       .sort({ createdAt: -1 })
       .toArray();
-
-    // Decrypt applications if encryption is initialized
-    if (isEncryptionInitialized()) {
-      const encryptionMiddleware = getEncryptionMiddleware();
-      return await Promise.all(
-        applications.map(async (app) => {
-          if (encryptionMiddleware.isEncrypted(app, "JobApplication")) {
-            return await encryptionMiddleware.decryptFromStorage(
-              app,
-              "JobApplication",
-            );
-          }
-          return app;
-        }),
-      );
-    }
 
     return applications;
   }
@@ -455,29 +373,20 @@ export class ApplicationService {
     id: string | ObjectId,
     updates: Partial<JobApplication>,
   ): Promise<JobApplication | null> {
-    // First get the current application to merge with updates
+    // Get the current application to merge with updates
+    const collection = this.getCollection();
     let currentApplication: any = null;
 
-    if (this.testMode) {
-      // In test mode, find in memory storage
-      const searchId = typeof id === "string" ? id : id.toString();
-      currentApplication = this.testStorage.find(
-        (app) => app._id?.toString() === searchId && app.userId === userId,
-      );
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      try {
-        // Convert string to ObjectId if needed
-        const objectId = typeof id === "string" ? new ObjectId(id) : id;
-        currentApplication = await collection.findOne({
-          _id: objectId,
-          userId,
-        });
-      } catch {
-        // Return null if ObjectId conversion fails
-        return null;
-      }
+    try {
+      // Convert string to ObjectId if needed
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      currentApplication = await collection.findOne({
+        _id: objectId,
+        userId,
+      });
+    } catch {
+      // Return null if ObjectId conversion fails
+      return null;
     }
 
     if (!currentApplication) {
@@ -606,38 +515,19 @@ export class ApplicationService {
     delete updateDoc._id; // Don't update the _id field
     delete updateDoc.userId; // Don't allow userId to be changed
 
-    if (this.testMode) {
-      // In test mode, update in memory storage
-      const searchId = typeof id === "string" ? id : id.toString();
-      const appIndex = this.testStorage.findIndex(
-        (app) => app._id?.toString() === searchId && app.userId === userId,
+    // Update application in database
+    try {
+      // Convert string to ObjectId if needed
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      const result = await collection.findOneAndUpdate(
+        { _id: objectId, userId },
+        { $set: updateDoc },
+        { returnDocument: "after" },
       );
-
-      if (appIndex === -1) return null;
-
-      const updatedApp = {
-        ...currentApplication,
-        ...updateDoc,
-        updatedAt: new Date(),
-      };
-      this.testStorage[appIndex] = updatedApp;
-      return updatedApp;
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      try {
-        // Convert string to ObjectId if needed
-        const objectId = typeof id === "string" ? new ObjectId(id) : id;
-        const result = await collection.findOneAndUpdate(
-          { _id: objectId, userId },
-          { $set: updateDoc },
-          { returnDocument: "after" },
-        );
-        return result;
-      } catch {
-        // Return null if ObjectId conversion fails or update fails
-        return null;
-      }
+      return result;
+    } catch {
+      // Return null if ObjectId conversion fails or update fails
+      return null;
     }
   }
 
@@ -677,5 +567,4 @@ export class ApplicationService {
   }
 }
 
-// Export singleton instance
-export const applicationService = new ApplicationService();
+// ApplicationService now uses dependency injection - no singleton export
