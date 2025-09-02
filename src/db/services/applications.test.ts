@@ -1,253 +1,273 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { JobApplication, ApplicationCreateData } from "../schemas";
+import { ApplicationService } from "./applications";
+import {
+  encryptString,
+  decryptString,
+  createEncryptionKey,
+} from "../../utils/client-crypto";
+import { createMockDb, MockDb } from "../__mocks__/mock-db-client";
 
-// Import the real service - no mocking needed!
-import { applicationService } from "./applications";
+describe("ApplicationService", () => {
+  let applicationService: ApplicationService;
+  let mockDb: MockDb;
+  let clientEncryptionKey: CryptoKey;
 
-describe("ApplicationService Status Calculation", () => {
-  describe("calculateCurrentStatus", () => {
-    it('should return "Not Applied" when no status dates are set', () => {
-      const application: Partial<JobApplication> = {};
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "not_applied",
-        name: "Not Applied",
-      });
-    });
-
-    it('should return "Applied" when only appliedDate is set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "applied",
-        name: "Applied",
-      });
-    });
-
-    it('should return "Phone Screen" when appliedDate and phoneScreenDate are set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "phone_screen",
-        name: "Phone Screen",
-      });
-    });
-
-    it('should return "Round 1" when up to round1Date is set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        round1Date: "2025-01-25",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "round_1",
-        name: "Round 1",
-      });
-    });
-
-    it('should return "Round 2" when up to round2Date is set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        round1Date: "2025-01-25",
-        round2Date: "2025-01-30",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "round_2",
-        name: "Round 2",
-      });
-    });
-
-    it('should return "Accepted" when acceptedDate is set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        round1Date: "2025-01-25",
-        acceptedDate: "2025-02-01",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "accepted",
-        name: "Accepted",
-      });
-    });
-
-    it('should return "Declined" when declinedDate is set', () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        declinedDate: "2025-01-22",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "declined",
-        name: "Declined",
-      });
-    });
-
-    it("should use the latest date when multiple status dates are set", () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        round1Date: "2025-01-25",
-        round2Date: "2025-01-30",
-        acceptedDate: "2025-02-01",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "accepted",
-        name: "Accepted",
-      });
-    });
-
-    it("should handle out-of-order dates correctly", () => {
-      // phoneScreenDate is later than round1Date (unusual but possible)
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        round1Date: "2025-01-20",
-        phoneScreenDate: "2025-01-25", // Later than round1Date
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "phone_screen",
-        name: "Phone Screen",
-      });
-    });
-
-    it("should handle sparse date assignments", () => {
-      // Only appliedDate and round2Date set (skipping phoneScreen and round1)
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        round2Date: "2025-01-30",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "round_2",
-        name: "Round 2",
-      });
-    });
-
-    it("should handle declined applications that also have acceptance dates", () => {
-      // Both declined and accepted set - latest date wins
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "2025-01-20",
-        acceptedDate: "2025-01-25",
-        declinedDate: "2025-01-30", // Later than accepted
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "declined",
-        name: "Declined",
-      });
-    });
-
-    it("should handle same dates by taking the higher priority status", () => {
-      // Same date for multiple statuses - later in workflow takes precedence
-      const sameDate = "2025-01-20";
-      const application: Partial<JobApplication> = {
-        appliedDate: sameDate,
-        phoneScreenDate: sameDate,
-        round1Date: sameDate,
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "round_1",
-        name: "Round 1",
-      });
-    });
-
-    it("should handle invalid date strings gracefully", () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "invalid-date",
-        round1Date: "2025-01-25",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      // Should ignore invalid date and use the latest valid one
-      expect(result).toEqual({
-        id: "round_1",
-        name: "Round 1",
-      });
-    });
-
-    it("should handle empty strings as no date", () => {
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        phoneScreenDate: "", // Empty string should be treated as no date
-        round1Date: "2025-01-25",
-      };
-
-      const result = applicationService.calculateCurrentStatus(application);
-
-      expect(result).toEqual({
-        id: "round_1",
-        name: "Round 1",
-      });
-    });
+  beforeEach(async () => {
+    mockDb = createMockDb();
+    applicationService = new ApplicationService(mockDb as any);
+    clientEncryptionKey = await createEncryptionKey();
   });
 
-  describe("Status calculation edge cases", () => {
-    it("should prioritize terminal statuses even with earlier dates", () => {
-      // Accepted date is earlier but should still take precedence over non-terminal statuses
-      const application: Partial<JobApplication> = {
-        appliedDate: "2025-01-15",
-        acceptedDate: "2025-01-20",
-        round1Date: "2025-01-25", // Later date but non-terminal
-      };
+  afterEach(() => {
+    mockDb.clearAll();
+  });
 
-      const result = applicationService.calculateCurrentStatus(application);
+  describe("Status Calculation", () => {
+    describe("calculateCurrentStatus", () => {
+      it('should return "Not Applied" when no status dates are set', () => {
+        const application: Partial<JobApplication> = {};
 
-      expect(result).toEqual({
-        id: "round_1", // Actually, our logic uses latest date, so this should be Round 1
-        name: "Round 1",
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "not_applied",
+          name: "Not Applied",
+        });
+      });
+
+      it('should return "Applied" when only appliedDate is set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "applied",
+          name: "Applied",
+        });
+      });
+
+      it('should return "Phone Screen" when appliedDate and phoneScreenDate are set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "phone_screen",
+          name: "Phone Screen",
+        });
+      });
+
+      it('should return "Round 1" when up to round1Date is set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          round1Date: "2025-01-25",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "round_1",
+          name: "Round 1",
+        });
+      });
+
+      it('should return "Round 2" when up to round2Date is set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          round1Date: "2025-01-25",
+          round2Date: "2025-01-30",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "round_2",
+          name: "Round 2",
+        });
+      });
+
+      it('should return "Accepted" when acceptedDate is set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          round1Date: "2025-01-25",
+          acceptedDate: "2025-02-01",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "accepted",
+          name: "Accepted",
+        });
+      });
+
+      it('should return "Declined" when declinedDate is set', () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          declinedDate: "2025-01-22",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "declined",
+          name: "Declined",
+        });
+      });
+
+      it("should use the latest date when multiple status dates are set", () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          round1Date: "2025-01-25",
+          round2Date: "2025-01-30",
+          acceptedDate: "2025-02-01",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "accepted",
+          name: "Accepted",
+        });
+      });
+
+      it("should handle out-of-order dates correctly", () => {
+        // phoneScreenDate is later than round1Date (unusual but possible)
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          round1Date: "2025-01-20",
+          phoneScreenDate: "2025-01-25", // Later than round1Date
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "phone_screen",
+          name: "Phone Screen",
+        });
+      });
+
+      it("should handle sparse date assignments", () => {
+        // Only appliedDate and round2Date set (skipping phoneScreen and round1)
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          round2Date: "2025-01-30",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "round_2",
+          name: "Round 2",
+        });
+      });
+
+      it("should handle declined applications that also have acceptance dates", () => {
+        // Both declined and accepted set - latest date wins
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "2025-01-20",
+          acceptedDate: "2025-01-25",
+          declinedDate: "2025-01-30", // Later than accepted
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "declined",
+          name: "Declined",
+        });
+      });
+
+      it("should handle same dates by taking the higher priority status", () => {
+        // Same date for multiple statuses - later in workflow takes precedence
+        const sameDate = "2025-01-20";
+        const application: Partial<JobApplication> = {
+          appliedDate: sameDate,
+          phoneScreenDate: sameDate,
+          round1Date: sameDate,
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "round_1",
+          name: "Round 1",
+        });
+      });
+
+      it("should handle invalid date strings gracefully", () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "invalid-date",
+          round1Date: "2025-01-25",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        // Should ignore invalid date and use the latest valid one
+        expect(result).toEqual({
+          id: "round_1",
+          name: "Round 1",
+        });
+      });
+
+      it("should handle empty strings as no date", () => {
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          phoneScreenDate: "", // Empty string should be treated as no date
+          round1Date: "2025-01-25",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "round_1",
+          name: "Round 1",
+        });
       });
     });
 
-    it("should handle only terminal status dates", () => {
-      const application: Partial<JobApplication> = {
-        acceptedDate: "2025-01-20",
-        declinedDate: "2025-01-25",
-      };
+    describe("Status calculation edge cases", () => {
+      it("should prioritize terminal statuses even with earlier dates", () => {
+        // Accepted date is earlier but should still take precedence over non-terminal statuses
+        const application: Partial<JobApplication> = {
+          appliedDate: "2025-01-15",
+          acceptedDate: "2025-01-20",
+          round1Date: "2025-01-25", // Later date but non-terminal
+        };
 
-      const result = applicationService.calculateCurrentStatus(application);
+        const result = applicationService.calculateCurrentStatus(application);
 
-      expect(result).toEqual({
-        id: "declined", // Latest date wins
-        name: "Declined",
+        expect(result).toEqual({
+          id: "round_1", // Actually, our logic uses latest date, so this should be Round 1
+          name: "Round 1",
+        });
+      });
+
+      it("should handle only terminal status dates", () => {
+        const application: Partial<JobApplication> = {
+          acceptedDate: "2025-01-20",
+          declinedDate: "2025-01-25",
+        };
+
+        const result = applicationService.calculateCurrentStatus(application);
+
+        expect(result).toEqual({
+          id: "declined", // Latest date wins
+          name: "Declined",
+        });
       });
     });
   });
@@ -325,119 +345,117 @@ describe("ApplicationService Status Calculation", () => {
         name: "Phone Screen",
       });
     });
-  });
-});
 
-describe("ApplicationService Automatic Event Creation", () => {
-  beforeEach(() => {
-    // Enable test mode - no database connections
-    applicationService.enableTestMode();
-    applicationService.clearTestStorage();
-  });
+    describe("Automatic Event Creation", () => {
+      // These tests use the same mock database setup as the main describe block
 
-  describe("createApplication with automatic events", () => {
-    it("should automatically create 'Application created' event when creating any application", async () => {
-      // RED: This test should fail because createApplication doesn't auto-generate events yet
-      const applicationData: ApplicationCreateData = {
-        userId: "user123",
-        companyName: "TechCorp",
-        roleName: "Software Engineer",
-        jobBoard: { id: "board1", name: "General" },
-        workflow: { id: "workflow1", name: "Default" },
-        applicationType: "cold",
-        roleType: "engineer",
-        locationType: "remote",
-        events: [],
-        currentStatus: { id: "not_applied", name: "Not Applied" },
-      };
+      describe("createApplication with automatic events", () => {
+        it("should automatically create 'Application created' event when creating any application", async () => {
+          // RED: This test should fail because createApplication doesn't auto-generate events yet
+          const applicationData: ApplicationCreateData = {
+            userId: "user123",
+            companyName: "TechCorp",
+            roleName: "Software Engineer",
+            jobBoard: { id: "board1", name: "General" },
+            workflow: { id: "workflow1", name: "Default" },
+            applicationType: "cold",
+            roleType: "engineer",
+            locationType: "remote",
+            events: [],
+            currentStatus: { id: "not_applied", name: "Not Applied" },
+          };
 
-      const result =
-        await applicationService.createApplication(applicationData);
+          const result =
+            await applicationService.createApplication(applicationData);
 
-      // Should always have at least one "Application created" event
-      expect(result.events).toHaveLength(1);
-      expect(result.events[0]).toMatchObject({
-        title: "Application created",
+          // Should always have at least one "Application created" event
+          expect(result.events).toHaveLength(1);
+          expect(result.events[0]).toMatchObject({
+            title: "Application created",
+          });
+        });
+
+        it("should create 'Application submitted' event when appliedDate is added to existing application", async () => {
+          // RED: This test should fail because updateApplicationWithStatusCalculation doesn't auto-generate events yet
+          const applicationData: ApplicationCreateData = {
+            userId: "user123",
+            companyName: "TechCorp",
+            roleName: "Software Engineer",
+            jobBoard: { id: "board1", name: "General" },
+            workflow: { id: "workflow1", name: "Default" },
+            applicationType: "cold",
+            roleType: "engineer",
+            locationType: "remote",
+            events: [],
+            currentStatus: { id: "not_applied", name: "Not Applied" },
+          };
+
+          // First create application without applied date
+          const createdApp =
+            await applicationService.createApplication(applicationData);
+          expect(createdApp.events).toHaveLength(1); // Just the "Application created" event
+          expect(createdApp.events[0].title).toBe("Application created");
+
+          // Then update with applied date - should create new event
+          const updatedApp =
+            await applicationService.updateApplicationWithStatusCalculation(
+              "user123",
+              createdApp._id!,
+              { appliedDate: "2025-01-15" },
+            );
+
+          // Should now have both "Application created" and "Application submitted" events
+          expect(updatedApp!.events).toHaveLength(2);
+
+          // Check for "Application created" event
+          expect(updatedApp!.events).toContainEqual(
+            expect.objectContaining({
+              title: "Application created",
+            }),
+          );
+
+          // Check for "Application submitted" event
+          const today = new Date().toISOString().split("T")[0];
+          expect(updatedApp!.events).toContainEqual(
+            expect.objectContaining({
+              title: "Application submitted",
+              date: today, // Event happened today
+              description: "Applied to position on 2025-01-15",
+            }),
+          );
+
+          // Now change the applied date - should create "Application resubmitted" event
+          const resubmittedApp =
+            await applicationService.updateApplicationWithStatusCalculation(
+              "user123",
+              updatedApp!._id!,
+              { appliedDate: "2025-01-20" },
+            );
+
+          // Should have 3 events now
+          expect(resubmittedApp!.events).toHaveLength(3);
+
+          // Check for "Application resubmitted" event
+          expect(resubmittedApp!.events).toContainEqual(
+            expect.objectContaining({
+              title: "Application resubmitted",
+              date: today, // Event happened today
+              description: "Application resubmitted on 2025-01-20",
+            }),
+          );
+        });
       });
-    });
-
-    it("should create 'Application submitted' event when appliedDate is added to existing application", async () => {
-      // RED: This test should fail because updateApplicationWithStatusCalculation doesn't auto-generate events yet
-      const applicationData: ApplicationCreateData = {
-        userId: "user123",
-        companyName: "TechCorp",
-        roleName: "Software Engineer",
-        jobBoard: { id: "board1", name: "General" },
-        workflow: { id: "workflow1", name: "Default" },
-        applicationType: "cold",
-        roleType: "engineer",
-        locationType: "remote",
-        events: [],
-        currentStatus: { id: "not_applied", name: "Not Applied" },
-      };
-
-      // First create application without applied date
-      const createdApp =
-        await applicationService.createApplication(applicationData);
-      expect(createdApp.events).toHaveLength(1); // Just the "Application created" event
-      expect(createdApp.events[0].title).toBe("Application created");
-
-      // Then update with applied date - should create new event
-      const updatedApp =
-        await applicationService.updateApplicationWithStatusCalculation(
-          "user123",
-          createdApp._id!,
-          { appliedDate: "2025-01-15" },
-        );
-
-      // Should now have both "Application created" and "Application submitted" events
-      expect(updatedApp!.events).toHaveLength(2);
-
-      // Check for "Application created" event
-      expect(updatedApp!.events).toContainEqual(
-        expect.objectContaining({
-          title: "Application created",
-        }),
-      );
-
-      // Check for "Application submitted" event
-      const today = new Date().toISOString().split("T")[0];
-      expect(updatedApp!.events).toContainEqual(
-        expect.objectContaining({
-          title: "Application submitted",
-          date: today, // Event happened today
-          description: "Applied to position on 2025-01-15",
-        }),
-      );
-
-      // Now change the applied date - should create "Application resubmitted" event
-      const resubmittedApp =
-        await applicationService.updateApplicationWithStatusCalculation(
-          "user123",
-          updatedApp!._id!,
-          { appliedDate: "2025-01-20" },
-        );
-
-      // Should have 3 events now
-      expect(resubmittedApp!.events).toHaveLength(3);
-
-      // Check for "Application resubmitted" event
-      expect(resubmittedApp!.events).toContainEqual(
-        expect.objectContaining({
-          title: "Application resubmitted",
-          date: today, // Event happened today
-          description: "Application resubmitted on 2025-01-20",
-        }),
-      );
     });
   });
 });
 
 describe("ApplicationService Batch Operations", () => {
+  let batchMockDb: MockDb;
+  let batchApplicationService: ApplicationService;
+
   beforeEach(() => {
-    // Enable test mode - no database connections
-    applicationService.enableTestMode();
-    applicationService.clearTestStorage();
+    batchMockDb = createMockDb();
+    batchApplicationService = new ApplicationService(batchMockDb as any);
   });
 
   describe("createApplicationsBatch", () => {
@@ -470,7 +488,9 @@ describe("ApplicationService Batch Operations", () => {
       ];
 
       const result =
-        await applicationService.createApplicationsBatch(inputApplications);
+        await batchApplicationService.createApplicationsBatch(
+          inputApplications,
+        );
 
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
@@ -500,7 +520,8 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "Glassdoor", userId: "user123" },
       ];
 
-      const result = applicationService.getUniqueJobBoards(testApplications);
+      const result =
+        batchApplicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toHaveLength(3);
       expect(result).toContain("LinkedIn");
@@ -512,7 +533,9 @@ describe("ApplicationService Batch Operations", () => {
       const inputApplications: any[] = [];
 
       const result =
-        await applicationService.createApplicationsBatch(inputApplications);
+        await batchApplicationService.createApplicationsBatch(
+          inputApplications,
+        );
 
       expect(result).toHaveLength(0);
     });
@@ -524,7 +547,8 @@ describe("ApplicationService Batch Operations", () => {
         { jobBoard: "LinkedIn", userId: "user123" },
       ];
 
-      const result = applicationService.getUniqueJobBoards(testApplications);
+      const result =
+        batchApplicationService.getUniqueJobBoards(testApplications);
 
       expect(result).toContain("General"); // Default board name
       expect(result).toContain("LinkedIn");
@@ -549,6 +573,87 @@ describe("ApplicationService Batch Operations", () => {
 
       expect(largeDataSet).toHaveLength(50);
       expect(largeDataSet[0].companyName).toBe("Company 0");
+    });
+  });
+
+  describe("Client-side encryption support", () => {
+    let clientEncryptionKey: CryptoKey;
+
+    beforeEach(async () => {
+      clientEncryptionKey = await createEncryptionKey();
+    });
+
+    it("should store pre-encrypted data and return encrypted data", async () => {
+      // Client encrypts sensitive data before sending to server
+      const encryptedApplicationData: ApplicationCreateData = {
+        userId: "test-user-123",
+        companyName: await encryptString("Secret Corp", clientEncryptionKey),
+        roleName: await encryptString("Senior Engineer", clientEncryptionKey),
+        jobBoard: { id: "job-board-1", name: "LinkedIn" }, // Not encrypted
+        workflow: { id: "workflow-1", name: "Standard" }, // Not encrypted
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        appliedDate: await encryptString("2023-12-01", clientEncryptionKey),
+        currentStatus: { id: "applied", name: "Applied" },
+      };
+
+      // Server stores encrypted data as-is
+      const createdApp = await batchApplicationService.createApplication(
+        encryptedApplicationData,
+      );
+
+      // Server returns encrypted data
+      expect(createdApp.companyName).not.toBe("Secret Corp");
+      expect(createdApp.companyName).toMatch(/^[A-Za-z0-9+/]+=*$/); // Base64 pattern
+      expect(createdApp.userId).toBe("test-user-123"); // Non-sensitive data unchanged
+
+      // Verify data stored in database is encrypted
+      const collection = batchMockDb.collection("applications");
+      const storedApp = await collection.findOne({ _id: createdApp._id });
+      expect(storedApp!.companyName).toBe(createdApp.companyName); // Same encrypted data
+
+      // Client can decrypt the returned data
+      const decryptedCompanyName = await decryptString(
+        createdApp.companyName,
+        clientEncryptionKey,
+      );
+      expect(decryptedCompanyName).toBe("Secret Corp");
+    });
+
+    it("should handle mixed encrypted and unencrypted data", async () => {
+      // Create application with some encrypted fields
+      const partiallyEncryptedData: ApplicationCreateData = {
+        userId: "test-user-123",
+        companyName: await encryptString("Encrypted Corp", clientEncryptionKey),
+        roleName: "Plain Role", // Not encrypted for this test
+        jobBoard: { id: "job-board-1", name: "LinkedIn" },
+        workflow: { id: "workflow-1", name: "Standard" },
+        applicationType: "cold",
+        roleType: "engineer",
+        locationType: "remote",
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+      };
+
+      const createdApp = await batchApplicationService.createApplication(
+        partiallyEncryptedData,
+      );
+
+      // Encrypted field should remain encrypted
+      expect(createdApp.companyName).not.toBe("Encrypted Corp");
+      expect(createdApp.companyName).toMatch(/^[A-Za-z0-9+/]+=*$/);
+
+      // Non-encrypted field should remain as-is
+      expect(createdApp.roleName).toBe("Plain Role");
+
+      // Verify client can decrypt encrypted fields
+      const decryptedCompanyName = await decryptString(
+        createdApp.companyName,
+        clientEncryptionKey,
+      );
+      expect(decryptedCompanyName).toBe("Encrypted Corp");
     });
   });
 });

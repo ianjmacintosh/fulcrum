@@ -7,46 +7,20 @@ import {
   ApplicationCreateData,
   ApplicationEvent,
 } from "../schemas";
+import {
+  getEncryptionMiddleware,
+  isEncryptionInitialized,
+} from "../../utils/encryption-middleware";
 
 export class ApplicationService {
-  private db: Db | null = null;
   private collection: Collection<JobApplication> | null = null;
-  private testMode: boolean = false;
-  private testStorage: JobApplication[] = [];
-  private testIdCounter: number = 1;
 
-  /**
-   * Enable test mode - uses in-memory storage instead of database
-   */
-  public enableTestMode(): void {
-    this.testMode = true;
-    this.testStorage = [];
-    this.testIdCounter = 1;
-  }
+  constructor(private dbClient: Db) {}
 
-  /**
-   * Disable test mode - returns to normal database operations
-   */
-  public disableTestMode(): void {
-    this.testMode = false;
-    this.testStorage = [];
-    this.testIdCounter = 1;
-  }
-
-  /**
-   * Clear test storage (only works in test mode)
-   */
-  public clearTestStorage(): void {
-    if (this.testMode) {
-      this.testStorage = [];
-      this.testIdCounter = 1;
-    }
-  }
-
-  private async getCollection(): Promise<Collection<JobApplication>> {
+  private getCollection(): Collection<JobApplication> {
     if (!this.collection) {
-      this.db = await connectToDatabase();
-      this.collection = this.db.collection<JobApplication>("applications");
+      this.collection =
+        this.dbClient.collection<JobApplication>("applications");
     }
     return this.collection;
   }
@@ -91,14 +65,33 @@ export class ApplicationService {
 
     if (this.testMode) {
       // In test mode, use in-memory storage
+      let applicationToStore = newApplication;
+      if (isEncryptionInitialized()) {
+        const encryptionMiddleware = getEncryptionMiddleware();
+        applicationToStore = await encryptionMiddleware.encryptForStorage(
+          newApplication,
+          "JobApplication",
+        );
+      }
+
       const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
-      const applicationWithId = { ...newApplication, _id: id };
+      const applicationWithId = { ...applicationToStore, _id: id };
       this.testStorage.push(applicationWithId);
-      return applicationWithId;
+      return { ...newApplication, _id: id }; // Return original unencrypted data
     } else {
-      // Normal database operation
+      // Normal database operation - encrypt before storing
       const collection = await this.getCollection();
-      const result = await collection.insertOne(newApplication);
+
+      let applicationToStore = newApplication;
+      if (isEncryptionInitialized()) {
+        const encryptionMiddleware = getEncryptionMiddleware();
+        applicationToStore = await encryptionMiddleware.encryptForStorage(
+          newApplication,
+          "JobApplication",
+        );
+      }
+
+      const result = await collection.insertOne(applicationToStore);
       return { ...newApplication, _id: result.insertedId };
     }
   }
@@ -149,16 +142,42 @@ export class ApplicationService {
 
     if (this.testMode) {
       // In test mode, use in-memory storage
-      const applicationsWithIds = newApplications.map((application) => {
+      let applicationsToStore = newApplications;
+      if (isEncryptionInitialized()) {
+        const encryptionMiddleware = getEncryptionMiddleware();
+        applicationsToStore = await Promise.all(
+          newApplications.map((app) =>
+            encryptionMiddleware.encryptForStorage(app, "JobApplication"),
+          ),
+        );
+      }
+
+      const applicationsWithIds = applicationsToStore.map((application) => {
         const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
         return { ...application, _id: id };
       });
       this.testStorage.push(...applicationsWithIds);
-      return applicationsWithIds;
+
+      // Return original unencrypted data with IDs
+      return newApplications.map((application, index) => ({
+        ...application,
+        _id: applicationsWithIds[index]._id,
+      }));
     } else {
-      // Normal database operation
+      // Normal database operation - encrypt before storing
       const collection = await this.getCollection();
-      const result = await collection.insertMany(newApplications);
+
+      let applicationsToStore = newApplications;
+      if (isEncryptionInitialized()) {
+        const encryptionMiddleware = getEncryptionMiddleware();
+        applicationsToStore = await Promise.all(
+          newApplications.map((app) =>
+            encryptionMiddleware.encryptForStorage(app, "JobApplication"),
+          ),
+        );
+      }
+
+      const result = await collection.insertMany(applicationsToStore);
 
       // Return applications with their generated IDs
       return newApplications.map((application, index) => ({
@@ -192,7 +211,28 @@ export class ApplicationService {
       query.limit(limit);
     }
 
-    return await query.skip(skip).sort({ createdAt: -1 }).toArray();
+    const applications = await query
+      .skip(skip)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    // Decrypt applications if encryption is initialized
+    if (isEncryptionInitialized()) {
+      const encryptionMiddleware = getEncryptionMiddleware();
+      return await Promise.all(
+        applications.map(async (app) => {
+          if (encryptionMiddleware.isEncrypted(app, "JobApplication")) {
+            return await encryptionMiddleware.decryptFromStorage(
+              app,
+              "JobApplication",
+            );
+          }
+          return app;
+        }),
+      );
+    }
+
+    return applications;
   }
 
   async getApplicationById(
@@ -493,7 +533,7 @@ export class ApplicationService {
         const today = new Date().toISOString().split("T")[0];
 
         let eventTitle = title;
-        let eventDescription;
+        let eventDescription: string = "";
 
         // Create proper descriptions based on the field
         if (field === "appliedDate") {
