@@ -3,6 +3,7 @@ import { JobApplication, Workflow, JobBoard } from "./schemas";
 import { adminService } from "./services/admin";
 import { userService } from "./services/users";
 import { applicationStatusService } from "./services/application-statuses";
+import { ApplicationService } from "./services/applications";
 import { hashPassword } from "../utils/crypto";
 
 async function seedAdmin() {
@@ -132,6 +133,7 @@ async function migrateTestUserDataToAlice(aliceUserId: string) {
 
 export async function seedDatabase(forceReseed: boolean = false) {
   const db = await connectToDatabase();
+  const applicationService = new ApplicationService(db);
 
   console.log("🌱 Checking database seed status...");
 

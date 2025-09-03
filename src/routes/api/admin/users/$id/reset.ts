@@ -1,6 +1,7 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 import { userService } from "../../../../../db/services/users";
-import { userOnboardingService } from "../../../../../db/services/user-onboarding";
+import { createServices } from "../../../../../services/factory";
+import { UserOnboardingService } from "../../../../../db/services/user-onboarding";
 import {
   requireAdminAuth,
   createSuccessResponse,
@@ -70,6 +71,14 @@ export const ServerRoute = createServerFileRoute(
         includeTestData,
         preserveCustomJobBoards,
       });
+
+      // Create service instance
+      const services = await createServices();
+      const userOnboardingService = new UserOnboardingService(
+        services.applicationService,
+        services.jobBoardService,
+        services.workflowService,
+      );
 
       // Get user's current data summary for reporting
       const beforeSummary =

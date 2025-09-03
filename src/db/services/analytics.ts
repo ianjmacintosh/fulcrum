@@ -324,5 +324,4 @@ export class AnalyticsService {
   }
 }
 
-// Export singleton instance
-export const analyticsService = new AnalyticsService();
+// AnalyticsService uses dependency injection - no singleton export

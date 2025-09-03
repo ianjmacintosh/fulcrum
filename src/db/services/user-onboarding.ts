@@ -1,5 +1,8 @@
 import { connectToDatabase } from "../connection";
 import { defaultWorkflowService } from "./default-workflow";
+import { ApplicationService } from "./applications";
+import { JobBoardService } from "./job-boards";
+import { WorkflowService } from "./workflows";
 
 export interface ResetOptions {
   includeTestData: boolean;
@@ -7,6 +10,11 @@ export interface ResetOptions {
 }
 
 export class UserOnboardingService {
+  constructor(
+    private applicationService: ApplicationService,
+    private jobBoardService: JobBoardService,
+    private workflowService: WorkflowService,
+  ) {}
   /**
    * Provisions default data for a new user (job boards, workflow, statuses)
    */
@@ -41,7 +49,7 @@ export class UserOnboardingService {
     ];
 
     for (const jobBoardData of defaultJobBoards) {
-      await jobBoardService.createJobBoard({
+      await this.jobBoardService.createJobBoard({
         userId,
         ...jobBoardData,
       });
@@ -58,7 +66,7 @@ export class UserOnboardingService {
     const createdStatuses: { [key: string]: string } = {};
 
     for (const statusData of defaultStatuses) {
-      const status = await workflowService.createStatus({
+      const status = await this.workflowService.createStatus({
         userId,
         ...statusData,
       });
@@ -66,7 +74,7 @@ export class UserOnboardingService {
     }
 
     // Create default workflow using actual status IDs
-    await workflowService.createWorkflow({
+    await this.workflowService.createWorkflow({
       userId,
       name: "Basic Workflow",
       description: "Standard job application workflow",
@@ -88,9 +96,10 @@ export class UserOnboardingService {
    */
   async provisionSampleApplications(userId: string): Promise<void> {
     // Get user's default workflow and job boards
-    const defaultWorkflow = await workflowService.getDefaultWorkflow(userId);
-    const jobBoards = await jobBoardService.getJobBoards(userId);
-    const statuses = await workflowService.getStatuses(userId);
+    const defaultWorkflow =
+      await this.workflowService.getDefaultWorkflow(userId);
+    const jobBoards = await this.jobBoardService.getJobBoards(userId);
+    const statuses = await this.workflowService.getStatuses(userId);
 
     if (!defaultWorkflow || jobBoards.length === 0 || statuses.length === 0) {
       throw new Error(
@@ -297,7 +306,7 @@ export class UserOnboardingService {
 
     // Create each sample application
     for (const appData of sampleApplications) {
-      await applicationService.createApplication({
+      await this.applicationService.createApplication({
         userId,
         ...appData,
       });
@@ -311,15 +320,15 @@ export class UserOnboardingService {
     await connectToDatabase();
 
     // Always delete applications first (they reference other collections)
-    await applicationService.deleteAllApplicationsForUser(userId);
+    await this.applicationService.deleteAllApplicationsForUser(userId);
 
     // Delete statuses and workflows
-    await workflowService.deleteAllStatusesForUser(userId);
-    await workflowService.deleteAllWorkflowsForUser(userId);
+    await this.workflowService.deleteAllStatusesForUser(userId);
+    await this.workflowService.deleteAllWorkflowsForUser(userId);
 
     // Handle job boards based on preserveCustomJobBoards option
     if (!options.preserveCustomJobBoards) {
-      await jobBoardService.deleteAllJobBoardsForUser(userId);
+      await this.jobBoardService.deleteAllJobBoardsForUser(userId);
     }
 
     // Always reprovision default data
@@ -342,13 +351,13 @@ export class UserOnboardingService {
     jobBoardCount: number;
   }> {
     const [, jobBoards, defaultWorkflow] = await Promise.all([
-      applicationService.getApplications(userId, {}, 1), // Just check if any exist
-      jobBoardService.getJobBoards(userId),
-      workflowService.getDefaultWorkflow(userId),
+      this.applicationService.getApplications(userId, {}, 1), // Just check if any exist
+      this.jobBoardService.getJobBoards(userId),
+      this.workflowService.getDefaultWorkflow(userId),
     ]);
 
     const applicationCount =
-      await applicationService.getApplicationCount(userId);
+      await this.applicationService.getApplicationCount(userId);
 
     // Determine if user has custom job boards (more than the 5 defaults)
     const defaultJobBoardNames = [
@@ -372,5 +381,4 @@ export class UserOnboardingService {
   }
 }
 
-// Export singleton instance
-export const userOnboardingService = new UserOnboardingService();
+// UserOnboardingService uses dependency injection - no singleton export

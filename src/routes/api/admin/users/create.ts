@@ -1,6 +1,7 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 import { userService } from "../../../../db/services/users";
-import { userOnboardingService } from "../../../../db/services/user-onboarding";
+import { createServices } from "../../../../services/factory";
+import { UserOnboardingService } from "../../../../db/services/user-onboarding";
 import { hashPassword } from "../../../../utils/crypto";
 import {
   requireAdminAuth,
@@ -72,6 +73,12 @@ export const ServerRoute = createServerFileRoute(
 
       // Provision default user data (job boards, workflows, statuses)
       try {
+        const services = await createServices();
+        const userOnboardingService = new UserOnboardingService(
+          services.applicationService,
+          services.jobBoardService,
+          services.workflowService,
+        );
         await userOnboardingService.provisionDefaultUserData(user.id);
       } catch (onboardingError) {
         console.error(
