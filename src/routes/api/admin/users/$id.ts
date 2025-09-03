@@ -1,6 +1,6 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
 import { userService } from "../../../../db/services/users";
-import { applicationService } from "../../../../db/services/applications";
+import { createServices } from "../../../../services/factory";
 import {
   requireAdminAuth,
   createSuccessResponse,
@@ -23,6 +23,9 @@ export const ServerRoute = createServerFileRoute(
     }
 
     try {
+      // Initialize services
+      const services = await createServices();
+
       // Validate CSRF token from headers
       const csrfToken = request.headers.get("x-csrf-token");
       const csrfHash = request.headers.get("x-csrf-hash");
@@ -51,7 +54,7 @@ export const ServerRoute = createServerFileRoute(
 
       // Delete all user's applications first
       const deletedApplications =
-        await applicationService.deleteAllApplicationsForUser(userId);
+        await services.applicationService.deleteAllApplicationsForUser(userId);
 
       // Delete the user
       const userDeleted = await userService.deleteUser(userId);

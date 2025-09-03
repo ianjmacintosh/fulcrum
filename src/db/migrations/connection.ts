@@ -4,17 +4,6 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
-/**
- * LEGACY DATABASE CONNECTION - DEPRECATED FOR NEW SERVICES
- *
- * This connection utility is maintained for compatibility with legacy services
- * (admin, users, application-statuses, user-onboarding) that haven't been
- * migrated to dependency injection yet.
- *
- * For new services, use dependency injection by passing Db via constructor.
- * For migrations and scripts, use ./migrations/connection.ts
- */
-
 // MongoDB connection string - Railway provides different URLs for different contexts
 const MONGODB_URI =
   process.env.MONGO_URL || // Railway private endpoint (preferred)
@@ -26,6 +15,10 @@ const MONGODB_URI =
 let client: MongoClient | null = null;
 let db: Db | null = null;
 
+/**
+ * Connect to database for migration and seeding scripts
+ * This is intentionally separate from the main app's dependency injection
+ */
 export async function connectToDatabase(): Promise<Db> {
   if (db) {
     return db;

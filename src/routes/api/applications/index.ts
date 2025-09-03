@@ -4,7 +4,7 @@ import {
   createErrorResponse,
 } from "../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../middleware/auth";
-import { applicationService } from "../../../db/services/applications";
+import { createServices } from "../../../services/factory";
 
 export const ServerRoute = createServerFileRoute("/api/applications/")
   .middleware([requireUserAuth])
@@ -17,7 +17,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/")
       }
 
       try {
-        const applications = await applicationService.getApplications(
+        // Initialize services
+        const services = await createServices();
+
+        const applications = await services.applicationService.getApplications(
           auth.user.id,
           {},
           0, // No limit - get all applications

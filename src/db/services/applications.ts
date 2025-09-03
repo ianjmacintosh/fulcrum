@@ -1,5 +1,4 @@
 import { Db, Collection, ObjectId } from "mongodb";
-import { connectToDatabase } from "../connection";
 import {
   JobApplication,
   JobApplicationSchema,
@@ -11,12 +10,11 @@ import {
 export class ApplicationService {
   private collection: Collection<JobApplication> | null = null;
 
-  constructor(private dbClient: Db) {}
+  constructor(private db: Db) {}
 
   private getCollection(): Collection<JobApplication> {
     if (!this.collection) {
-      this.collection =
-        this.dbClient.collection<JobApplication>("applications");
+      this.collection = this.db.collection<JobApplication>("applications");
     }
     return this.collection;
   }
@@ -567,4 +565,4 @@ export class ApplicationService {
   }
 }
 
-// ApplicationService now uses dependency injection - no singleton export
+// ApplicationService uses dependency injection - no singleton export

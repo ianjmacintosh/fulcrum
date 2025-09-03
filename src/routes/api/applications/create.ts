@@ -1,12 +1,10 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { applicationService } from "../../../db/services/applications";
-import { workflowService } from "../../../db/services/workflows";
-import { jobBoardService } from "../../../db/services/job-boards";
 import {
   createSuccessResponse,
   createErrorResponse,
 } from "../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../middleware/auth";
+import { createServices } from "../../../services/factory";
 import { z } from "zod";
 
 // Schema for application creation validation
@@ -42,6 +40,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
       const userId = auth.user.id;
 
       try {
+        // Initialize services
+        const services = await createServices();
         // Parse form data
         const formData = await request.formData();
 
@@ -123,11 +123,12 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
         }
 
         // Get default workflow and status for user (shared for both single and bulk)
-        let defaultWorkflow = await workflowService.getDefaultWorkflow(userId);
+        let defaultWorkflow =
+          await services.workflowService.getDefaultWorkflow(userId);
 
         if (!defaultWorkflow) {
           // Create a basic default workflow if none exists
-          defaultWorkflow = await workflowService.createWorkflow({
+          defaultWorkflow = await services.workflowService.createWorkflow({
             userId,
             name: "Default Workflow",
             description: "Default application workflow",
@@ -146,15 +147,17 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
         if (isBulkOperation) {
           // Handle bulk creation using optimized batch operations
           // Get unique job board names for batch processing
-          const uniqueJobBoardNames = applicationService.getUniqueJobBoards(
-            bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
-          );
+          const uniqueJobBoardNames =
+            services.applicationService.getUniqueJobBoards(
+              bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
+            );
 
           // Batch get/create all job boards at once
-          const jobBoardsMap = await jobBoardService.getOrCreateJobBoardsBatch(
-            userId,
-            uniqueJobBoardNames,
-          );
+          const jobBoardsMap =
+            await services.jobBoardService.getOrCreateJobBoardsBatch(
+              userId,
+              uniqueJobBoardNames,
+            );
 
           // Prepare all applications for batch creation
           const applicationsToCreate = bulkValidatedData.map((appData) => {
@@ -196,15 +199,17 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 : [],
               appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               notes: appData.notes || undefined,
-              currentStatus: applicationService.calculateCurrentStatus({
-                appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
-              }),
+              currentStatus: services.applicationService.calculateCurrentStatus(
+                {
+                  appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+                },
+              ),
             };
           });
 
           // Batch create all applications at once
           const createdApplications =
-            await applicationService.createApplicationsBatch(
+            await services.applicationService.createApplicationsBatch(
               applicationsToCreate,
             );
 
@@ -234,10 +239,11 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
 
           // Get or create job board - use default if not provided
           const jobBoardName = validatedData.jobBoard || "General";
-          const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
-            userId,
-            jobBoardName,
-          );
+          const jobBoardRecord =
+            await services.jobBoardService.getOrCreateJobBoard(
+              userId,
+              jobBoardName,
+            );
 
           // Set defaults for optional fields
           const applicationType = validatedData.applicationType || "cold";
@@ -276,7 +282,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               : [],
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
-            currentStatus: applicationService.calculateCurrentStatus({
+            currentStatus: services.applicationService.calculateCurrentStatus({
               appliedDate: hasAppliedDate
                 ? validatedData.appliedDate
                 : undefined,
@@ -285,7 +291,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
 
           // Create the job application
           const application =
-            await applicationService.createApplication(applicationData);
+            await services.applicationService.createApplication(
+              applicationData,
+            );
 
           return createSuccessResponse(
             {

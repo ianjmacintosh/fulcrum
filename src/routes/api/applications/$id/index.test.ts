@@ -2,14 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { JobApplication } from "../../../../db/schemas";
 import { mockApplicationService } from "../../../../db/services/mock-application-service";
 
-// Mock the module
-vi.mock("../../../../db/services/applications", () => ({
-  applicationService: mockApplicationService,
-}));
-
-// Import after mocking
-import { applicationService } from "../../../../db/services/applications";
-
 describe("GET /api/applications/:id", () => {
   const testUserId = "test-user-123";
   let testApplication: JobApplication;
@@ -19,7 +11,7 @@ describe("GET /api/applications/:id", () => {
     mockApplicationService.clear();
 
     // Create test application
-    testApplication = await applicationService.createApplication({
+    testApplication = await mockApplicationService.createApplication({
       userId: testUserId,
       companyName: "Test Company",
       roleName: "Test Role",
@@ -47,7 +39,7 @@ describe("GET /api/applications/:id", () => {
   it("should return application details for valid ID", async () => {
     // This would be the implementation test
     // For now, we'll test the service layer directly
-    const application = await applicationService.getApplicationById(
+    const application = await mockApplicationService.getApplicationById(
       testUserId,
       testApplication._id!.toString(),
     );
@@ -61,7 +53,7 @@ describe("GET /api/applications/:id", () => {
   });
 
   it("should return null for non-existent application ID", async () => {
-    const application = await applicationService.getApplicationById(
+    const application = await mockApplicationService.getApplicationById(
       testUserId,
       "000000000000000000000000",
     );
@@ -71,7 +63,7 @@ describe("GET /api/applications/:id", () => {
 
   it("should not return applications from other users", async () => {
     // Try to access the application with different user ID
-    const application = await applicationService.getApplicationById(
+    const application = await mockApplicationService.getApplicationById(
       "other-user-456",
       testApplication._id!.toString(),
     );
@@ -81,7 +73,7 @@ describe("GET /api/applications/:id", () => {
 
   it("should return events sorted chronologically", async () => {
     // Add more events to the application
-    await applicationService.updateApplication(
+    await mockApplicationService.updateApplication(
       testUserId,
       testApplication._id!,
       {
@@ -113,7 +105,7 @@ describe("GET /api/applications/:id", () => {
       },
     );
 
-    const application = await applicationService.getApplicationById(
+    const application = await mockApplicationService.getApplicationById(
       testUserId,
       testApplication._id!.toString(),
     );

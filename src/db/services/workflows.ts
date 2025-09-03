@@ -1,5 +1,4 @@
 import { Db, Collection, ObjectId } from "mongodb";
-import { connectToDatabase } from "../connection";
 import {
   Workflow,
   WorkflowSchema,
@@ -8,35 +7,19 @@ import {
 } from "../schemas";
 
 export class WorkflowService {
-  private db: Db | null = null;
-  private workflowsCollection: Collection<Workflow> | null = null;
-  private statusesCollection: Collection<ApplicationStatus> | null = null;
+  private workflowsCollection: Collection<Workflow>;
+  private statusesCollection: Collection<ApplicationStatus>;
 
-  private async getWorkflowsCollection(): Promise<Collection<Workflow>> {
-    if (!this.workflowsCollection) {
-      this.db = await connectToDatabase();
-      this.workflowsCollection = this.db.collection<Workflow>("workflows");
-    }
-    return this.workflowsCollection;
-  }
-
-  private async getStatusesCollection(): Promise<
-    Collection<ApplicationStatus>
-  > {
-    if (!this.statusesCollection) {
-      this.db = await connectToDatabase();
-      this.statusesCollection = this.db.collection<ApplicationStatus>(
-        "application_statuses",
-      );
-    }
-    return this.statusesCollection;
+  constructor(db: Db) {
+    this.workflowsCollection = db.collection<Workflow>("workflows");
+    this.statusesCollection = db.collection<ApplicationStatus>(
+      "application_statuses",
+    );
   }
 
   async createWorkflow(
     workflow: Omit<Workflow, "_id" | "createdAt">,
   ): Promise<Workflow> {
-    const collection = await this.getWorkflowsCollection();
-
     const newWorkflow: Workflow = {
       ...workflow,
       createdAt: new Date(),
@@ -51,7 +34,7 @@ export class WorkflowService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newWorkflow);
+    const result = await this.workflowsCollection.insertOne(newWorkflow);
     return { ...newWorkflow, _id: result.insertedId };
   }
 
@@ -60,7 +43,6 @@ export class WorkflowService {
     limit: number = 100,
     skip: number = 0,
   ): Promise<Workflow[]> {
-    const collection = await this.getWorkflowsCollection();
     return await collection
       .find({ userId })
       .limit(limit)
@@ -73,14 +55,12 @@ export class WorkflowService {
     userId: string,
     id: string | ObjectId,
   ): Promise<Workflow | null> {
-    const collection = await this.getWorkflowsCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
-    return await collection.findOne({ _id: objectId, userId });
+    return await this.workflowsCollection.findOne({ _id: objectId, userId });
   }
 
   async getDefaultWorkflow(userId: string): Promise<Workflow | null> {
-    const collection = await this.getWorkflowsCollection();
-    return await collection.findOne({ userId, isDefault: true });
+    return await this.workflowsCollection.findOne({ userId, isDefault: true });
   }
 
   async updateWorkflow(
@@ -88,14 +68,13 @@ export class WorkflowService {
     id: string | ObjectId,
     updates: Partial<Workflow>,
   ): Promise<Workflow | null> {
-    const collection = await this.getWorkflowsCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
 
     const updateDoc = { ...updates };
     delete updateDoc._id;
     delete updateDoc.userId;
 
-    const result = await collection.findOneAndUpdate(
+    const result = await this.workflowsCollection.findOneAndUpdate(
       { _id: objectId, userId },
       { $set: updateDoc },
       { returnDocument: "after" },
@@ -108,10 +87,12 @@ export class WorkflowService {
     userId: string,
     id: string | ObjectId,
   ): Promise<boolean> {
-    const collection = await this.getWorkflowsCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
 
-    const result = await collection.deleteOne({ _id: objectId, userId });
+    const result = await this.workflowsCollection.deleteOne({
+      _id: objectId,
+      userId,
+    });
     return result.deletedCount === 1;
   }
 
@@ -119,8 +100,6 @@ export class WorkflowService {
   async createStatus(
     status: Omit<ApplicationStatus, "_id" | "createdAt">,
   ): Promise<ApplicationStatus> {
-    const collection = await this.getStatusesCollection();
-
     const newStatus: ApplicationStatus = {
       ...status,
       createdAt: new Date(),
@@ -135,7 +114,7 @@ export class WorkflowService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newStatus);
+    const result = await this.statusesCollection.insertOne(newStatus);
     return { ...newStatus, _id: result.insertedId };
   }
 
@@ -144,7 +123,6 @@ export class WorkflowService {
     limit: number = 100,
     skip: number = 0,
   ): Promise<ApplicationStatus[]> {
-    const collection = await this.getStatusesCollection();
     return await collection
       .find({ userId })
       .limit(limit)
@@ -155,27 +133,22 @@ export class WorkflowService {
 
   // Admin methods (bypass user scoping)
   async getAllWorkflowsForUser(userId: string): Promise<Workflow[]> {
-    const collection = await this.getWorkflowsCollection();
-    return await collection.find({ userId }).toArray();
+    return await this.workflowsCollection.find({ userId }).toArray();
   }
 
   async getAllStatusesForUser(userId: string): Promise<ApplicationStatus[]> {
-    const collection = await this.getStatusesCollection();
-    return await collection.find({ userId }).toArray();
+    return await this.statusesCollection.find({ userId }).toArray();
   }
 
   async deleteAllWorkflowsForUser(userId: string): Promise<number> {
-    const collection = await this.getWorkflowsCollection();
-    const result = await collection.deleteMany({ userId });
+    const result = await this.workflowsCollection.deleteMany({ userId });
     return result.deletedCount;
   }
 
   async deleteAllStatusesForUser(userId: string): Promise<number> {
-    const collection = await this.getStatusesCollection();
-    const result = await collection.deleteMany({ userId });
+    const result = await this.statusesCollection.deleteMany({ userId });
     return result.deletedCount;
   }
 }
 
-// Export singleton instance
-export const workflowService = new WorkflowService();
+// WorkflowService now uses dependency injection - no singleton export

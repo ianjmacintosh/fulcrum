@@ -1,4 +1,4 @@
-import { connectToDatabase, closeDatabaseConnection } from "../connection";
+import { connectToDatabase, closeDatabaseConnection } from "./connection";
 import { Db } from "mongodb";
 
 export interface MigrationResult {

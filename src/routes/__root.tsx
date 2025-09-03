@@ -10,11 +10,15 @@ import {
 import { Navigation } from "../components/Navigation";
 import { Footer } from "../components/Footer";
 import { RouterAuthProvider } from "../components/RouterAuthProvider";
+import { ServicesProvider } from "../components/ServicesProvider";
 import { AuthProvider } from "../contexts/AuthContext";
-import { AuthContext } from "../router";
+import { AuthContext, ServicesContext } from "../router";
 import "../styles/global.css";
 
-export const Route = createRootRouteWithContext<{ auth: AuthContext }>()({
+export const Route = createRootRouteWithContext<{
+  auth: AuthContext;
+  services: ServicesContext;
+}>()({
   head: () => ({
     meta: [
       {
@@ -36,13 +40,15 @@ export const Route = createRootRouteWithContext<{ auth: AuthContext }>()({
 function RootComponent() {
   return (
     <RootDocument>
-      <AuthProvider>
-        <RouterAuthProvider>
-          <Navigation />
-          <Outlet />
-          <Footer />
-        </RouterAuthProvider>
-      </AuthProvider>
+      <ServicesProvider>
+        <AuthProvider>
+          <RouterAuthProvider>
+            <Navigation />
+            <Outlet />
+            <Footer />
+          </RouterAuthProvider>
+        </AuthProvider>
+      </ServicesProvider>
     </RootDocument>
   );
 }

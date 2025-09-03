@@ -1,24 +1,16 @@
 import { Db, Collection, ObjectId } from "mongodb";
-import { connectToDatabase } from "../connection";
 import { JobBoard, JobBoardSchema } from "../schemas";
 
 export class JobBoardService {
-  private db: Db | null = null;
-  private collection: Collection<JobBoard> | null = null;
+  private collection: Collection<JobBoard>;
 
-  private async getCollection(): Promise<Collection<JobBoard>> {
-    if (!this.collection) {
-      this.db = await connectToDatabase();
-      this.collection = this.db.collection<JobBoard>("job_boards");
-    }
-    return this.collection;
+  constructor(db: Db) {
+    this.collection = db.collection<JobBoard>("job_boards");
   }
 
   async createJobBoard(
     jobBoard: Omit<JobBoard, "_id" | "createdAt">,
   ): Promise<JobBoard> {
-    const collection = await this.getCollection();
-
     const newJobBoard: JobBoard = {
       ...jobBoard,
       createdAt: new Date(),
@@ -33,7 +25,7 @@ export class JobBoardService {
       throw new Error(`Validation error: ${validationResult.error.message}`);
     }
 
-    const result = await collection.insertOne(newJobBoard);
+    const result = await this.collection.insertOne(newJobBoard);
     return { ...newJobBoard, _id: result.insertedId };
   }
 
@@ -42,8 +34,7 @@ export class JobBoardService {
     limit: number = 100,
     skip: number = 0,
   ): Promise<JobBoard[]> {
-    const collection = await this.getCollection();
-    return await collection
+    return await this.collection
       .find({ userId })
       .limit(limit)
       .skip(skip)
@@ -55,17 +46,15 @@ export class JobBoardService {
     userId: string,
     id: string | ObjectId,
   ): Promise<JobBoard | null> {
-    const collection = await this.getCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
-    return await collection.findOne({ _id: objectId, userId });
+    return await this.collection.findOne({ _id: objectId, userId });
   }
 
   async getJobBoardByName(
     userId: string,
     name: string,
   ): Promise<JobBoard | null> {
-    const collection = await this.getCollection();
-    return await collection.findOne({ userId, name });
+    return await this.collection.findOne({ userId, name });
   }
 
   async updateJobBoard(
@@ -73,7 +62,6 @@ export class JobBoardService {
     id: string | ObjectId,
     updates: Partial<JobBoard>,
   ): Promise<JobBoard | null> {
-    const collection = await this.getCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
 
     const updateDoc = { ...updates };
@@ -93,7 +81,6 @@ export class JobBoardService {
     userId: string,
     id: string | ObjectId,
   ): Promise<boolean> {
-    const collection = await this.getCollection();
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
 
     const result = await collection.deleteOne({ _id: objectId, userId });
@@ -101,8 +88,7 @@ export class JobBoardService {
   }
 
   async getJobBoardCount(userId: string): Promise<number> {
-    const collection = await this.getCollection();
-    return await collection.countDocuments({ userId });
+    return await this.collection.countDocuments({ userId });
   }
 
   // Helper method to get or create a job board by name
@@ -139,7 +125,6 @@ export class JobBoardService {
     const uniqueNames = [...new Set(names)];
 
     // First, try to find existing job boards with a single query
-    const collection = await this.getCollection();
     const existingJobBoards = await collection
       .find({
         userId,
@@ -193,16 +178,13 @@ export class JobBoardService {
 
   // Admin methods (bypass user scoping)
   async getAllJobBoardsForUser(userId: string): Promise<JobBoard[]> {
-    const collection = await this.getCollection();
-    return await collection.find({ userId }).toArray();
+    return await this.collection.find({ userId }).toArray();
   }
 
   async deleteAllJobBoardsForUser(userId: string): Promise<number> {
-    const collection = await this.getCollection();
     const result = await collection.deleteMany({ userId });
     return result.deletedCount;
   }
 }
 
-// Export singleton instance
-export const jobBoardService = new JobBoardService();
+// JobBoardService now uses dependency injection - no singleton export

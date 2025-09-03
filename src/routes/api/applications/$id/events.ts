@@ -4,7 +4,7 @@ import {
   createErrorResponse,
 } from "../../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../../middleware/auth";
-import { applicationService } from "../../../../db/services/applications";
+import { createServices } from "../../../../services/factory";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 
@@ -33,6 +33,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/events")
       }
 
       try {
+        // Initialize services
+        const services = await createServices();
+
         const body = await request.json();
         const validationResult = CreateEventSchema.safeParse(body);
 
@@ -46,10 +49,11 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/events")
         const { title, description, date } = validationResult.data;
 
         // Get the application
-        const application = await applicationService.getApplicationById(
-          auth.user.id,
-          id,
-        );
+        const application =
+          await services.applicationService.getApplicationById(
+            auth.user.id,
+            id,
+          );
         if (!application) {
           return createErrorResponse("Application not found", 404);
         }
@@ -72,11 +76,12 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/events")
         const updateData = { events: updatedEvents };
 
         // Update the application atomically
-        const updatedApplication = await applicationService.updateApplication(
-          auth.user.id,
-          id,
-          updateData,
-        );
+        const updatedApplication =
+          await services.applicationService.updateApplication(
+            auth.user.id,
+            id,
+            updateData,
+          );
 
         if (!updatedApplication) {
           return createErrorResponse("Failed to update application", 500);

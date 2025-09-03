@@ -45,10 +45,11 @@ export function RouterAuthProvider({
       session: null, // Client-side doesn't have access to session details
     };
 
-    // Update router context synchronously
+    // Update router context synchronously (assume services are already initialized)
     router.update({
       context: {
         auth: newAuthContext,
+        services: (router as any).context.services || undefined,
       },
     });
 

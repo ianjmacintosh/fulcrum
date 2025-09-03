@@ -23,7 +23,10 @@ const mockRouter = {
     },
     matches: [{ id: "dashboard" }],
   },
-};
+  context: {
+    services: undefined, // Mock services context
+  },
+} as any;
 
 vi.mock("@tanstack/react-router", () => ({
   useRouter: () => mockRouter,

@@ -1,4 +1,4 @@
-import { connectToDatabase } from "./connection";
+import { connectToDatabase } from "./migrations/connection";
 import { JobApplication, Workflow, JobBoard } from "./schemas";
 import { adminService } from "./services/admin";
 import { userService } from "./services/users";
