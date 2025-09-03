@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
 import { fetchCSRFTokens } from "../../utils/csrf-client";
+import {
+  encryptFields,
+  createKeyFromPassword,
+} from "../../services/encryption-service";
 import "./new.css";
 
 export const Route = createFileRoute("/applications/new")({
@@ -33,6 +37,9 @@ function NewApplication() {
     Array<{ id: string; name: string; url: string }>
   >([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [encryptionKey, setEncryptionKey] = useState<CryptoKey | null>(null);
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [password, setPassword] = useState("");
 
   // Fetch CSRF tokens and job boards on component mount
   useEffect(() => {
@@ -103,17 +110,71 @@ function NewApplication() {
     }
 
     try {
-      // Create form data for submission
+      // Check if we have an encryption key, if not prompt for password
+      let key = encryptionKey;
+      if (!key) {
+        if (!password) {
+          setNeedsPassword(true);
+          setErrorMessage(
+            "Please enter your password to encrypt application data.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        try {
+          const keyData = await createKeyFromPassword(password);
+          key = keyData.key;
+          setEncryptionKey(key);
+          setNeedsPassword(false);
+          setPassword(""); // Clear password from memory
+        } catch (error) {
+          setErrorMessage(
+            "Failed to create encryption key. Please check your password.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Prepare application data for encryption
+      const applicationData = {
+        companyName: formData.companyName,
+        roleName: formData.roleName,
+        jobPostingUrl: formData.jobPostingUrl || undefined,
+        appliedDate: formData.appliedDate || undefined,
+        notes: formData.notes || undefined,
+        // Create events if applied date is provided
+        events: formData.appliedDate
+          ? [
+              {
+                id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                title: "Application submitted",
+                description: formData.notes || "Applied to position",
+                date: formData.appliedDate,
+              },
+            ]
+          : [],
+      };
+
+      // Encrypt sensitive fields
+      const encryptedData = await encryptFields(
+        applicationData,
+        key,
+        "JobApplication",
+      );
+
+      // Create form data for submission with encrypted data
       const submitFormData = new FormData();
-      submitFormData.append("companyName", formData.companyName);
-      submitFormData.append("roleName", formData.roleName);
-      submitFormData.append("jobPostingUrl", formData.jobPostingUrl);
-      submitFormData.append("appliedDate", formData.appliedDate);
+      submitFormData.append("companyName", encryptedData.companyName);
+      submitFormData.append("roleName", encryptedData.roleName);
+      submitFormData.append("jobPostingUrl", encryptedData.jobPostingUrl || "");
+      submitFormData.append("appliedDate", encryptedData.appliedDate || "");
       submitFormData.append("jobBoard", formData.jobBoard);
       submitFormData.append("applicationType", formData.applicationType);
       submitFormData.append("roleType", formData.roleType);
       submitFormData.append("locationType", formData.locationType);
-      submitFormData.append("notes", formData.notes);
+      submitFormData.append("notes", encryptedData.notes || "");
       submitFormData.append("csrf_token", csrfTokens.csrfToken);
       submitFormData.append("csrf_hash", csrfTokens.csrfHash);
 
@@ -333,6 +394,29 @@ function NewApplication() {
                 rows={4}
               />
             </div>
+
+            {successMessage && (
+              <div className="success-message">{successMessage}</div>
+            )}
+
+            {needsPassword && (
+              <div className="form-group">
+                <label htmlFor="password">Encryption Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password to encrypt application data"
+                  required={needsPassword}
+                />
+                <p className="form-help">
+                  Your data will be encrypted before being saved. Enter the same
+                  password you use for login.
+                </p>
+              </div>
+            )}
 
             {successMessage && (
               <div className="success-message">{successMessage}</div>

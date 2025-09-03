@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { User } from "../db/schemas";
 import { AdminUser } from "../db/schemas";
+import { createKeyFromPassword } from "../services/encryption-service";
 
 export interface AuthState {
   user: User | AdminUser | null;
