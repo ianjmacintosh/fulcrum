@@ -3,13 +3,7 @@
  * Handles automatic encryption/decryption of sensitive fields based on entity type
  */
 
-import {
-  encryptString,
-  decryptString,
-  generateSalt,
-  saltToString,
-  saltFromString,
-} from "./client-crypto";
+import { encryptString, decryptString, saltToString } from "./client-crypto";
 
 // Define which fields should be encrypted for each entity type
 export type EntityType =
@@ -97,7 +91,7 @@ export class EncryptionMiddleware {
     entityType: EntityType,
   ): Promise<T> {
     const fieldsToEncrypt = this.getFieldConfig(entityType);
-    const encrypted = { ...data };
+    const encrypted: any = { ...data };
 
     // Encrypt specified fields
     for (const field of fieldsToEncrypt) {
@@ -135,9 +129,9 @@ export class EncryptionMiddleware {
     }
 
     // Add encryption metadata
-    (encrypted as any)._encrypted = true;
+    encrypted._encrypted = true;
 
-    return encrypted;
+    return encrypted as T;
   }
 
   /**
@@ -151,7 +145,7 @@ export class EncryptionMiddleware {
     entityType: EntityType,
   ): Promise<T> {
     const fieldsToEncrypt = this.getFieldConfig(entityType);
-    const decrypted = { ...data };
+    const decrypted: any = { ...data };
 
     // Decrypt specified fields
     for (const field of fieldsToEncrypt) {
@@ -203,9 +197,9 @@ export class EncryptionMiddleware {
     }
 
     // Remove encryption metadata
-    delete (decrypted as any)._encrypted;
+    delete decrypted._encrypted;
 
-    return decrypted;
+    return decrypted as T;
   }
 
   /**

@@ -43,7 +43,7 @@ export class WorkflowService {
     limit: number = 100,
     skip: number = 0,
   ): Promise<Workflow[]> {
-    return await collection
+    return await this.workflowsCollection
       .find({ userId })
       .limit(limit)
       .skip(skip)
@@ -123,7 +123,7 @@ export class WorkflowService {
     limit: number = 100,
     skip: number = 0,
   ): Promise<ApplicationStatus[]> {
-    return await collection
+    return await this.statusesCollection
       .find({ userId })
       .limit(limit)
       .skip(skip)

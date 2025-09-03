@@ -32,7 +32,7 @@ describe("Client-side encryption utilities", () => {
       const key = await deriveKey(password, salt);
       expect(key).toBeInstanceOf(CryptoKey);
       expect(key.algorithm.name).toBe("AES-GCM");
-      expect(key.algorithm.length).toBe(256);
+      expect((key.algorithm as AesKeyAlgorithm).length).toBe(256);
       expect(key.extractable).toBe(false);
       expect(key.usages).toContain("encrypt");
       expect(key.usages).toContain("decrypt");
@@ -221,7 +221,7 @@ describe("Client-side encryption utilities", () => {
 
       expect(key).toBeInstanceOf(CryptoKey);
       expect(key.algorithm.name).toBe("AES-GCM");
-      expect(key.algorithm.length).toBe(256);
+      expect((key.algorithm as AesKeyAlgorithm).length).toBe(256);
       expect(key.extractable).toBe(false);
       expect(key.usages).toContain("encrypt");
       expect(key.usages).toContain("decrypt");

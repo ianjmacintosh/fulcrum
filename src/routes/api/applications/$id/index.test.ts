@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { JobApplication } from "../../../../db/schemas";
 import { mockApplicationService } from "../../../../db/services/mock-application-service";
 

@@ -68,7 +68,7 @@ export class JobBoardService {
     delete updateDoc._id;
     delete updateDoc.userId;
 
-    const result = await collection.findOneAndUpdate(
+    const result = await this.collection.findOneAndUpdate(
       { _id: objectId, userId },
       { $set: updateDoc },
       { returnDocument: "after" },
@@ -83,7 +83,7 @@ export class JobBoardService {
   ): Promise<boolean> {
     const objectId = typeof id === "string" ? new ObjectId(id) : id;
 
-    const result = await collection.deleteOne({ _id: objectId, userId });
+    const result = await this.collection.deleteOne({ _id: objectId, userId });
     return result.deletedCount === 1;
   }
 
@@ -125,7 +125,7 @@ export class JobBoardService {
     const uniqueNames = [...new Set(names)];
 
     // First, try to find existing job boards with a single query
-    const existingJobBoards = await collection
+    const existingJobBoards = await this.collection
       .find({
         userId,
         name: { $in: uniqueNames },
@@ -161,7 +161,7 @@ export class JobBoardService {
       }
 
       // Insert all new job boards at once
-      const insertResult = await collection.insertMany(newJobBoards);
+      const insertResult = await this.collection.insertMany(newJobBoards);
 
       // Add the newly created job boards to the result map
       namesToCreate.forEach((name, index) => {
@@ -182,7 +182,7 @@ export class JobBoardService {
   }
 
   async deleteAllJobBoardsForUser(userId: string): Promise<number> {
-    const result = await collection.deleteMany({ userId });
+    const result = await this.collection.deleteMany({ userId });
     return result.deletedCount;
   }
 }

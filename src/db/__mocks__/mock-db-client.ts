@@ -1,19 +1,16 @@
 import {
-  Collection,
-  Db,
   InsertOneResult,
   InsertManyResult,
   FindOneAndUpdateOptions,
   ObjectId,
-  FindOptions,
+  DeleteResult,
 } from "mongodb";
-import { JobApplication } from "../schemas";
 
 /**
  * Mock database client for testing
  * Provides in-memory storage that implements the MongoDB Collection interface
  */
-export class MockCollection<T = any> implements Partial<Collection<T>> {
+export class MockCollection<T = any> {
   private storage: T[] = [];
   private idCounter = 1;
 
@@ -79,23 +76,26 @@ export class MockCollection<T = any> implements Partial<Collection<T>> {
     return options?.returnDocument === "after" ? updatedDoc : oldDoc;
   }
 
-  async deleteOne(filter: any): Promise<{ deletedCount: number }> {
+  async deleteOne(filter: any): Promise<DeleteResult> {
     const index = this.storage.findIndex((doc) =>
       this.matchesFilter(doc, filter),
     );
     if (index !== -1) {
       this.storage.splice(index, 1);
-      return { deletedCount: 1 };
+      return { acknowledged: true, deletedCount: 1 };
     }
-    return { deletedCount: 0 };
+    return { acknowledged: true, deletedCount: 0 };
   }
 
-  async deleteMany(filter: any): Promise<{ deletedCount: number }> {
+  async deleteMany(filter: any): Promise<DeleteResult> {
     const originalLength = this.storage.length;
     this.storage = this.storage.filter(
       (doc) => !this.matchesFilter(doc, filter),
     );
-    return { deletedCount: originalLength - this.storage.length };
+    return {
+      acknowledged: true,
+      deletedCount: originalLength - this.storage.length,
+    };
   }
 
   async countDocuments(filter: any = {}): Promise<number> {
@@ -103,7 +103,7 @@ export class MockCollection<T = any> implements Partial<Collection<T>> {
   }
 
   // Create index - no-op for mock
-  async createIndex(...args: any[]): Promise<string> {
+  async createIndex(): Promise<string> {
     return "mock_index";
   }
 
@@ -123,13 +123,14 @@ export class MockCollection<T = any> implements Partial<Collection<T>> {
 
       if (typeof value === "object" && value !== null) {
         // Handle operators like $in, $gte, $lte
-        if ("$in" in value) {
+        if ("$in" in value && Array.isArray(value.$in)) {
           return value.$in.includes(doc[key]);
         }
         if ("$gte" in value && "$lte" in value) {
           const docValue = new Date(doc[key]);
           return (
-            docValue >= new Date(value.$gte) && docValue <= new Date(value.$lte)
+            docValue >= new Date(value.$gte as string | number | Date) &&
+            docValue <= new Date(value.$lte as string | number | Date)
           );
         }
       }
@@ -182,7 +183,7 @@ class MockQuery<T> {
   }
 }
 
-export class MockDb implements Partial<Db> {
+export class MockDb {
   private collections = new Map<string, MockCollection>();
 
   collection<T = any>(name: string): MockCollection<T> {

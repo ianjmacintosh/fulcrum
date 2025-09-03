@@ -1,16 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   EncryptionMiddleware,
-  EncryptedFieldConfig,
   createUserEncryptionSalt,
 } from "./encryption-middleware";
 import { createEncryptionKey } from "./client-crypto";
-import {
-  JobApplication,
-  ApplicationEvent,
-  User,
-  JobBoard,
-} from "../db/schemas";
+import { JobApplication, ApplicationEvent } from "../db/schemas";
 
 describe("EncryptionMiddleware", () => {
   let middleware: EncryptionMiddleware;

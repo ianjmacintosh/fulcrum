@@ -3,7 +3,6 @@ import { JobApplication, Workflow, JobBoard } from "./schemas";
 import { adminService } from "./services/admin";
 import { userService } from "./services/users";
 import { applicationStatusService } from "./services/application-statuses";
-import { applicationService } from "./services/applications";
 import { hashPassword } from "../utils/crypto";
 
 async function seedAdmin() {

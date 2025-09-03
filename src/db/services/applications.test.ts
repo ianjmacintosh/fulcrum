@@ -11,12 +11,10 @@ import { createMockDb, MockDb } from "../__mocks__/mock-db-client";
 describe("ApplicationService", () => {
   let applicationService: ApplicationService;
   let mockDb: MockDb;
-  let clientEncryptionKey: CryptoKey;
 
   beforeEach(async () => {
     mockDb = createMockDb();
     applicationService = new ApplicationService(mockDb as any);
-    clientEncryptionKey = await createEncryptionKey();
   });
 
   afterEach(() => {

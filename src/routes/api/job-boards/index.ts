@@ -1,10 +1,10 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { jobBoardService } from "../../../db/services/job-boards";
 import {
   createSuccessResponse,
   createErrorResponse,
 } from "../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../middleware/auth";
+import { createServices } from "../../../services/factory";
 
 export const ServerRoute = createServerFileRoute("/api/job-boards/")
   .middleware([requireUserAuth])
@@ -19,7 +19,8 @@ export const ServerRoute = createServerFileRoute("/api/job-boards/")
       const userId = auth.user.id;
 
       try {
-        const jobBoards = await jobBoardService.getJobBoards(userId);
+        const services = await createServices();
+        const jobBoards = await services.jobBoardService.getJobBoards(userId);
 
         return createSuccessResponse({
           jobBoards: jobBoards.map((board) => ({
