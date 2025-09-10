@@ -49,7 +49,7 @@ export function RouterAuthProvider({
     router.update({
       context: {
         auth: newAuthContext,
-        services: (router as any).context.services || undefined,
+        services: (router as any).context?.services || undefined,
       },
     });
 
