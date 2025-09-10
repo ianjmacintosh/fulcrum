@@ -4,9 +4,9 @@ import { requireUserAuth } from "../../utils/route-guards";
 import { JobApplicationCardsList } from "../../components/JobApplicationCardsList";
 import {
   decryptFields,
-  createKeyFromPassword,
   isDataEncrypted,
 } from "../../services/encryption-service";
+import { useAuth } from "../../hooks/useAuth";
 import "./index.css";
 
 export const Route = createFileRoute("/applications/")({
@@ -44,69 +44,64 @@ export const Route = createFileRoute("/applications/")({
 
 function Applications() {
   const { applications: rawApplications } = Route.useLoaderData();
+  const { encryptionKey } = useAuth();
   const [decryptedApplications, setDecryptedApplications] =
     useState(rawApplications);
-  const [needsPassword, setNeedsPassword] = useState(false);
-  const [password, setPassword] = useState("");
   const [decryptionError, setDecryptionError] = useState("");
-  const [isDecrypting, setIsDecrypting] = useState(false);
 
-  // Check if applications need decryption
+  // Decrypt applications when data or encryption key changes
   useEffect(() => {
-    if (rawApplications.length > 0) {
+    const decryptApplications = async () => {
+      if (rawApplications.length === 0) {
+        setDecryptedApplications(rawApplications);
+        return;
+      }
+
       // Check if any application has encrypted data
       const hasEncryptedData = rawApplications.some((app: any) =>
         isDataEncrypted(app, "JobApplication"),
       );
 
-      if (hasEncryptedData && !needsPassword) {
-        setNeedsPassword(true);
-      } else if (!hasEncryptedData) {
+      if (!hasEncryptedData) {
+        // No encrypted data, use applications as-is
         setDecryptedApplications(rawApplications);
+        return;
       }
-    }
-  }, [rawApplications, needsPassword]);
 
-  const handleDecryption = async () => {
-    if (!password) {
-      setDecryptionError(
-        "Please enter your password to decrypt application data.",
-      );
-      return;
-    }
+      if (!encryptionKey) {
+        // Need encryption key but don't have it
+        setDecryptionError(
+          "Encryption key not available. Please log out and log back in to decrypt your data.",
+        );
+        setDecryptedApplications(rawApplications); // Show encrypted data as fallback
+        return;
+      }
 
-    setIsDecrypting(true);
-    setDecryptionError("");
+      try {
+        // Decrypt all applications
+        const decryptedApps = await Promise.all(
+          rawApplications.map(async (app: any) => {
+            try {
+              return await decryptFields(app, encryptionKey, "JobApplication");
+            } catch (error) {
+              console.warn(`Failed to decrypt application ${app._id}:`, error);
+              // Return original app if decryption fails (backward compatibility)
+              return app;
+            }
+          }),
+        );
 
-    try {
-      // Create decryption key from password
-      const { key } = await createKeyFromPassword(password);
+        setDecryptedApplications(decryptedApps);
+        setDecryptionError("");
+      } catch (error) {
+        console.error("Decryption failed:", error);
+        setDecryptionError("Failed to decrypt application data.");
+        setDecryptedApplications(rawApplications); // Show encrypted data as fallback
+      }
+    };
 
-      // Decrypt all applications
-      const decryptedApps = await Promise.all(
-        rawApplications.map(async (app: any) => {
-          try {
-            return await decryptFields(app, key, "JobApplication");
-          } catch (error) {
-            console.warn(`Failed to decrypt application ${app._id}:`, error);
-            // Return original app if decryption fails (backward compatibility)
-            return app;
-          }
-        }),
-      );
-
-      setDecryptedApplications(decryptedApps);
-      setNeedsPassword(false);
-      setPassword(""); // Clear password from memory
-    } catch (error) {
-      console.error("Decryption failed:", error);
-      setDecryptionError(
-        "Failed to decrypt application data. Please check your password.",
-      );
-    } finally {
-      setIsDecrypting(false);
-    }
-  };
+    decryptApplications();
+  }, [rawApplications, encryptionKey]);
 
   return (
     <div className="page">
@@ -118,43 +113,11 @@ function Applications() {
       </header>
 
       <main className="page-content">
-        {needsPassword && (
-          <section className="decryption-prompt">
-            <h2>Decrypt Your Application Data</h2>
-            <p>
-              Your application data is encrypted. Please enter your password to
-              decrypt and view your applications.
-            </p>
-
-            <div className="decryption-form">
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleDecryption();
-                  }
-                }}
-                disabled={isDecrypting}
-              />
-              <button
-                onClick={handleDecryption}
-                disabled={isDecrypting || !password}
-                className="decrypt-button"
-              >
-                {isDecrypting ? "Decrypting..." : "Decrypt Data"}
-              </button>
-            </div>
-
-            {decryptionError && (
-              <div className="error-message">{decryptionError}</div>
-            )}
-          </section>
+        {decryptionError && (
+          <div className="error-message">{decryptionError}</div>
         )}
 
-        {!needsPassword && (
+        {
           <>
             <section className="applications-summary">
               <div className="summary-stats">
@@ -212,7 +175,7 @@ function Applications() {
               </Link>
             </section>
           </>
-        )}
+        }
       </main>
     </div>
   );

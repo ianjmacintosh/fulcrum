@@ -8,6 +8,7 @@ export interface AuthState {
   userType: "admin" | "user" | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  encryptionKey: CryptoKey | null;
 }
 
 export interface AuthContextType extends AuthState {
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     userType: null,
     isLoggedIn: false,
     isLoading: true,
+    encryptionKey: null,
   });
 
   // Check authentication status on mount and when needed
@@ -57,6 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             userType: data.userType,
             isLoggedIn: true,
             isLoading: false,
+            encryptionKey: null, // Key will need to be re-derived with password
           });
         } else {
           setState({
@@ -64,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             userType: null,
             isLoggedIn: false,
             isLoading: false,
+            encryptionKey: null,
           });
         }
       } else {
@@ -72,6 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           userType: null,
           isLoggedIn: false,
           isLoading: false,
+          encryptionKey: null,
         });
       }
     } catch (error) {
@@ -81,6 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userType: null,
         isLoggedIn: false,
         isLoading: false,
+        encryptionKey: null,
       });
     }
   };
@@ -100,13 +106,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Refresh auth status after successful login
-        await checkAuthStatus();
-        return {
-          success: true,
-          userType: data.userType,
-          redirectUrl: data.redirectUrl,
-        };
+        try {
+          // Derive encryption key from password
+          const { key } = await createKeyFromPassword(password);
+
+          // Refresh auth status after successful login and store encryption key
+          await checkAuthStatus();
+
+          // Update state to include the encryption key
+          setState((prevState) => ({
+            ...prevState,
+            encryptionKey: key,
+          }));
+
+          return {
+            success: true,
+            userType: data.userType,
+            redirectUrl: data.redirectUrl,
+          };
+        } catch (encryptionError) {
+          console.error("Failed to derive encryption key:", encryptionError);
+          // Login still succeeds, but encryption key derivation failed
+          await checkAuthStatus();
+          return {
+            success: true,
+            userType: data.userType,
+            redirectUrl: data.redirectUrl,
+            warning:
+              "Login successful but encryption key derivation failed. You may need to re-enter your password for encrypted data.",
+          };
+        }
       } else {
         return {
           success: false,
@@ -136,6 +165,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userType: null,
         isLoggedIn: false,
         isLoading: false,
+        encryptionKey: null,
       });
     } catch (error) {
       console.error("Logout error:", error);
@@ -145,6 +175,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userType: null,
         isLoggedIn: false,
         isLoading: false,
+        encryptionKey: null,
       });
     }
   };

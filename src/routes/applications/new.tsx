@@ -2,10 +2,8 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
 import { fetchCSRFTokens } from "../../utils/csrf-client";
-import {
-  encryptFields,
-  createKeyFromPassword,
-} from "../../services/encryption-service";
+import { encryptFields } from "../../services/encryption-service";
+import { useAuth } from "../../hooks/useAuth";
 import "./new.css";
 
 export const Route = createFileRoute("/applications/new")({
@@ -15,6 +13,7 @@ export const Route = createFileRoute("/applications/new")({
 
 function NewApplication() {
   const router = useRouter();
+  const { encryptionKey } = useAuth();
   const [formData, setFormData] = useState({
     companyName: "",
     roleName: "",
@@ -37,9 +36,6 @@ function NewApplication() {
     Array<{ id: string; name: string; url: string }>
   >([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [encryptionKey, setEncryptionKey] = useState<CryptoKey | null>(null);
-  const [needsPassword, setNeedsPassword] = useState(false);
-  const [password, setPassword] = useState("");
 
   // Fetch CSRF tokens and job boards on component mount
   useEffect(() => {
@@ -110,31 +106,13 @@ function NewApplication() {
     }
 
     try {
-      // Check if we have an encryption key, if not prompt for password
-      let key = encryptionKey;
-      if (!key) {
-        if (!password) {
-          setNeedsPassword(true);
-          setErrorMessage(
-            "Please enter your password to encrypt application data.",
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
-        try {
-          const keyData = await createKeyFromPassword(password);
-          key = keyData.key;
-          setEncryptionKey(key);
-          setNeedsPassword(false);
-          setPassword(""); // Clear password from memory
-        } catch (error) {
-          setErrorMessage(
-            "Failed to create encryption key. Please check your password.",
-          );
-          setIsSubmitting(false);
-          return;
-        }
+      // Check if we have an encryption key from auth context
+      if (!encryptionKey) {
+        setErrorMessage(
+          "Encryption key not available. Please log out and log back in.",
+        );
+        setIsSubmitting(false);
+        return;
       }
 
       // Prepare application data for encryption
@@ -160,7 +138,7 @@ function NewApplication() {
       // Encrypt sensitive fields
       const encryptedData = await encryptFields(
         applicationData,
-        key,
+        encryptionKey,
         "JobApplication",
       );
 
@@ -394,29 +372,6 @@ function NewApplication() {
                 rows={4}
               />
             </div>
-
-            {successMessage && (
-              <div className="success-message">{successMessage}</div>
-            )}
-
-            {needsPassword && (
-              <div className="form-group">
-                <label htmlFor="password">Encryption Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password to encrypt application data"
-                  required={needsPassword}
-                />
-                <p className="form-help">
-                  Your data will be encrypted before being saved. Enter the same
-                  password you use for login.
-                </p>
-              </div>
-            )}
 
             {successMessage && (
               <div className="success-message">{successMessage}</div>
