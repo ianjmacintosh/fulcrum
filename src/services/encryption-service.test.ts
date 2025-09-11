@@ -21,29 +21,35 @@ describe("Encryption Service", () => {
   });
 
   describe("Key Creation", () => {
-    it("should create key from password and return salt", async () => {
+    it("should create key from password and user ID", async () => {
       const password = "test-password-123";
+      const userId = "user-123";
 
-      const { key, salt } = await createKeyFromPassword(password);
+      const { key, salt } = await createKeyFromPassword(password, userId);
 
       expect(salt).toMatch(/^[A-Za-z0-9+/]+=*$/); // Base64 pattern
       expect(salt.length).toBeGreaterThan(10);
       expect(key).toBeInstanceOf(CryptoKey);
     });
 
-    it("should create same key with existing salt", async () => {
+    it("should create same key for same user ID and password", async () => {
       const password = "test-password-123";
+      const userId = "user-123";
 
       // First key creation
-      const { key: key1, salt } = await createKeyFromPassword(password);
-
-      // Second key creation with same salt
-      const { key: key2, salt: sameSalt } = await createKeyFromPassword(
+      const { key: key1, salt: salt1 } = await createKeyFromPassword(
         password,
-        salt,
+        userId,
       );
 
-      expect(sameSalt).toBe(salt);
+      // Second key creation with same password and user ID
+      const { key: key2, salt: salt2 } = await createKeyFromPassword(
+        password,
+        userId,
+      );
+
+      // Should produce identical salt and functionally equivalent keys
+      expect(salt1).toBe(salt2);
 
       // Test that keys work the same way by encrypting/decrypting
       const testData = "test string";
@@ -53,9 +59,40 @@ describe("Encryption Service", () => {
     });
 
     it("should throw error with empty password", async () => {
-      await expect(createKeyFromPassword("")).rejects.toThrow(
+      await expect(createKeyFromPassword("", "user-123")).rejects.toThrow(
         "Password cannot be empty",
       );
+    });
+
+    it("should throw error with empty user ID", async () => {
+      await expect(createKeyFromPassword("password123", "")).rejects.toThrow(
+        "User ID cannot be empty",
+      );
+    });
+
+    it("should create different keys for different user IDs", async () => {
+      const password = "test-password-123";
+      const userId1 = "user-123";
+      const userId2 = "user-456";
+
+      const { key: key1, salt: salt1 } = await createKeyFromPassword(
+        password,
+        userId1,
+      );
+      const { key: key2, salt: salt2 } = await createKeyFromPassword(
+        password,
+        userId2,
+      );
+
+      // Should produce different salts for different user IDs
+      expect(salt1).not.toBe(salt2);
+
+      // Keys should not be able to decrypt each other's data
+      const testData = "test string";
+      const encrypted1 = await encryptString(testData, key1);
+
+      // Attempting to decrypt with wrong key should fail
+      await expect(decryptString(encrypted1, key2)).rejects.toThrow();
     });
   });
 

@@ -77,6 +77,7 @@ export const ServerRoute = createServerFileRoute("/api/auth/login").methods({
           success: true,
           message: "Login successful",
           userType: authResult.userType,
+          userId: authResult.userId,
           redirectUrl,
         }),
         {

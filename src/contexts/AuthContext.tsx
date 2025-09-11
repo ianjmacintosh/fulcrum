@@ -1,5 +1,11 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { createKeyFromPassword } from "../services/encryption-service";
+import {
+  storeEncryptionKey,
+  retrieveEncryptionKey,
+  removeEncryptionKey,
+  isKeyStorageAvailable,
+} from "../services/key-storage";
 
 // Client-side user types (no server imports to avoid bundle bloat)
 export interface User {
@@ -74,12 +80,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.authenticated && data.user) {
+          // Try to retrieve encryption key from IndexedDB if not in memory
+          let encryptionKey = state.encryptionKey;
+          if (!encryptionKey && isKeyStorageAvailable()) {
+            try {
+              const userId = data.user.id || data.user._id;
+              encryptionKey = await retrieveEncryptionKey(userId);
+            } catch (error) {
+              console.error(
+                "Failed to retrieve encryption key from storage:",
+                error,
+              );
+            }
+          }
+
           setState({
             user: data.user,
             userType: data.userType,
             isLoggedIn: true,
             isLoading: false,
-            encryptionKey: null, // Key will need to be re-derived with password
+            encryptionKey: encryptionKey,
           });
         } else {
           setState({
@@ -127,10 +147,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok && data.success) {
         try {
-          // Derive encryption key from password
-          const { key } = await createKeyFromPassword(password);
+          // Get user ID from login response for encryption key derivation
+          const userId = data.userId;
 
-          // Refresh auth status after successful login and store encryption key
+          if (!userId) {
+            throw new Error(
+              "No user ID available for encryption key derivation",
+            );
+          }
+
+          // Derive encryption key from password using user ID as salt
+          const { key } = await createKeyFromPassword(password, userId);
+
+          // Store encryption key in IndexedDB for future sessions
+          if (isKeyStorageAvailable()) {
+            try {
+              await storeEncryptionKey(key, userId);
+            } catch (error) {
+              console.error("Failed to store encryption key:", error);
+            }
+          }
+
+          // Refresh auth status after successful login
           await checkAuthStatus();
 
           // Update state to include the encryption key
@@ -173,11 +211,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout function
   const logout = async () => {
+    const currentUser = state.user;
+
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
+
+      // Remove encryption key from IndexedDB
+      if (currentUser && isKeyStorageAvailable()) {
+        try {
+          await removeEncryptionKey(currentUser.id || currentUser._id);
+        } catch (error) {
+          console.error("Failed to remove encryption key from storage:", error);
+        }
+      }
 
       // Clear auth state
       setState({
@@ -189,6 +238,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     } catch (error) {
       console.error("Logout error:", error);
+
+      // Remove encryption key even if logout request fails
+      if (currentUser && isKeyStorageAvailable()) {
+        try {
+          await removeEncryptionKey(currentUser.id || currentUser._id);
+        } catch (error) {
+          console.error("Failed to remove encryption key from storage:", error);
+        }
+      }
+
       // Clear auth state even if logout request fails
       setState({
         user: null,

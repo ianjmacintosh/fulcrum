@@ -41,27 +41,37 @@ export const ENCRYPTED_FIELDS = {
 export type EntityType = keyof typeof ENCRYPTED_FIELDS;
 
 /**
- * Create encryption key from user password
+ * Create encryption key from user password using user ID as salt
  * @param password User's password
- * @param salt Optional salt string (generates new if not provided)
- * @returns Promise resolving to { key, salt } where salt is base64 string for storage
+ * @param userId User's ID to use as salt base
+ * @returns Promise resolving to { key, salt } where salt is derived from user ID
  */
 export async function createKeyFromPassword(
   password: string,
-  salt?: string,
+  userId: string,
 ): Promise<{ key: CryptoKey; salt: string }> {
   if (!password || password.length === 0) {
     throw new Error("Password cannot be empty");
   }
 
-  // Use provided salt or generate new one
-  const saltBytes = salt ? saltFromString(salt) : await generateSalt();
+  if (!userId || userId.length === 0) {
+    throw new Error("User ID cannot be empty");
+  }
 
-  // Derive encryption key from password and salt
-  const key = await deriveKey(password, saltBytes);
+  // Create a consistent salt from user ID
+  // Hash the user ID to create a fixed-length salt
+  const encoder = new TextEncoder();
+  const userIdBytes = encoder.encode(userId);
+  const saltBytes = await crypto.subtle.digest("SHA-256", userIdBytes);
+
+  // Use first 16 bytes as salt (128 bits)
+  const salt = new Uint8Array(saltBytes.slice(0, 16));
+
+  // Derive encryption key from password and user-ID-based salt
+  const key = await deriveKey(password, salt);
 
   // Return key and salt as string for storage
-  return { key, salt: saltToString(saltBytes) };
+  return { key, salt: saltToString(salt) };
 }
 
 /**
