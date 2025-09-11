@@ -1,107 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
 import { JobApplicationCardsList } from "../../components/JobApplicationCardsList";
-import {
-  decryptFields,
-  isDataEncrypted,
-} from "../../services/encryption-service";
-import { useAuth } from "../../hooks/useAuth";
+import { useApplications } from "../../contexts/ApplicationsContext";
 import "./index.css";
 
 export const Route = createFileRoute("/applications/")({
   beforeLoad: requireUserAuth,
-  loader: async () => {
-    // On server-side, skip loading data if user is not authenticated
-    // Client will reload once auth context is available
-    if (typeof window === "undefined") {
-      return { applications: [] };
-    }
-
-    try {
-      const response = await fetch("/api/applications/", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch applications");
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error("Applications API returned error");
-      }
-
-      return { applications: result.applications };
-    } catch (error) {
-      console.error("Applications loader error:", error);
-      throw error;
-    }
-  },
   component: Applications,
 });
 
 function Applications() {
-  const { applications: rawApplications } = Route.useLoaderData();
-  const { encryptionKey } = useAuth();
-  const [decryptedApplications, setDecryptedApplications] =
-    useState(rawApplications);
-  const [decryptionError, setDecryptionError] = useState("");
+  const { applications, isLoading, error, decryptionError } = useApplications();
 
-  // Decrypt applications when data or encryption key changes
-  useEffect(() => {
-    const decryptApplications = async () => {
-      if (rawApplications.length === 0) {
-        setDecryptedApplications(rawApplications);
-        return;
-      }
-
-      // Check if any application has encrypted data
-      const hasEncryptedData = rawApplications.some((app: any) =>
-        isDataEncrypted(app, "JobApplication"),
-      );
-
-      if (!hasEncryptedData) {
-        // No encrypted data, use applications as-is
-        setDecryptedApplications(rawApplications);
-        return;
-      }
-
-      if (!encryptionKey) {
-        // Need encryption key but don't have it
-        setDecryptionError(
-          "Encryption key not available. Please log out and log back in to decrypt your data.",
-        );
-        setDecryptedApplications(rawApplications); // Show encrypted data as fallback
-        return;
-      }
-
-      try {
-        // Decrypt all applications
-        const decryptedApps = await Promise.all(
-          rawApplications.map(async (app: any) => {
-            try {
-              return await decryptFields(app, encryptionKey, "JobApplication");
-            } catch (error) {
-              console.warn(`Failed to decrypt application ${app._id}:`, error);
-              // Return original app if decryption fails (backward compatibility)
-              return app;
-            }
-          }),
-        );
-
-        setDecryptedApplications(decryptedApps);
-        setDecryptionError("");
-      } catch (error) {
-        console.error("Decryption failed:", error);
-        setDecryptionError("Failed to decrypt application data.");
-        setDecryptedApplications(rawApplications); // Show encrypted data as fallback
-      }
-    };
-
-    decryptApplications();
-  }, [rawApplications, encryptionKey]);
+  if (error) {
+    return (
+      <div className="page">
+        <div className="page-content">
+          <div className="error-message">
+            Failed to load applications: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -117,21 +39,21 @@ function Applications() {
           <div className="error-message">{decryptionError}</div>
         )}
 
-        {
+        {isLoading ? (
+          <div className="loading-message">Loading applications...</div>
+        ) : (
           <>
             <section className="applications-summary">
               <div className="summary-stats">
                 <div className="summary-stat">
                   <span className="summary-label">Total Applications</span>
-                  <span className="summary-value">
-                    {decryptedApplications.length}
-                  </span>
+                  <span className="summary-value">{applications.length}</span>
                 </div>
                 <div className="summary-stat">
                   <span className="summary-label">Open Applications</span>
                   <span className="summary-value">
                     {
-                      decryptedApplications.filter(
+                      applications.filter(
                         (app: any) =>
                           !["rejected", "declined", "withdrawn"].includes(
                             app.currentStatus.id.toLowerCase(),
@@ -144,7 +66,7 @@ function Applications() {
                   <span className="summary-label">Closed/Rejected</span>
                   <span className="summary-value">
                     {
-                      decryptedApplications.filter((app: any) =>
+                      applications.filter((app: any) =>
                         ["rejected", "declined", "withdrawn"].includes(
                           app.currentStatus.id.toLowerCase(),
                         ),
@@ -164,7 +86,7 @@ function Applications() {
               </Link>
             </section>
 
-            <JobApplicationCardsList applications={decryptedApplications} />
+            <JobApplicationCardsList applications={applications} />
 
             <section className="add-application">
               <Link to="/applications/new" className="add-button">
@@ -175,7 +97,7 @@ function Applications() {
               </Link>
             </section>
           </>
-        }
+        )}
       </main>
     </div>
   );

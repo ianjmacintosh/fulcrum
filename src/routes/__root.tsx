@@ -12,6 +12,7 @@ import { Footer } from "../components/Footer";
 import { RouterAuthProvider } from "../components/RouterAuthProvider";
 import { ServicesProvider } from "../components/ServicesProvider";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ApplicationsProvider } from "../contexts/ApplicationsContext";
 import { AuthContext, ServicesContext } from "../router";
 import "../styles/global.css";
 
@@ -42,11 +43,13 @@ function RootComponent() {
     <RootDocument>
       <ServicesProvider>
         <AuthProvider>
-          <RouterAuthProvider>
-            <Navigation />
-            <Outlet />
-            <Footer />
-          </RouterAuthProvider>
+          <ApplicationsProvider>
+            <RouterAuthProvider>
+              <Navigation />
+              <Outlet />
+              <Footer />
+            </RouterAuthProvider>
+          </ApplicationsProvider>
         </AuthProvider>
       </ServicesProvider>
     </RootDocument>
