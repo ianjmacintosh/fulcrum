@@ -1,7 +1,27 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { User } from "../db/schemas";
-import { AdminUser } from "../db/schemas";
 import { createKeyFromPassword } from "../services/encryption-service";
+
+// Client-side user types (no server imports to avoid bundle bloat)
+export interface User {
+  _id?: string;
+  id?: string;
+  email: string;
+  name?: string;
+  username?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface AdminUser {
+  _id?: string;
+  id?: string;
+  email: string;
+  name?: string;
+  username?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  role: "admin";
+}
 
 export interface AuthState {
   user: User | AdminUser | null;

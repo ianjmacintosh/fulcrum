@@ -37,6 +37,7 @@ const defaultAuthContext: AuthContextType = {
   userType: null,
   isLoggedIn: false,
   isLoading: false,
+  encryptionKey: null,
   login: vi.fn(),
   logout: vi.fn(),
   checkAuthStatus: vi.fn(),
