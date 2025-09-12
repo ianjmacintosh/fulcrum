@@ -85,10 +85,43 @@ Each service class encapsulates MongoDB operations for a specific domain:
 
 ### Client-Side Field-Level Encryption
 
-Fulcrum implements **client-side encryption** where sensitive data is encrypted before being sent to the server:
+Fulcrum implements **client-side encryption** where sensitive data is encrypted before being sent to the server.
+
+#### Sensitive Fields That Are Encrypted
+
+The following fields contain sensitive user data and are automatically encrypted:
+
+##### JobApplication Entity
+- **`companyName`** - Company name (PII - could reveal job search targets)
+- **`roleName`** - Job title/role name (PII - reveals career interests)
+- **`jobPostingUrl`** - URL to job posting (PII - reveals job search activity)
+- **`notes`** - Personal notes about the application (PII - sensitive thoughts/opinions)
+- **`appliedDate`** - Date application was submitted (PII - reveals job search timeline)
+- **`phoneScreenDate`** - Date of phone screening (PII - reveals interview activity)
+- **`round1Date`** - Date of first interview round (PII - reveals interview progress)
+- **`round2Date`** - Date of second interview round (PII - reveals interview progress)
+- **`acceptedDate`** - Date offer was accepted (PII - reveals employment status)
+- **`declinedDate`** - Date offer was declined (PII - reveals employment decisions)
+- **`createdAt`** - Record creation timestamp (PII - reveals activity patterns)
+- **`updatedAt`** - Record update timestamp (PII - reveals activity patterns)
+
+##### ApplicationEvent Entity
+- **`title`** - Event title (PII - reveals specific activities/milestones)
+- **`description`** - Event description (PII - sensitive details about job search)
+- **`date`** - Event date (PII - reveals job search timeline)
+
+##### User Entity
+- **`name`** - User's full name (PII - personally identifiable)
+- **`createdAt`** - Account creation date (PII - reveals user activity)
+- **`updatedAt`** - Profile update date (PII - reveals user activity)
+
+##### Fields That Remain Unencrypted
+- **`User.email`** - Required for authentication and login functionality
+- **Entity IDs** - Database identifiers (_id fields) needed for queries and relationships
+- **Status fields** - Current workflow status indicators needed for filtering and display logic
 
 ```typescript
-// src/services/encryption-service.ts
+// src/services/encryption-service.ts - Implementation
 export const ENCRYPTED_FIELDS = {
   JobApplication: [
     "companyName", "roleName", "jobPostingUrl", "notes",
