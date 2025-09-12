@@ -7,7 +7,13 @@ import { requireUserAuth } from "../../../middleware/auth";
 import { createServices } from "../../../services/factory";
 import { z } from "zod";
 
-// Schema for application creation validation
+/**
+ * Schema for application creation validation
+ *
+ * Supports both legacy form submissions and new ServicesProvider submissions:
+ * - Legacy: Only basic fields, server generates timestamps
+ * - ServicesProvider: Includes encrypted createdAt/updatedAt from client
+ */
 const CreateApplicationSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   roleName: z.string().min(1, "Job title is required"),
@@ -22,6 +28,9 @@ const CreateApplicationSchema = z.object({
   roleType: z.enum(["manager", "engineer"]).optional(),
   locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
   notes: z.string().optional().or(z.literal("")),
+  // Encrypted timestamp fields from ServicesProvider (base64-encoded strings)
+  createdAt: z.string().optional().or(z.literal("")),
+  updatedAt: z.string().optional().or(z.literal("")),
 });
 
 // Schema for bulk application creation
@@ -101,6 +110,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           const roleType = formData.get("roleType") as string;
           const locationType = formData.get("locationType") as string;
           const notes = formData.get("notes") as string;
+          // Extract encrypted timestamps from ServicesProvider (if present)
+          const createdAt = formData.get("createdAt") as string;
+          const updatedAt = formData.get("updatedAt") as string;
 
           // Validate input
           const validation = CreateApplicationSchema.safeParse({
@@ -113,6 +125,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             roleType,
             locationType,
             notes,
+            createdAt,
+            updatedAt,
           });
 
           if (!validation.success) {
@@ -253,7 +267,15 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             validatedData.appliedDate &&
             validatedData.appliedDate.trim() !== "";
 
-          // Create application data without currentStatus first
+          // Check if encrypted timestamps were provided by ServicesProvider
+          // This supports backward compatibility - legacy forms don't send timestamps
+          const hasEncryptedTimestamps =
+            validatedData.createdAt &&
+            validatedData.createdAt.trim() !== "" &&
+            validatedData.updatedAt &&
+            validatedData.updatedAt.trim() !== "";
+
+          // Create application data with conditional timestamp handling
           const applicationData = {
             userId,
             companyName: validatedData.companyName,
@@ -282,6 +304,12 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               : [],
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
+            // Conditionally include encrypted timestamps from ServicesProvider
+            // If not provided, applicationService.createApplication() will generate server timestamps
+            ...(hasEncryptedTimestamps && {
+              createdAt: validatedData.createdAt, // Encrypted timestamp from client
+              updatedAt: validatedData.updatedAt, // Encrypted timestamp from client
+            }),
             currentStatus: services.applicationService.calculateCurrentStatus({
               appliedDate: hasAppliedDate
                 ? validatedData.appliedDate

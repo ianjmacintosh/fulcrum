@@ -41,8 +41,8 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <RootDocument>
-      <ServicesProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ServicesProvider>
           <ApplicationsProvider>
             <RouterAuthProvider>
               <Navigation />
@@ -50,8 +50,8 @@ function RootComponent() {
               <Footer />
             </RouterAuthProvider>
           </ApplicationsProvider>
-        </AuthProvider>
-      </ServicesProvider>
+        </ServicesProvider>
+      </AuthProvider>
     </RootDocument>
   );
 }

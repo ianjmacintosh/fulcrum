@@ -3,6 +3,7 @@ import {
   ServicesContext,
   ClientServices,
   CreateApplicationData,
+  ApplicationResponse,
 } from "../contexts/ServicesContext";
 import { AuthContext } from "../contexts/AuthContext";
 import {
@@ -10,24 +11,216 @@ import {
   decryptFields,
   isDataEncrypted,
 } from "../services/encryption-service";
+import { useAuth } from "../hooks/useAuth";
+import { fetchCSRFTokens } from "../utils/csrf-client";
 
 /**
- * Lightweight ServicesProvider - services will be added back gradually
- * For now, focusing on performance by avoiding heavy initialization
+ * ServicesProvider with HTTP handling and automatic encryption
  */
 export function ServicesProvider({ children }: { children: React.ReactNode }) {
-  // Provide a minimal, non-blocking services context
-  const emptyServices = useMemo(
+  const { encryptionKey, isLoggedIn } = useAuth();
+
+  // Helper function to inject timestamps and create events
+  const prepareApplicationData = (data: CreateApplicationData) => {
+    const now = new Date().toISOString();
+    return {
+      ...data,
+      createdAt: now,
+      updatedAt: now,
+      events: data.appliedDate
+        ? [
+            {
+              id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+              title: "Application submitted",
+              description: data.notes || "Applied to position",
+              date: data.appliedDate,
+            },
+          ]
+        : [],
+    };
+  };
+
+  // Helper function to encrypt application data including nested events
+  const encryptApplicationData = async (data: any) => {
+    // Encrypt main application fields
+    const encryptedData = await encryptFields(
+      data,
+      encryptionKey!,
+      "JobApplication",
+    );
+
+    // Encrypt events separately if they exist
+    if (encryptedData.events && encryptedData.events.length > 0) {
+      encryptedData.events = await Promise.all(
+        encryptedData.events.map(
+          async (event: any) =>
+            await encryptFields(event, encryptionKey!, "ApplicationEvent"),
+        ),
+      );
+    }
+
+    return encryptedData;
+  };
+
+  // Helper function to create FormData for API submission
+  const createFormData = (
+    encryptedData: any,
+    originalData: CreateApplicationData,
+    csrfTokens: any,
+  ) => {
+    const formData = new FormData();
+
+    // Add encrypted sensitive fields
+    formData.append("companyName", encryptedData.companyName || "");
+    formData.append("roleName", encryptedData.roleName || "");
+    formData.append("jobPostingUrl", encryptedData.jobPostingUrl || "");
+    formData.append("appliedDate", encryptedData.appliedDate || "");
+    formData.append("notes", encryptedData.notes || "");
+
+    // Add unencrypted reference data
+    formData.append("jobBoard", originalData.jobBoard || "");
+    formData.append("applicationType", originalData.applicationType || "cold");
+    formData.append("roleType", originalData.roleType || "engineer");
+    formData.append("locationType", originalData.locationType || "remote");
+
+    // Add CSRF tokens
+    formData.append("csrf_token", csrfTokens.csrfToken);
+    formData.append("csrf_hash", csrfTokens.csrfHash);
+
+    return formData;
+  };
+
+  // Create application with automatic timestamp injection and encryption
+  // List applications with automatic decryption
+  const listApplications = async () => {
+    try {
+      // Fetch applications from API
+      const response = await fetch("/api/applications/", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch applications");
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error("Applications API returned error");
+      }
+
+      const rawApplications = result.applications || [];
+
+      // Decrypt applications if encryption key is available
+      if (encryptionKey && rawApplications.length > 0) {
+        // Check if any application has encrypted data
+        const hasEncryptedData = rawApplications.some((app: any) =>
+          isDataEncrypted(app, "JobApplication"),
+        );
+
+        if (hasEncryptedData) {
+          // Decrypt all applications
+          const decryptedApps = await Promise.all(
+            rawApplications.map(async (app: any) => {
+              try {
+                return await decryptFields(
+                  app,
+                  encryptionKey,
+                  "JobApplication",
+                );
+              } catch (error) {
+                console.warn(
+                  `Failed to decrypt application ${app._id}:`,
+                  error,
+                );
+                // Return original app if decryption fails (backward compatibility)
+                return app;
+              }
+            }),
+          );
+          return {
+            success: true,
+            applications: decryptedApps,
+          };
+        }
+      }
+
+      // Return unencrypted data or if no encryption key
+      return {
+        success: true,
+        applications: rawApplications,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch applications",
+        applications: [],
+      };
+    }
+  };
+
+  const createApplication = async (
+    data: CreateApplicationData,
+  ): Promise<ApplicationResponse> => {
+    // Check if encryption key is available
+    if (!encryptionKey) {
+      throw new Error(
+        "Encryption key not available. Please log out and log back in.",
+      );
+    }
+
+    try {
+      // Get CSRF tokens for security
+      const csrfTokens = await fetchCSRFTokens();
+
+      // Prepare data with timestamps and events
+      const preparedData = prepareApplicationData(data);
+
+      // Encrypt all sensitive fields
+      const encryptedData = await encryptApplicationData(preparedData);
+
+      // Create form data for API submission
+      const formData = createFormData(encryptedData, data, csrfTokens);
+
+      // Submit to API
+      const response = await fetch("/api/applications/create", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create application");
+      }
+
+      return {
+        success: true,
+        application: result.application,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+        application: null,
+      } as ApplicationResponse;
+    }
+  };
+
+  const services = useMemo(
     () => ({
       applications: {
-        list: async () => ({
-          success: false,
-          error: "Services not implemented yet",
-        }),
-        create: async () => ({
-          success: false,
-          error: "Services not implemented yet",
-        }),
+        list: listApplications,
+        create: createApplication,
         createBulk: async () => ({
           success: false,
           error: "Services not implemented yet",
@@ -70,11 +263,11 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
         }),
       },
     }),
-    [],
+    [encryptionKey, isLoggedIn], // Re-create services when auth state changes
   );
 
   return (
-    <ServicesContext.Provider value={emptyServices}>
+    <ServicesContext.Provider value={services}>
       {children}
     </ServicesContext.Provider>
   );
