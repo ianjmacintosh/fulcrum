@@ -68,27 +68,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Check authentication status on mount and when needed
   const checkAuthStatus = async () => {
+    console.log("AuthContext DEBUG: checkAuthStatus called");
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Check if we have a session cookie
+      console.log("AuthContext DEBUG: Fetching /api/auth/status");
       const response = await fetch("/api/auth/status", {
         method: "GET",
         credentials: "include",
       });
 
+      console.log("AuthContext DEBUG: Auth status response:", {
+        ok: response.ok,
+        status: response.status,
+      });
+
       if (response.ok) {
         const data = await response.json();
+        console.log("AuthContext DEBUG: Auth status data:", {
+          success: data.success,
+          authenticated: data.authenticated,
+          hasUser: !!data.user,
+          userId: data.user?.id || data.user?._id,
+        });
+
         if (data.success && data.authenticated && data.user) {
           // Try to retrieve encryption key from IndexedDB if not in memory
           let encryptionKey = state.encryptionKey;
+          console.log("AuthContext DEBUG: Checking encryption key:", {
+            hasKeyInMemory: !!encryptionKey,
+            isStorageAvailable: isKeyStorageAvailable(),
+          });
+
           if (!encryptionKey && isKeyStorageAvailable()) {
             try {
               const userId = data.user.id || data.user._id;
               encryptionKey = await retrieveEncryptionKey(userId);
+              console.log(
+                "AuthContext DEBUG: Retrieved key from storage:",
+                !!encryptionKey,
+              );
             } catch (error) {
               console.error(
-                "Failed to retrieve encryption key from storage:",
+                "AuthContext DEBUG: Failed to retrieve encryption key from storage:",
                 error,
               );
             }

@@ -18,7 +18,7 @@ import { fetchCSRFTokens } from "../utils/csrf-client";
  * ServicesProvider with HTTP handling and automatic encryption
  */
 export function ServicesProvider({ children }: { children: React.ReactNode }) {
-  const { encryptionKey, isLoggedIn } = useAuth();
+  const { encryptionKey, isLoggedIn, isLoading } = useAuth();
 
   // Helper function to inject timestamps and create events
   const prepareApplicationData = (data: CreateApplicationData) => {
@@ -77,6 +77,10 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
     formData.append("appliedDate", encryptedData.appliedDate || "");
     formData.append("notes", encryptedData.notes || "");
 
+    // Add encrypted timestamps
+    formData.append("createdAt", encryptedData.createdAt || "");
+    formData.append("updatedAt", encryptedData.updatedAt || "");
+
     // Add unencrypted reference data
     formData.append("jobBoard", originalData.jobBoard || "");
     formData.append("applicationType", originalData.applicationType || "cold");
@@ -91,76 +95,6 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create application with automatic timestamp injection and encryption
-  // List applications with automatic decryption
-  const listApplications = async () => {
-    try {
-      // Fetch applications from API
-      const response = await fetch("/api/applications/", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch applications");
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error("Applications API returned error");
-      }
-
-      const rawApplications = result.applications || [];
-
-      // Decrypt applications if encryption key is available
-      if (encryptionKey && rawApplications.length > 0) {
-        // Check if any application has encrypted data
-        const hasEncryptedData = rawApplications.some((app: any) =>
-          isDataEncrypted(app, "JobApplication"),
-        );
-
-        if (hasEncryptedData) {
-          // Decrypt all applications
-          const decryptedApps = await Promise.all(
-            rawApplications.map(async (app: any) => {
-              try {
-                return await decryptFields(
-                  app,
-                  encryptionKey,
-                  "JobApplication",
-                );
-              } catch (error) {
-                console.warn(
-                  `Failed to decrypt application ${app._id}:`,
-                  error,
-                );
-                // Return original app if decryption fails (backward compatibility)
-                return app;
-              }
-            }),
-          );
-          return {
-            success: true,
-            applications: decryptedApps,
-          };
-        }
-      }
-
-      // Return unencrypted data or if no encryption key
-      return {
-        success: true,
-        applications: rawApplications,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch applications",
-        applications: [],
-      };
-    }
-  };
 
   const createApplication = async (
     data: CreateApplicationData,
@@ -216,8 +150,110 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const services = useMemo(
-    () => ({
+  const services = useMemo(() => {
+    // List applications with automatic decryption
+    const listApplications = async () => {
+      try {
+        // Fetch applications from API
+        const response = await fetch("/api/applications/", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch applications");
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error("Applications API returned error");
+        }
+
+        const rawApplications = result.applications || [];
+
+        if (encryptionKey && rawApplications.length > 0) {
+          // Check if any application has encrypted data
+          const hasEncryptedData = rawApplications.some((app: any) =>
+            isDataEncrypted(app, "JobApplication"),
+          );
+
+          if (hasEncryptedData) {
+            // Decrypt all applications
+            const decryptedApps = await Promise.all(
+              rawApplications.map(async (app: any) => {
+                try {
+                  // Decrypt main application fields
+                  const decryptedApp = await decryptFields(
+                    app,
+                    encryptionKey,
+                    "JobApplication",
+                  );
+
+                  // Also decrypt events if they exist and are encrypted
+                  if (
+                    decryptedApp.events &&
+                    Array.isArray(decryptedApp.events) &&
+                    decryptedApp.events.length > 0
+                  ) {
+                    decryptedApp.events = await Promise.all(
+                      decryptedApp.events.map(async (event: any) => {
+                        try {
+                          // Check if event has encrypted data
+                          if (isDataEncrypted(event, "ApplicationEvent")) {
+                            return await decryptFields(
+                              event,
+                              encryptionKey,
+                              "ApplicationEvent",
+                            );
+                          }
+                          return event;
+                        } catch (error) {
+                          console.warn(
+                            `Failed to decrypt event ${event.id}:`,
+                            error,
+                          );
+                          return event;
+                        }
+                      }),
+                    );
+                  }
+
+                  return decryptedApp;
+                } catch (error) {
+                  console.warn(
+                    `Failed to decrypt application ${app._id}:`,
+                    error,
+                  );
+                  // Return original app if decryption fails (backward compatibility)
+                  return app;
+                }
+              }),
+            );
+            return {
+              success: true,
+              applications: decryptedApps,
+            };
+          }
+        }
+
+        // Return unencrypted data or if no encryption key
+        return {
+          success: true,
+          applications: rawApplications,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch applications",
+          applications: [],
+        };
+      }
+    };
+
+    return {
       applications: {
         list: listApplications,
         create: createApplication,
@@ -262,9 +298,8 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
           error: "Services not implemented yet",
         }),
       },
-    }),
-    [encryptionKey, isLoggedIn], // Re-create services when auth state changes
-  );
+    };
+  }, [encryptionKey, isLoggedIn]); // Re-create services when auth state changes
 
   return (
     <ServicesContext.Provider value={services}>

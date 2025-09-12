@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { JobApplication } from "../db/schemas";
 import { useServices } from "./ServicesContext";
+import { useAuth } from "../hooks/useAuth";
 
 interface ApplicationsContextType {
   applications: JobApplication[];
@@ -27,6 +28,7 @@ export function ApplicationsProvider({ children }: ApplicationsProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const services = useServices();
+  const { isLoading: authLoading } = useAuth();
 
   const fetchApplications = async (): Promise<void> => {
     try {
@@ -53,10 +55,12 @@ export function ApplicationsProvider({ children }: ApplicationsProviderProps) {
     }
   };
 
-  // Fetch applications on mount
+  // Fetch applications only after authentication is complete
   useEffect(() => {
-    fetchApplications();
-  }, []);
+    if (!authLoading) {
+      fetchApplications();
+    }
+  }, [authLoading]);
 
   const getApplication = (id: string): JobApplication | null => {
     return applications.find((app) => app._id?.toString() === id) || null;

@@ -365,6 +365,38 @@ describe("Encryption Service", () => {
 
       expect(isDataEncrypted(shortBase64Data, "JobApplication")).toBe(false);
     });
+
+    it("should check actual encrypted data length and detection", async () => {
+      const testData = {
+        companyName: "TestCorp",
+        roleName: "Engineer",
+        notes: "Short",
+      };
+
+      const encrypted = await encryptFields(
+        testData,
+        testKey,
+        "JobApplication",
+      );
+
+      // Log the actual encrypted lengths to understand what we're working with
+      console.log("Encrypted data lengths:", {
+        companyName: encrypted.companyName?.length,
+        roleName: encrypted.roleName?.length,
+        notes: encrypted.notes?.length,
+        companyNameValue: encrypted.companyName?.substring(0, 20) + "...",
+        roleNameValue: encrypted.roleName?.substring(0, 20) + "...",
+        notesValue: encrypted.notes?.substring(0, 20) + "...",
+      });
+
+      // Verify that even short original strings create detectable encrypted data
+      expect(isDataEncrypted(encrypted, "JobApplication")).toBe(true);
+
+      // Verify individual encrypted fields are long enough to be detected
+      expect(encrypted.companyName?.length).toBeGreaterThan(20);
+      expect(encrypted.roleName?.length).toBeGreaterThan(20);
+      expect(encrypted.notes?.length).toBeGreaterThan(20);
+    });
   });
 
   describe("Entity Types", () => {

@@ -123,6 +123,52 @@ describe("ServicesProvider", () => {
     expect(mockDecryptFields).not.toHaveBeenCalled();
   });
 
+  it("handles case when encryption key is null despite being logged in", async () => {
+    const encryptedApplications = [
+      { _id: "1", companyName: "encrypted_data", roleName: "encrypted_data" },
+    ];
+
+    // Simulate case where user is logged in but encryption key is null
+    // (e.g., key failed to load from IndexedDB)
+    mockUseAuth.mockReturnValue({
+      encryptionKey: null,
+      isLoggedIn: true,
+    });
+
+    mockIsDataEncrypted.mockReturnValue(true);
+
+    (fetch as any).mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          success: true,
+          applications: encryptedApplications,
+        }),
+    });
+
+    render(
+      <ServicesProvider>
+        <TestComponent />
+      </ServicesProvider>,
+    );
+
+    const button = screen.getByTestId("test-button");
+    button.click();
+
+    await waitFor(() => {
+      const result = document.querySelector('[data-testid="api-result"]');
+      expect(result).toBeInTheDocument();
+    });
+
+    // Verify no decryption was attempted (no encryption key)
+    expect(mockIsDataEncrypted).not.toHaveBeenCalled();
+    expect(mockDecryptFields).not.toHaveBeenCalled();
+
+    // Should return encrypted data as-is
+    const result = document.querySelector('[data-testid="api-result"]');
+    expect(result?.textContent).toContain('"companyName":"encrypted_data"');
+  });
+
   it("handles automatic decryption when encryption key is available", async () => {
     const mockEncryptionKey = {} as CryptoKey; // Mock key
     const encryptedApplications = [

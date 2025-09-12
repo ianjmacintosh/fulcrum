@@ -195,7 +195,8 @@ export function isDataEncrypted(
     if (data[field] && typeof data[field] === "string") {
       const value = data[field] as string;
       // Check if it looks like base64 (and is long enough to be encrypted)
-      if (value.match(/^[A-Za-z0-9+/]+=*$/) && value.length > 50) {
+      // Lowered threshold from 50 to 20 to catch shorter encrypted fields
+      if (value.match(/^[A-Za-z0-9+/]+=*$/) && value.length > 20) {
         return true;
       }
     }
