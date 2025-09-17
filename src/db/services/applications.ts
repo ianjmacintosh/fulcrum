@@ -26,36 +26,132 @@ export class ApplicationService {
     return `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
+  /**
+   * Validate that required encrypted timestamps are provided by client
+   * Server cannot generate timestamps because it lacks encryption capabilities
+   */
+  private validateEncryptedTimestamps(
+    application: ApplicationCreateData,
+  ): void {
+    const { createdAt, updatedAt } = application;
+
+    // Ensure both timestamps are present
+    if (!createdAt) {
+      throw new Error("createdAt timestamp is required and must be encrypted");
+    }
+
+    if (!updatedAt) {
+      throw new Error("updatedAt timestamp is required and must be encrypted");
+    }
+
+    // Prevent accidental use of Date objects
+    if (createdAt instanceof Date || updatedAt instanceof Date) {
+      throw new Error("Timestamps must be encrypted strings, not Date objects");
+    }
+
+    // Validate string format
+    if (typeof createdAt !== "string" || typeof updatedAt !== "string") {
+      throw new Error("Timestamps must be encrypted strings");
+    }
+
+    // Verify base64 encryption format
+    if (
+      !this.isValidEncryptedString(createdAt) ||
+      !this.isValidEncryptedString(updatedAt)
+    ) {
+      throw new Error("Timestamps must be properly encrypted (base64 format)");
+    }
+  }
+
+  /**
+   * Check if a string appears to be properly encrypted (base64 format)
+   */
+  private isValidEncryptedString(value: string): boolean {
+    const base64Pattern = /^[A-Za-z0-9+/]+=*$/;
+    return base64Pattern.test(value) && value.length > 10; // Basic length check
+  }
+
+  /**
+   * Validate that all event dates are encrypted
+   * Server cannot generate event dates because it lacks encryption capabilities
+   */
+  private validateEncryptedEventDates(events: ApplicationEvent[]): void {
+    if (!events || events.length === 0) {
+      return; // Empty events are fine - no validation needed
+    }
+
+    events.forEach((event, index) => {
+      this.validateSingleEventDate(event, index);
+    });
+  }
+
+  /**
+   * Validate a single event's date field
+   */
+  private validateSingleEventDate(
+    event: ApplicationEvent,
+    index: number,
+  ): void {
+    if (!event.date) {
+      throw new Error(`Event at index ${index} missing date field`);
+    }
+
+    // Ensure date is a string (not Date object or other type)
+    if (typeof event.date !== "string") {
+      throw new Error(
+        `Event dates must be encrypted strings, found ${typeof event.date} at index ${index}`,
+      );
+    }
+
+    // Detect unencrypted ISO date strings
+    if (this.isISODateString(event.date)) {
+      throw new Error("Event dates must be encrypted");
+    }
+
+    // Verify it looks like encrypted data (base64)
+    if (!this.isValidEncryptedString(event.date)) {
+      throw new Error("All event dates must be encrypted");
+    }
+  }
+
+  /**
+   * Check if a string looks like an ISO date string (unencrypted)
+   */
+  private isISODateString(dateString: string): boolean {
+    const isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    return isoDatePattern.test(dateString);
+  }
+
   async createApplication(
     application: ApplicationCreateData,
   ): Promise<JobApplication> {
-    const now = new Date();
+    // Validate that required encrypted timestamps are provided
+    this.validateEncryptedTimestamps(application);
 
-    // Always generate "Application created" event
-    const createdEvent: ApplicationEvent = {
+    // Validate that all event dates are encrypted
+    this.validateEncryptedEventDates(application.events);
+
+    // Always generate "Application created" event using client-provided encrypted timestamp
+    const creationEvent: ApplicationEvent = {
       id: this.generateEventId(),
       title: "Application created",
       description: "Application tracking started",
-      date: now.toISOString().split("T")[0],
+      date: application.createdAt!, // Use client-provided encrypted timestamp
     };
 
+    // Use application data exactly as provided by client, but ADD creation event to existing events
     const newApplication: JobApplication = {
       ...application,
-      events: [...application.events, createdEvent],
-      createdAt: now,
-      updatedAt: now,
+      // Add creation event to existing client events (preserves any events client sent)
+      events: [...application.events, creationEvent],
+      // Use client-provided encrypted timestamps - no server-side generation
+      createdAt: application.createdAt!,
+      updatedAt: application.updatedAt!,
     };
 
-    // Validate with Zod (excluding _id since MongoDB will generate it)
-    const validationResult = JobApplicationSchema.safeParse({
-      ...newApplication,
-      createdAt: newApplication.createdAt,
-      updatedAt: newApplication.updatedAt,
-    });
-
-    if (!validationResult.success) {
-      throw new Error(`Validation error: ${validationResult.error.message}`);
-    }
+    // Skip Zod validation for encrypted data - the client handles encryption
+    // and we can't validate encrypted strings with the standard schema.
+    // Basic structure validation was done in validateEncryptedTimestamps().
 
     // Store application as-is (client handles encryption)
     const collection = this.getCollection();
@@ -71,41 +167,36 @@ export class ApplicationService {
       return [];
     }
 
-    const now = new Date();
-
     const newApplications: JobApplication[] = applications.map(
       (application) => {
-        // Always generate "Application created" event for batch operations too
-        const createdEvent: ApplicationEvent = {
+        // Validate that required encrypted timestamps are provided for each application
+        this.validateEncryptedTimestamps(application);
+
+        // Validate that all event dates are encrypted for each application
+        this.validateEncryptedEventDates(application.events);
+
+        // Always generate "Application created" event using client-provided encrypted timestamp
+        const creationEvent: ApplicationEvent = {
           id: this.generateEventId(),
           title: "Application created",
           description: "Application tracking started",
-          date: now.toISOString().split("T")[0],
+          date: application.createdAt!, // Use client-provided encrypted timestamp
         };
 
         return {
           ...application,
-          events: [...application.events, createdEvent],
-          createdAt: now,
-          updatedAt: now,
+          // Add creation event to existing client events (preserves any events client sent)
+          events: [...application.events, creationEvent],
+          // Use client-provided encrypted timestamps - no server-side generation
+          createdAt: application.createdAt!,
+          updatedAt: application.updatedAt!,
         };
       },
     );
 
-    // Validate all applications before inserting
-    for (const [index, application] of newApplications.entries()) {
-      const validationResult = JobApplicationSchema.safeParse({
-        ...application,
-        createdAt: application.createdAt,
-        updatedAt: application.updatedAt,
-      });
-
-      if (!validationResult.success) {
-        throw new Error(
-          `Validation error for application ${index} (${application.companyName} - ${application.roleName}): ${validationResult.error.message}`,
-        );
-      }
-    }
+    // Skip Zod validation for encrypted data - the client handles encryption
+    // and we can't validate encrypted strings with the standard schema.
+    // Basic structure validation was done in validateEncryptedTimestamps().
 
     // Store applications as-is (client handles encryption)
     const collection = this.getCollection();

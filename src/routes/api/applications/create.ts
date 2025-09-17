@@ -10,9 +10,8 @@ import { z } from "zod";
 /**
  * Schema for application creation validation
  *
- * Supports both legacy form submissions and new ServicesProvider submissions:
- * - Legacy: Only basic fields, server generates timestamps
- * - ServicesProvider: Includes encrypted createdAt/updatedAt from client
+ * All submissions must include encrypted timestamps from client.
+ * Server cannot generate timestamps due to encryption requirements.
  */
 const CreateApplicationSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -28,7 +27,8 @@ const CreateApplicationSchema = z.object({
   roleType: z.enum(["manager", "engineer"]).optional(),
   locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
   notes: z.string().optional().or(z.literal("")),
-  // Encrypted timestamp fields from ServicesProvider (base64-encoded strings)
+  // Encrypted timestamp fields from client (base64-encoded strings)
+  // Optional for backward compatibility, but server will require them for security
   createdAt: z.string().optional().or(z.literal("")),
   updatedAt: z.string().optional().or(z.literal("")),
 });
@@ -201,16 +201,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               applicationType: applicationType as "cold" | "warm",
               roleType: roleType as "manager" | "engineer",
               locationType: locationType as "on-site" | "hybrid" | "remote",
-              events: hasAppliedDate
-                ? [
-                    {
-                      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                      title: "Application submitted",
-                      description: appData.notes || "Applied to position",
-                      date: appData.appliedDate!,
-                    },
-                  ]
-                : [],
+              // No server-side event generation - all events must come from client with encrypted dates
+              events: [],
               appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               notes: appData.notes || undefined,
               currentStatus: services.applicationService.calculateCurrentStatus(
@@ -267,15 +259,22 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             validatedData.appliedDate &&
             validatedData.appliedDate.trim() !== "";
 
-          // Check if encrypted timestamps were provided by ServicesProvider
-          // This supports backward compatibility - legacy forms don't send timestamps
+          // Check if this is a legacy form submission (no encrypted timestamps)
           const hasEncryptedTimestamps =
             validatedData.createdAt &&
             validatedData.createdAt.trim() !== "" &&
             validatedData.updatedAt &&
             validatedData.updatedAt.trim() !== "";
 
-          // Create application data with conditional timestamp handling
+          // Require encrypted timestamps for security
+          if (!hasEncryptedTimestamps) {
+            return createErrorResponse(
+              "Encrypted timestamps are required for security. Please ensure your client provides encrypted createdAt and updatedAt fields.",
+              400,
+            );
+          }
+
+          // Create application data - timestamps are required and validated by schema
           const applicationData = {
             userId,
             companyName: validatedData.companyName,
@@ -292,24 +291,13 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             applicationType: applicationType as "cold" | "warm",
             roleType: roleType as "manager" | "engineer",
             locationType: locationType as "on-site" | "hybrid" | "remote",
-            events: hasAppliedDate
-              ? [
-                  {
-                    id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    title: "Application submitted",
-                    description: validatedData.notes || "Applied to position",
-                    date: validatedData.appliedDate!,
-                  },
-                ]
-              : [],
+            // No server-side event generation - all events must come from client with encrypted dates
+            events: [],
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
-            // Conditionally include encrypted timestamps from ServicesProvider
-            // If not provided, applicationService.createApplication() will generate server timestamps
-            ...(hasEncryptedTimestamps && {
-              createdAt: validatedData.createdAt, // Encrypted timestamp from client
-              updatedAt: validatedData.updatedAt, // Encrypted timestamp from client
-            }),
+            // Always include encrypted timestamps from client - server cannot generate them
+            createdAt: validatedData.createdAt, // Required encrypted timestamp from client
+            updatedAt: validatedData.updatedAt, // Required encrypted timestamp from client
             currentStatus: services.applicationService.calculateCurrentStatus({
               appliedDate: hasAppliedDate
                 ? validatedData.appliedDate
@@ -331,6 +319,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 roleName: application.roleName,
                 currentStatus: application.currentStatus,
                 createdAt: application.createdAt,
+                updatedAt: application.updatedAt,
               },
             },
             201,

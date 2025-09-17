@@ -47,7 +47,7 @@ describe("GET /api/applications/:id", () => {
     expect(application).toBeTruthy();
     expect(application?.companyName).toBe("Test Company");
     expect(application?.roleName).toBe("Test Role");
-    expect(application?.events).toHaveLength(1);
+    expect(application?.events).toHaveLength(2); // 1 client event + 1 creation event
     expect(application?.events[0].title).toBe("Application submitted");
     expect(application?.currentStatus.eventId).toBe("event_test-123");
   });

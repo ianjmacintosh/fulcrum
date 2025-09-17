@@ -150,13 +150,10 @@ export async function decryptFields<T extends Record<string, any>>(
         } else {
           result[field] = decryptedValue;
         }
-      } catch (error) {
+      } catch {
         // If decryption fails, assume field is not encrypted (backward compatibility)
         // This handles mixed encrypted/unencrypted data during migration
-        console.warn(
-          `Failed to decrypt field ${field}, assuming unencrypted:`,
-          error,
-        );
+        console.warn(`Failed to decrypt field "${field}"`);
       }
     }
   }

@@ -13,6 +13,7 @@ import {
 } from "../services/encryption-service";
 import { useAuth } from "../hooks/useAuth";
 import { fetchCSRFTokens } from "../utils/csrf-client";
+import { ApplicationsContext } from "../contexts/ApplicationsContext";
 
 /**
  * ServicesProvider with HTTP handling and automatic encryption
@@ -229,6 +230,10 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
                 }
               }),
             );
+            console.log(
+              `Returning ${decryptedApps.length} decrypted applications`,
+            );
+            console.log(decryptedApps);
             return {
               success: true,
               applications: decryptedApps,

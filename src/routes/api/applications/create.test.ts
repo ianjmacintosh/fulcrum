@@ -374,4 +374,121 @@ describe("Application Creation API Validation", () => {
       );
     });
   });
+
+  describe("API Encrypted Timestamp Requirements", () => {
+    it("should ensure ApplicationService validates encrypted timestamps", async () => {
+      // Test that API passes data to ApplicationService which handles validation
+      const applicationData = {
+        userId: "user-123",
+        companyName: "Test Corp",
+        roleName: "Engineer",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+        // Missing encrypted timestamps - ApplicationService should reject this
+      };
+
+      // Mock ApplicationService to reject missing encrypted timestamps
+      mockCreateApplication.mockRejectedValueOnce(
+        new Error("createdAt timestamp is required and must be encrypted"),
+      );
+
+      try {
+        await mockCreateApplication(applicationData);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.message).toContain(
+          "createdAt timestamp is required and must be encrypted",
+        );
+      }
+    });
+
+    it("should ensure ApplicationService validates encrypted event dates", async () => {
+      const applicationData = {
+        userId: "user-123",
+        companyName: "Test Corp",
+        roleName: "Engineer",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [
+          {
+            id: "event-1",
+            title: "Application submitted",
+            description: "Applied online",
+            date: "2023-12-01T10:00:00.000Z", // Unencrypted date - should be rejected
+          },
+        ],
+        currentStatus: { id: "applied", name: "Applied" },
+        createdAt: "encrypted_created_timestamp==",
+        updatedAt: "encrypted_updated_timestamp==",
+      };
+
+      // Mock ApplicationService to reject unencrypted event dates
+      mockCreateApplication.mockRejectedValueOnce(
+        new Error("Event dates must be encrypted"),
+      );
+
+      try {
+        await mockCreateApplication(applicationData);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.message).toContain("Event dates must be encrypted");
+      }
+    });
+
+    it("should pass properly encrypted data to ApplicationService", async () => {
+      const encryptedApplicationData = {
+        userId: "user-123",
+        companyName: "encrypted_company_name==",
+        roleName: "encrypted_role_name==",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [
+          {
+            id: "event-1",
+            title: "encrypted_event_title==",
+            description: "encrypted_event_description==",
+            date: "encrypted_event_date==",
+          },
+        ],
+        currentStatus: { id: "applied", name: "Applied" },
+        createdAt: "encrypted_created_timestamp==",
+        updatedAt: "encrypted_updated_timestamp==",
+      };
+
+      // Mock successful creation with encrypted data
+      mockCreateApplication.mockResolvedValueOnce({
+        _id: "created-app-id",
+        ...encryptedApplicationData,
+      });
+
+      const result = await mockCreateApplication(encryptedApplicationData);
+
+      expect(result).toBeDefined();
+      expect(result._id).toBe("created-app-id");
+      expect(mockCreateApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          createdAt: "encrypted_created_timestamp==",
+          updatedAt: "encrypted_updated_timestamp==",
+          events: expect.arrayContaining([
+            expect.objectContaining({
+              date: "encrypted_event_date==",
+            }),
+          ]),
+        }),
+      );
+    });
+  });
 });

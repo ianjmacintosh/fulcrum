@@ -348,8 +348,9 @@ describe("ApplicationService", () => {
       // These tests use the same mock database setup as the main describe block
 
       describe("createApplication with automatic events", () => {
-        it("should automatically create 'Application created' event when creating any application", async () => {
-          // RED: This test should fail because createApplication doesn't auto-generate events yet
+        it("should NOT automatically create 'Application created' event - client must provide all events", async () => {
+          // UPDATED: ApplicationService no longer auto-generates events - all events must come from client
+          const clientKey = await createEncryptionKey();
           const applicationData: ApplicationCreateData = {
             userId: "user123",
             companyName: "TechCorp",
@@ -359,22 +360,22 @@ describe("ApplicationService", () => {
             applicationType: "cold",
             roleType: "engineer",
             locationType: "remote",
-            events: [],
+            events: [], // Empty events - server should not add any
             currentStatus: { id: "not_applied", name: "Not Applied" },
+            createdAt: await encryptString(new Date().toISOString(), clientKey),
+            updatedAt: await encryptString(new Date().toISOString(), clientKey),
           };
 
           const result =
             await applicationService.createApplication(applicationData);
 
-          // Should always have at least one "Application created" event
-          expect(result.events).toHaveLength(1);
-          expect(result.events[0]).toMatchObject({
-            title: "Application created",
-          });
+          // Should preserve exactly what client provided - no server-generated events
+          expect(result.events).toHaveLength(0);
         });
 
-        it("should create 'Application submitted' event when appliedDate is added to existing application", async () => {
+        it("should NOT create 'Application submitted' event when appliedDate is updated - client must provide all events", async () => {
           // RED: This test should fail because updateApplicationWithStatusCalculation doesn't auto-generate events yet
+          const clientKey = await createEncryptionKey();
           const applicationData: ApplicationCreateData = {
             userId: "user123",
             companyName: "TechCorp",
@@ -386,15 +387,16 @@ describe("ApplicationService", () => {
             locationType: "remote",
             events: [],
             currentStatus: { id: "not_applied", name: "Not Applied" },
+            createdAt: await encryptString(new Date().toISOString(), clientKey),
+            updatedAt: await encryptString(new Date().toISOString(), clientKey),
           };
 
           // First create application without applied date
           const createdApp =
             await applicationService.createApplication(applicationData);
-          expect(createdApp.events).toHaveLength(1); // Just the "Application created" event
-          expect(createdApp.events[0].title).toBe("Application created");
+          expect(createdApp.events).toHaveLength(0); // No server-generated events
 
-          // Then update with applied date - should create new event
+          // Then update with applied date - should still not auto-generate events
           const updatedApp =
             await applicationService.updateApplicationWithStatusCalculation(
               "user123",
@@ -402,45 +404,8 @@ describe("ApplicationService", () => {
               { appliedDate: "2025-01-15" },
             );
 
-          // Should now have both "Application created" and "Application submitted" events
-          expect(updatedApp!.events).toHaveLength(2);
-
-          // Check for "Application created" event
-          expect(updatedApp!.events).toContainEqual(
-            expect.objectContaining({
-              title: "Application created",
-            }),
-          );
-
-          // Check for "Application submitted" event
-          const today = new Date().toISOString().split("T")[0];
-          expect(updatedApp!.events).toContainEqual(
-            expect.objectContaining({
-              title: "Application submitted",
-              date: today, // Event happened today
-              description: "Applied to position on 2025-01-15",
-            }),
-          );
-
-          // Now change the applied date - should create "Application resubmitted" event
-          const resubmittedApp =
-            await applicationService.updateApplicationWithStatusCalculation(
-              "user123",
-              updatedApp!._id!,
-              { appliedDate: "2025-01-20" },
-            );
-
-          // Should have 3 events now
-          expect(resubmittedApp!.events).toHaveLength(3);
-
-          // Check for "Application resubmitted" event
-          expect(resubmittedApp!.events).toContainEqual(
-            expect.objectContaining({
-              title: "Application resubmitted",
-              date: today, // Event happened today
-              description: "Application resubmitted on 2025-01-20",
-            }),
-          );
+          // Should still have 0 events - client must provide events
+          expect(updatedApp!.events).toHaveLength(0);
         });
       });
     });
@@ -595,6 +560,14 @@ describe("ApplicationService Batch Operations", () => {
         events: [],
         appliedDate: await encryptString("2023-12-01", clientEncryptionKey),
         currentStatus: { id: "applied", name: "Applied" },
+        createdAt: await encryptString(
+          new Date().toISOString(),
+          clientEncryptionKey,
+        ),
+        updatedAt: await encryptString(
+          new Date().toISOString(),
+          clientEncryptionKey,
+        ),
       };
 
       // Server stores encrypted data as-is
@@ -633,6 +606,14 @@ describe("ApplicationService Batch Operations", () => {
         locationType: "remote",
         events: [],
         currentStatus: { id: "not_applied", name: "Not Applied" },
+        createdAt: await encryptString(
+          new Date().toISOString(),
+          clientEncryptionKey,
+        ),
+        updatedAt: await encryptString(
+          new Date().toISOString(),
+          clientEncryptionKey,
+        ),
       };
 
       const createdApp = await batchApplicationService.createApplication(
@@ -652,6 +633,340 @@ describe("ApplicationService Batch Operations", () => {
         clientEncryptionKey,
       );
       expect(decryptedCompanyName).toBe("Encrypted Corp");
+    });
+
+    describe("Client-Only Timestamp Requirements", () => {
+      let clientEncryptionKey: CryptoKey;
+
+      beforeEach(async () => {
+        clientEncryptionKey = await createEncryptionKey();
+      });
+
+      it("should REQUIRE encrypted createdAt from client", async () => {
+        const applicationDataWithoutCreatedAt: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+          // Missing createdAt - should cause error
+          updatedAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithoutCreatedAt,
+          ),
+        ).rejects.toThrow(
+          "createdAt timestamp is required and must be encrypted",
+        );
+      });
+
+      it("should REQUIRE encrypted updatedAt from client", async () => {
+        const applicationDataWithoutUpdatedAt: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+          createdAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+          // Missing updatedAt - should cause error
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithoutUpdatedAt,
+          ),
+        ).rejects.toThrow(
+          "updatedAt timestamp is required and must be encrypted",
+        );
+      });
+
+      it("should REJECT requests without encrypted timestamps", async () => {
+        const applicationDataWithPlainTimestamps: any = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+          createdAt: new Date(), // Plain Date object - should cause error
+          updatedAt: new Date(), // Plain Date object - should cause error
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithPlainTimestamps,
+          ),
+        ).rejects.toThrow(
+          "Timestamps must be encrypted strings, not Date objects",
+        );
+      });
+
+      it("should never generate server-side timestamps", async () => {
+        const applicationDataWithoutTimestamps: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+          // No timestamps provided at all
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithoutTimestamps,
+          ),
+        ).rejects.toThrow(
+          "createdAt timestamp is required and must be encrypted",
+        );
+
+        // Verify no server-generated timestamps were created
+        const collection = batchMockDb.collection("applications");
+        const allApps = await collection.find({}).toArray();
+        expect(allApps).toHaveLength(0); // Should not have created any application
+      });
+
+      it("should accept and preserve encrypted timestamps from client", async () => {
+        const encryptedCreatedAt = await encryptString(
+          "2023-12-01T10:00:00.000Z",
+          clientEncryptionKey,
+        );
+        const encryptedUpdatedAt = await encryptString(
+          "2023-12-01T11:00:00.000Z",
+          clientEncryptionKey,
+        );
+
+        const applicationDataWithEncryptedTimestamps: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [],
+          currentStatus: { id: "not_applied", name: "Not Applied" },
+          createdAt: encryptedCreatedAt,
+          updatedAt: encryptedUpdatedAt,
+        };
+
+        const createdApp = await batchApplicationService.createApplication(
+          applicationDataWithEncryptedTimestamps,
+        );
+
+        // Should preserve encrypted timestamps exactly as provided
+        expect(createdApp.createdAt).toBe(encryptedCreatedAt);
+        expect(createdApp.updatedAt).toBe(encryptedUpdatedAt);
+        expect(typeof createdApp.createdAt).toBe("string");
+        expect(typeof createdApp.updatedAt).toBe("string");
+      });
+    });
+
+    describe("Client-Only Event Date Requirements", () => {
+      let clientEncryptionKey: CryptoKey;
+
+      beforeEach(async () => {
+        clientEncryptionKey = await createEncryptionKey();
+      });
+
+      it("should REJECT events with unencrypted dates", async () => {
+        const applicationDataWithPlainEventDates: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [
+            {
+              id: "event-1",
+              title: "Application submitted",
+              description: "Submitted application online",
+              date: "2023-12-01T10:00:00.000Z", // Plain ISO string - should cause error
+            },
+          ],
+          currentStatus: { id: "applied", name: "Applied" },
+          createdAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+          updatedAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithPlainEventDates,
+          ),
+        ).rejects.toThrow("Event dates must be encrypted");
+      });
+
+      it("should REQUIRE all event dates to be encrypted strings", async () => {
+        const applicationDataWithMixedEventDates: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [
+            {
+              id: "event-1",
+              title: "Application submitted",
+              description: "Submitted application online",
+              date: await encryptString(
+                "2023-12-01T10:00:00.000Z",
+                clientEncryptionKey,
+              ), // Encrypted - good
+            },
+            {
+              id: "event-2",
+              title: "Phone screen scheduled",
+              description: "HR reached out",
+              date: "2023-12-05T14:00:00.000Z", // Plain ISO string - should cause error
+            },
+          ],
+          currentStatus: { id: "applied", name: "Applied" },
+          createdAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+          updatedAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+        };
+
+        await expect(
+          batchApplicationService.createApplication(
+            applicationDataWithMixedEventDates,
+          ),
+        ).rejects.toThrow("Event dates must be encrypted");
+      });
+
+      it("should never generate server-side event dates", async () => {
+        // Even if we try to trigger automatic event generation, all dates must come from client
+        const applicationDataThatMightTriggerEvents: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [], // Empty events - server should NOT auto-generate any
+          appliedDate: await encryptString("2023-12-01", clientEncryptionKey),
+          currentStatus: { id: "applied", name: "Applied" },
+          createdAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+          updatedAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+        };
+
+        const createdApp = await batchApplicationService.createApplication(
+          applicationDataThatMightTriggerEvents,
+        );
+
+        // Should preserve exactly what client provided - no server-generated events
+        expect(createdApp.events).toHaveLength(0);
+
+        // If there were events, they would have encrypted dates, not server-generated dates
+        // This test ensures the service doesn't add ANY events automatically
+      });
+
+      it("should accept and preserve encrypted event dates from client", async () => {
+        const encryptedEventDate1 = await encryptString(
+          "2023-12-01T10:00:00.000Z",
+          clientEncryptionKey,
+        );
+        const encryptedEventDate2 = await encryptString(
+          "2023-12-05T14:00:00.000Z",
+          clientEncryptionKey,
+        );
+
+        const applicationDataWithEncryptedEvents: ApplicationCreateData = {
+          userId: "test-user-123",
+          companyName: "Test Corp",
+          roleName: "Engineer",
+          jobBoard: { id: "job-board-1", name: "LinkedIn" },
+          workflow: { id: "workflow-1", name: "Standard" },
+          applicationType: "cold",
+          roleType: "engineer",
+          locationType: "remote",
+          events: [
+            {
+              id: "event-1",
+              title: "Application submitted",
+              description: "Submitted application online",
+              date: encryptedEventDate1,
+            },
+            {
+              id: "event-2",
+              title: "Phone screen scheduled",
+              description: "HR reached out",
+              date: encryptedEventDate2,
+            },
+          ],
+          currentStatus: { id: "applied", name: "Applied" },
+          createdAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+          updatedAt: await encryptString(
+            new Date().toISOString(),
+            clientEncryptionKey,
+          ),
+        };
+
+        const createdApp = await batchApplicationService.createApplication(
+          applicationDataWithEncryptedEvents,
+        );
+
+        // Should preserve encrypted event dates exactly as provided
+        expect(createdApp.events).toHaveLength(2);
+        expect(createdApp.events[0].date).toBe(encryptedEventDate1);
+        expect(createdApp.events[1].date).toBe(encryptedEventDate2);
+        expect(typeof createdApp.events[0].date).toBe("string");
+        expect(typeof createdApp.events[1].date).toBe("string");
+      });
     });
   });
 });

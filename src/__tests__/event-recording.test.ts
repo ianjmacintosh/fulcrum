@@ -51,7 +51,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       testApplication._id!.toString(),
     );
     expect(application).toBeTruthy();
-    expect(application?.events).toHaveLength(1);
+    expect(application?.events).toHaveLength(1); // Only creation event (no appliedDate provided)
 
     // Step 2: Get available statuses (simulating GET /api/application-statuses)
     const statuses =
@@ -90,7 +90,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
 
     // Step 4: Verify the update was successful
     expect(updatedApplication).toBeTruthy();
-    expect(updatedApplication?.events).toHaveLength(2);
+    expect(updatedApplication?.events).toHaveLength(2); // 1 creation event + 1 new event
 
     // Step 5: Fetch the updated application to verify persistence
     const refreshedApplication =
@@ -106,7 +106,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].title).toBe("Application submitted");
+    expect(sortedEvents[0].title).toBe("Application created"); // Server-generated creation event
     expect(sortedEvents[1].title).toBe("Phone screen scheduled");
     expect(sortedEvents[1].description).toBe(
       "Phone screen scheduled for next week",
@@ -145,14 +145,14 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       },
     );
 
-    expect(updatedApplication?.events).toHaveLength(4); // 1 initial + 3 new
+    expect(updatedApplication?.events).toHaveLength(4); // 1 creation + 3 new events
 
     // Verify chronological order
     const sortedEvents = [...updatedApplication!.events].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].title).toBe("Application submitted"); // 2025-01-15
+    expect(sortedEvents[0].title).toBe("Application created"); // Current date - earliest
     expect(sortedEvents[1].title).toBe("Phone screen completed"); // 2025-01-25
     expect(sortedEvents[2].title).toBe("Interview scheduled"); // 2025-02-01
     expect(sortedEvents[3].title).toBe("Interview completed"); // 2025-02-05
@@ -215,8 +215,8 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       },
     );
 
-    expect(updatedApplication?.events).toHaveLength(2);
-    expect(updatedApplication?.events[1].title).toBe("Phone screen scheduled");
+    expect(updatedApplication?.events).toHaveLength(2); // 1 creation + 1 new event
+    expect(updatedApplication?.events[1].title).toBe("Phone screen scheduled"); // Now at index 1
     expect(updatedApplication?.phoneScreenDate).toBe("2025-01-20");
   });
 
