@@ -127,8 +127,10 @@ describe("RouterAuthProvider", () => {
   test("updates router context when admin logs in", async () => {
     const adminUser = {
       username: "admin",
+      email: "admin@example.com",
       hashedPassword: "hashed_admin_password",
       createdAt: new Date("2025-01-01"),
+      role: "admin" as const,
     };
 
     renderWithAuthContext({
@@ -326,7 +328,6 @@ describe("RouterAuthProvider", () => {
         id: "user123",
         email: "user@example.com",
         name: "Test User",
-        hashedPassword: "hashed_password",
         createdAt: new Date("2025-01-01"),
         updatedAt: new Date("2025-01-01"),
       },

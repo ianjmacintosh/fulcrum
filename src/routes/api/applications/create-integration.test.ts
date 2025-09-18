@@ -71,8 +71,8 @@ describe("Application Creation API - ServicesProvider Integration", () => {
     };
 
     // This demonstrates the current API ignores client timestamps
-    expect(mockApplicationData.createdAt).toBeUndefined();
-    expect(mockApplicationData.updatedAt).toBeUndefined();
+    expect((mockApplicationData as any).createdAt).toBeUndefined();
+    expect((mockApplicationData as any).updatedAt).toBeUndefined();
 
     // While ServicesProvider expects to send these:
     expect("encrypted_created_timestamp==").not.toBe(

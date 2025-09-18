@@ -183,7 +183,7 @@ test.describe("Application Details Page", () => {
         errorMessages.push(msg.text());
       }
       if (
-        msg.type() === "warn" &&
+        msg.type() === "warning" &&
         (msg.text().includes("encryption") || msg.text().includes("key"))
       ) {
         consoleMessages.push(`WARN: ${msg.text()}`);

@@ -22,9 +22,9 @@ export function RouterAuthProvider({
       user: authContext.user
         ? {
             id:
-              "id" in authContext.user
-                ? authContext.user.id
-                : authContext.user.username,
+              ("id" in authContext.user
+                ? authContext.user.id!
+                : authContext.user.username!) || "",
             email:
               "email" in authContext.user ? authContext.user.email : undefined,
             name:

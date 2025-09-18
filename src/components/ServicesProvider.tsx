@@ -143,8 +143,7 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
         success: false,
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
-        application: null,
-      } as ApplicationResponse;
+      };
     }
   };
 
@@ -266,8 +265,8 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
         list: listApplications,
         create: createApplication,
         createBulk: async () => ({
-          success: false,
-          error: "Services not implemented yet",
+          applications: [],
+          count: 0,
         }),
         get: async () => ({
           success: false,
@@ -302,8 +301,7 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
           error: "Services not implemented yet",
         }),
         create: async () => ({
-          success: false,
-          error: "Services not implemented yet",
+          jobBoard: { name: "", _id: "", userId: "" },
         }),
       },
     };

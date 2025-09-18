@@ -87,7 +87,7 @@ describe("EncryptionMiddleware", () => {
       expect(encrypted.appliedDate).not.toBe("2023-12-01T00:00:00.000Z");
       expect(encrypted.createdAt).toBeDefined();
       expect(encrypted.createdAt).not.toBe(
-        application.createdAt?.toISOString(),
+        (application.createdAt as Date)?.toISOString(),
       );
     });
 
@@ -179,7 +179,7 @@ describe("EncryptionMiddleware", () => {
 
       // Date objects should be restored
       expect(decrypted.createdAt).toBeInstanceOf(Date);
-      expect(decrypted.createdAt?.toISOString()).toBe(
+      expect((decrypted.createdAt as Date)?.toISOString()).toBe(
         "2023-11-30T00:00:00.000Z",
       );
     });

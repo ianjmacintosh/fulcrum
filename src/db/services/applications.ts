@@ -44,7 +44,10 @@ export class ApplicationService {
     }
 
     // Prevent accidental use of Date objects
-    if (createdAt instanceof Date || updatedAt instanceof Date) {
+    if (
+      (createdAt as any) instanceof Date ||
+      (updatedAt as any) instanceof Date
+    ) {
       throw new Error("Timestamps must be encrypted strings, not Date objects");
     }
 

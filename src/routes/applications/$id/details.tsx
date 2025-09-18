@@ -241,7 +241,7 @@ function ApplicationDetails() {
         <section className="event-actions">
           <h2>Add Event</h2>
           <EventRecordingForm
-            applicationId={application._id}
+            applicationId={application._id?.toString() || ""}
             onEventCreated={handleEventCreated}
           />
         </section>

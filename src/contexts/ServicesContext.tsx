@@ -55,11 +55,11 @@ export interface ApplicationsListResponse extends ApiResponse {
 }
 
 export interface ApplicationResponse extends ApiResponse {
-  application: JobApplication;
+  application?: JobApplication;
 }
 
 export interface EventResponse extends ApiResponse {
-  event: ApplicationEvent;
+  event?: ApplicationEvent;
 }
 
 export interface DashboardMetrics {
@@ -71,7 +71,7 @@ export interface DashboardMetrics {
 }
 
 export interface DashboardResponse extends ApiResponse {
-  metrics: DashboardMetrics;
+  metrics?: DashboardMetrics;
 }
 
 export interface ProjectionParams {
@@ -88,7 +88,7 @@ export interface ProjectionData {
 }
 
 export interface ProjectionResponse extends ApiResponse {
-  projection: ProjectionData;
+  projection?: ProjectionData;
 }
 
 export interface JobBoard {
@@ -99,7 +99,7 @@ export interface JobBoard {
 }
 
 export interface JobBoardsResponse extends ApiResponse {
-  jobBoards: JobBoard[];
+  jobBoards?: JobBoard[];
 }
 
 export interface CreateApplicationData {

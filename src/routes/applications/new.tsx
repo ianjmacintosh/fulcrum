@@ -13,7 +13,7 @@ export const Route = createFileRoute("/applications/new")({
  * New Application form component
  * Uses ServicesProvider for automatic encryption, timestamp injection, and HTTP handling
  */
-function NewApplication() {
+export function NewApplication() {
   const router = useRouter();
   const services = useServices();
   const [formData, setFormData] = useState({

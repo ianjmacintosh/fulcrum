@@ -13,6 +13,7 @@ interface ApplicationsContextType {
   applications: JobApplication[];
   isLoading: boolean;
   error: string | null;
+  decryptionError: string | null;
   refreshApplications: () => Promise<void>;
   getApplication: (id: string) => JobApplication | null;
 }
@@ -27,6 +28,8 @@ export function ApplicationsProvider({ children }: ApplicationsProviderProps) {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [decryptionError, setDecryptionError] = useState<string | null>(null);
   const services = useServices();
   const { isLoading: authLoading } = useAuth();
 
@@ -43,7 +46,7 @@ export function ApplicationsProvider({ children }: ApplicationsProviderProps) {
         throw new Error(result.error || "Failed to fetch applications");
       }
 
-      setApplications(result.applications || []);
+      setApplications((result.applications || []) as JobApplication[]);
     } catch (err) {
       console.error("Failed to fetch applications:", err);
       setError(
@@ -74,6 +77,7 @@ export function ApplicationsProvider({ children }: ApplicationsProviderProps) {
     applications,
     isLoading,
     error,
+    decryptionError,
     refreshApplications,
     getApplication,
   };

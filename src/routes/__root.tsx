@@ -13,6 +13,7 @@ import { RouterAuthProvider } from "../components/RouterAuthProvider";
 import { ServicesProvider } from "../components/ServicesProvider";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ApplicationsProvider } from "../contexts/ApplicationsContext";
+import { KeyManager } from "../services/key-manager";
 import { AuthContext, ServicesContext } from "../router";
 import "../styles/global.css";
 
@@ -39,9 +40,11 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
+  const keyManager = new KeyManager("indexeddb");
+
   return (
     <RootDocument>
-      <AuthProvider>
+      <AuthProvider keyManager={keyManager}>
         <ServicesProvider>
           <ApplicationsProvider>
             <RouterAuthProvider>

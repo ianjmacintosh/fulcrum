@@ -24,13 +24,13 @@ vi.mock("../../hooks/useAuth");
 vi.mock("../../contexts/ServicesContext");
 vi.mock("../../utils/csrf-client");
 
-import { Route } from "./new";
 import { AuthProvider } from "../../contexts/AuthContext";
 import { ServicesProvider } from "../../components/ServicesProvider";
 import { useServices } from "../../contexts/ServicesContext";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchCSRFTokens } from "../../utils/csrf-client";
 import { KeyManager } from "../../services/key-manager";
+import { NewApplication } from "./new";
 
 const mockUseAuth = useAuth as any;
 const mockUseServices = useServices as any;
@@ -105,7 +105,7 @@ describe("NewApplication Component", () => {
     render(
       <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
-          <Route.component />
+          <NewApplication />
         </ServicesProvider>
       </AuthProvider>,
     );
@@ -148,7 +148,7 @@ describe("NewApplication Component", () => {
     render(
       <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
-          <Route.component />
+          <NewApplication />
         </ServicesProvider>
       </AuthProvider>,
     );
@@ -211,7 +211,7 @@ describe("NewApplication Component", () => {
     render(
       <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
-          <Route.component />
+          <NewApplication />
         </ServicesProvider>
       </AuthProvider>,
     );
@@ -240,7 +240,7 @@ describe("NewApplication Component", () => {
     render(
       <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
-          <Route.component />
+          <NewApplication />
         </ServicesProvider>
       </AuthProvider>,
     );
