@@ -164,9 +164,10 @@ describe("ServicesProvider", () => {
     expect(mockIsDataEncrypted).not.toHaveBeenCalled();
     expect(mockDecryptFields).not.toHaveBeenCalled();
 
-    // Should return encrypted data as-is
+    // Should return error about missing encryption key
     const result = document.querySelector('[data-testid="api-result"]');
-    expect(result?.textContent).toContain('"companyName":"encrypted_data"');
+    expect(result?.textContent).toContain('"success":false');
+    expect(result?.textContent).toContain("No encryption key available");
   });
 
   it("handles automatic decryption when encryption key is available", async () => {

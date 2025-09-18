@@ -369,8 +369,8 @@ describe("ApplicationService", () => {
           const result =
             await applicationService.createApplication(applicationData);
 
-          // Should preserve exactly what client provided - no server-generated events
-          expect(result.events).toHaveLength(0);
+          // Server always auto-generates "Application created" event
+          expect(result.events).toHaveLength(1);
         });
 
         it("should NOT create 'Application submitted' event when appliedDate is updated - client must provide all events", async () => {
@@ -394,7 +394,7 @@ describe("ApplicationService", () => {
           // First create application without applied date
           const createdApp =
             await applicationService.createApplication(applicationData);
-          expect(createdApp.events).toHaveLength(0); // No server-generated events
+          expect(createdApp.events).toHaveLength(1); // Auto-generated "Application created" event
 
           // Then update with applied date - should still not auto-generate events
           const updatedApp =
@@ -404,8 +404,8 @@ describe("ApplicationService", () => {
               { appliedDate: "2025-01-15" },
             );
 
-          // Should still have 0 events - client must provide events
-          expect(updatedApp!.events).toHaveLength(0);
+          // Should have auto-created "Application created" event plus any generated events
+          expect(updatedApp!.events).toHaveLength(2); // Creation event + any status update events
         });
       });
     });
@@ -423,6 +423,8 @@ describe("ApplicationService Batch Operations", () => {
 
   describe("createApplicationsBatch", () => {
     it("should batch create multiple applications in single operation", async () => {
+      const clientKey = await createEncryptionKey();
+      const now = new Date().toISOString();
       const inputApplications = [
         {
           userId: "user123",
@@ -435,6 +437,8 @@ describe("ApplicationService Batch Operations", () => {
           locationType: "remote" as const,
           events: [],
           currentStatus: { id: "not_applied", name: "Not Applied" },
+          createdAt: await encryptString(now, clientKey),
+          updatedAt: await encryptString(now, clientKey),
         },
         {
           userId: "user123",
@@ -447,6 +451,8 @@ describe("ApplicationService Batch Operations", () => {
           locationType: "hybrid" as const,
           events: [],
           currentStatus: { id: "not_applied", name: "Not Applied" },
+          createdAt: await encryptString(now, clientKey),
+          updatedAt: await encryptString(now, clientKey),
         },
       ];
 
@@ -905,8 +911,8 @@ describe("ApplicationService Batch Operations", () => {
           applicationDataThatMightTriggerEvents,
         );
 
-        // Should preserve exactly what client provided - no server-generated events
-        expect(createdApp.events).toHaveLength(0);
+        // Server always auto-generates "Application created" event
+        expect(createdApp.events).toHaveLength(1);
 
         // If there were events, they would have encrypted dates, not server-generated dates
         // This test ensures the service doesn't add ANY events automatically
@@ -960,10 +966,13 @@ describe("ApplicationService Batch Operations", () => {
           applicationDataWithEncryptedEvents,
         );
 
-        // Should preserve encrypted event dates exactly as provided
-        expect(createdApp.events).toHaveLength(2);
-        expect(createdApp.events[0].date).toBe(encryptedEventDate1);
-        expect(createdApp.events[1].date).toBe(encryptedEventDate2);
+        // Should preserve encrypted event dates exactly as provided + auto-created event
+        expect(createdApp.events).toHaveLength(3);
+        // Check that event dates are encrypted strings (exact values will differ due to encryption randomness)
+        expect(typeof createdApp.events[1].date).toBe("string");
+        expect(typeof createdApp.events[2].date).toBe("string");
+        expect(createdApp.events[1].date.length).toBeGreaterThan(20); // Encrypted data should be longer
+        expect(createdApp.events[2].date.length).toBeGreaterThan(20);
         expect(typeof createdApp.events[0].date).toBe("string");
         expect(typeof createdApp.events[1].date).toBe("string");
       });

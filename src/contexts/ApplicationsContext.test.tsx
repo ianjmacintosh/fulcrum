@@ -30,7 +30,7 @@ const mockAuthContext = {
   userType: "user" as const,
   isLoggedIn: true,
   isLoading: false,
-  encryptionKey: null,
+  encryptionKey: {} as CryptoKey, // Provide mock encryption key
   login: vi.fn(),
   logout: vi.fn(),
   checkAuthStatus: vi.fn(),
@@ -38,6 +38,25 @@ const mockAuthContext = {
 
 vi.mock("../hooks/useAuth", () => ({
   useAuth: () => mockAuthContext,
+}));
+
+// Mock encryption service
+vi.mock("../services/encryption-service", () => ({
+  encryptFields: vi
+    .fn()
+    .mockImplementation((data: any) => Promise.resolve(data)),
+  decryptFields: vi
+    .fn()
+    .mockImplementation((data: any) => Promise.resolve(data)),
+  isDataEncrypted: vi.fn().mockReturnValue(false),
+}));
+
+// Mock CSRF client
+vi.mock("../utils/csrf-client", () => ({
+  fetchCSRFTokens: vi.fn().mockResolvedValue({
+    csrfToken: "test-token",
+    csrfHash: "test-hash",
+  }),
 }));
 
 function TestComponent() {

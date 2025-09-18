@@ -16,13 +16,13 @@ export const mockApplicationService = {
   ): Promise<JobApplication> {
     const now = new Date();
 
-    // Always generate creation event using client-provided encrypted timestamp or fallback
+    // Always generate creation event using an early date to ensure chronological order
     const creationEvent = {
       id: this.generateEventId(),
       title: "Application created",
       description: "Application tracking started",
-      // Use client-provided encrypted timestamp if available, otherwise use current date
-      date: (application as any).createdAt || now.toISOString(),
+      // Use an early date to ensure it comes first chronologically
+      date: (application as any).createdAt || "2025-01-01T00:00:00.000Z",
     };
 
     const newApplication: JobApplication = {

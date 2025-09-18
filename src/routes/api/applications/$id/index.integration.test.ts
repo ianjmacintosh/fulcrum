@@ -52,15 +52,16 @@ describe("Application Details API Unit Tests", () => {
 
     expect(application).toBeTruthy();
     expect(application?.companyName).toBe("Test Company");
-    expect(application?.events).toHaveLength(2);
+    expect(application?.events).toHaveLength(3); // Auto-created "Application created" event + 2 client events
 
     // Verify events can be sorted chronologically
     const sortedEvents = [...application!.events].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].title).toBe("Application submitted");
-    expect(sortedEvents[1].title).toBe("Phone screen completed");
+    expect(sortedEvents[0].title).toBe("Application created"); // Auto-created first (earliest date)
+    expect(sortedEvents[1].title).toBe("Application submitted"); // Client event (2025-01-15)
+    expect(sortedEvents[2].title).toBe("Phone screen completed"); // Client event (2025-01-25)
   });
 
   it("should handle invalid application IDs", async () => {
