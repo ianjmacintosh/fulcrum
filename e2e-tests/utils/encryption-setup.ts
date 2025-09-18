@@ -1,17 +1,62 @@
 import { Page } from "@playwright/test";
 
-const USER_PASSWORD = process.env.USER_PASSWORD || "";
+const USER_PASSWORD = process.env.USER_PASSWORD || "followthewhiterabbit";
 
 /**
  * Set up encryption key in IndexedDB for E2E tests
  * Derives key from test user password and stores it for the session
  */
 export async function setupEncryptionForTest(page: Page): Promise<void> {
-  const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+  // Check if encryption key is already set up to avoid unnecessary reloads
+  const hasKey = await page.evaluate(async () => {
+    try {
+      const DB_NAME = "fulcrum-keys";
+      const STORE_NAME = "cryptoKeys";
+      const USER_KEY_ID = "userEncryptionKey";
+
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = () => {
+          // DB doesn't exist yet
+          reject(new Error("DB doesn't exist"));
+        };
+      });
+
+      const transaction = db.transaction([STORE_NAME], "readonly");
+      const store = transaction.objectStore(STORE_NAME);
+
+      // Get current user ID from auth status
+      const response = await fetch("/api/auth/status", {
+        credentials: "include",
+      });
+      const data = await response.json();
+      const userId = data.user?.id || data.user?._id;
+
+      if (!userId) return false;
+
+      const keyId = `${USER_KEY_ID}_${userId}`;
+      const request = store.get(keyId);
+
+      return new Promise<boolean>((resolve) => {
+        request.onerror = () => resolve(false);
+        request.onsuccess = () => resolve(!!request.result);
+      });
+    } catch {
+      return false;
+    }
+  });
+
+  if (hasKey) {
+    console.log("Encryption key already exists, skipping setup");
+    return;
+  }
+
   await page.evaluate(
-    async ({ password, baseUrl }) => {
+    async ({ password }) => {
       // Fetch current user to get userId
-      const response = await fetch(`${baseUrl}/api/auth/status`, {
+      const response = await fetch("/api/auth/status", {
         credentials: "include",
       });
       const data = await response.json();
@@ -79,10 +124,13 @@ export async function setupEncryptionForTest(page: Page): Promise<void> {
         transaction.onerror = () => reject(transaction.error);
       });
     },
-    { password: USER_PASSWORD, baseUrl },
+    { password: USER_PASSWORD },
   );
 
   // After storing the key, refresh the page so AuthContext picks it up
-  await page.reload();
-  await page.waitForLoadState("networkidle");
+  // Only reload if we actually set up a new key
+  if (!hasKey) {
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+  }
 }
