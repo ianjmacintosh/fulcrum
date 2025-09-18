@@ -1,11 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { createKeyFromPassword } from "../services/encryption-service";
-import {
-  storeEncryptionKey,
-  retrieveEncryptionKey,
-  removeEncryptionKey,
-  isKeyStorageAvailable,
-} from "../services/key-storage";
+import { IKeyManager } from "../services/key-manager";
 
 // Client-side user types (no server imports to avoid bundle bloat)
 export interface User {
@@ -55,9 +50,13 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
   children: ReactNode;
+  keyManager: IKeyManager;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children, keyManager }: AuthProviderProps) {
+  if (!keyManager) {
+    throw new Error("KeyManager must be explicitly provided");
+  }
   const [state, setState] = useState<AuthState>({
     user: null,
     userType: null,
@@ -98,13 +97,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           let encryptionKey = state.encryptionKey;
           console.log("AuthContext DEBUG: Checking encryption key:", {
             hasKeyInMemory: !!encryptionKey,
-            isStorageAvailable: isKeyStorageAvailable(),
+            isStorageAvailable: keyManager.isAvailable(),
           });
 
-          if (!encryptionKey && isKeyStorageAvailable()) {
+          if (!encryptionKey && keyManager.isAvailable()) {
             try {
               const userId = data.user.id || data.user._id;
-              encryptionKey = await retrieveEncryptionKey(userId);
+              encryptionKey = await keyManager.getKey(userId);
               console.log(
                 "AuthContext DEBUG: Retrieved key from storage:",
                 !!encryptionKey,
@@ -181,23 +180,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           // Derive encryption key from password using user ID as salt
           const { key } = await createKeyFromPassword(password, userId);
+          let derivedKey: CryptoKey | null = null;
 
-          // Store encryption key in IndexedDB for future sessions
-          if (isKeyStorageAvailable()) {
-            try {
-              await storeEncryptionKey(key, userId);
-            } catch (error) {
-              console.error("Failed to store encryption key:", error);
-            }
+          // Store encryption key using KeyManager for future sessions
+          // Always try to store, but only set derivedKey if successful
+          try {
+            await keyManager.setKey(key, userId);
+            derivedKey = key; // Only set if successfully stored
+          } catch (error) {
+            console.error("Failed to store encryption key:", error);
+            // derivedKey remains null if storage fails
           }
 
           // Refresh auth status after successful login
           await checkAuthStatus();
 
-          // Update state to include the encryption key
+          // Update state to include the encryption key only if it was successfully stored
           setState((prevState) => ({
             ...prevState,
-            encryptionKey: key,
+            encryptionKey: derivedKey,
           }));
 
           return {
@@ -242,10 +243,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         credentials: "include",
       });
 
-      // Remove encryption key from IndexedDB
-      if (currentUser && isKeyStorageAvailable()) {
+      // Remove encryption key using KeyManager
+      if (currentUser && keyManager.isAvailable()) {
         try {
-          await removeEncryptionKey(currentUser.id || currentUser._id);
+          await keyManager.removeKey(currentUser.id || currentUser._id);
         } catch (error) {
           console.error("Failed to remove encryption key from storage:", error);
         }
@@ -263,9 +264,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error("Logout error:", error);
 
       // Remove encryption key even if logout request fails
-      if (currentUser && isKeyStorageAvailable()) {
+      if (currentUser && keyManager.isAvailable()) {
         try {
-          await removeEncryptionKey(currentUser.id || currentUser._id);
+          await keyManager.removeKey(currentUser.id || currentUser._id);
         } catch (error) {
           console.error("Failed to remove encryption key from storage:", error);
         }

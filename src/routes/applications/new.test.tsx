@@ -30,6 +30,7 @@ import { ServicesProvider } from "../../components/ServicesProvider";
 import { useServices } from "../../contexts/ServicesContext";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchCSRFTokens } from "../../utils/csrf-client";
+import { KeyManager } from "../../services/key-manager";
 
 const mockUseAuth = useAuth as any;
 const mockUseServices = useServices as any;
@@ -39,6 +40,7 @@ const mockFetchCSRFTokens = fetchCSRFTokens as any;
 global.fetch = vi.fn();
 
 describe("NewApplication Component", () => {
+  let testKeyManager: KeyManager;
   const mockCreateApplication = vi.fn();
   const mockServices = {
     applications: {
@@ -63,6 +65,9 @@ describe("NewApplication Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
+
+    // Create a test KeyManager with memory strategy
+    testKeyManager = new KeyManager("memory");
 
     // Setup default mocks
     mockUseAuth.mockReturnValue({
@@ -98,7 +103,7 @@ describe("NewApplication Component", () => {
 
   it("should use ServicesProvider.applications.create instead of direct fetch", async () => {
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <Route.component />
         </ServicesProvider>
@@ -141,7 +146,7 @@ describe("NewApplication Component", () => {
 
   it("should pass all form data to ServicesProvider.applications.create", async () => {
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <Route.component />
         </ServicesProvider>
@@ -204,7 +209,7 @@ describe("NewApplication Component", () => {
     });
 
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <Route.component />
         </ServicesProvider>
@@ -233,7 +238,7 @@ describe("NewApplication Component", () => {
 
   it("should NOT perform manual encryption when using ServicesProvider", async () => {
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <Route.component />
         </ServicesProvider>

@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import { createKeyFromPassword } from "../services/encryption-service";
+import { KeyManager } from "../services/key-manager";
 
 // Mock the encryption service
 vi.mock("../services/encryption-service", () => ({
@@ -16,12 +17,16 @@ global.fetch = mockFetch;
 
 describe("AuthContext", () => {
   let mockCryptoKey: CryptoKey;
+  let testKeyManager: KeyManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Create a mock crypto key
     mockCryptoKey = {} as CryptoKey;
+
+    // Create a test KeyManager with memory strategy
+    testKeyManager = new KeyManager("memory");
 
     // Mock successful encryption service
     vi.mocked(createKeyFromPassword).mockResolvedValue({
@@ -32,6 +37,7 @@ describe("AuthContext", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    document.body.innerHTML = "";
   });
 
   test("preserves encryption key after successful login and auth status check", async () => {
@@ -99,7 +105,7 @@ describe("AuthContext", () => {
     }
 
     const { getByTestId } = render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <TestComponent />
       </AuthProvider>,
     );
@@ -207,7 +213,7 @@ describe("AuthContext", () => {
     }
 
     const { getByTestId } = render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <TestComponentWithLogout />
       </AuthProvider>,
     );
@@ -297,7 +303,7 @@ describe("AuthContext", () => {
     }
 
     const { getByTestId } = render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <TestComponentFailedEncryption />
       </AuthProvider>,
     );

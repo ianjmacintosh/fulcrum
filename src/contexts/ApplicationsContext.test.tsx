@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { ApplicationsProvider, useApplications } from "./ApplicationsContext";
 import { AuthProvider } from "./AuthContext";
 import { ServicesProvider } from "../components/ServicesProvider";
+import { KeyManager } from "../services/key-manager";
 
 const mockApplications = [
   {
@@ -84,10 +85,14 @@ function TestComponent() {
 }
 
 describe("ApplicationsContext", () => {
+  let testKeyManager: KeyManager;
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Clean up DOM between tests to avoid element conflicts
     document.body.innerHTML = "";
+    // Create a test KeyManager with memory strategy
+    testKeyManager = new KeyManager("memory");
   });
 
   it("provides applications data correctly", async () => {
@@ -100,7 +105,7 @@ describe("ApplicationsContext", () => {
     });
 
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <ApplicationsProvider>
             <TestComponent />
@@ -130,7 +135,7 @@ describe("ApplicationsContext", () => {
     (global.fetch as any).mockRejectedValueOnce(new Error("Network error"));
 
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <ApplicationsProvider>
             <TestComponent />
@@ -153,7 +158,7 @@ describe("ApplicationsContext", () => {
     });
 
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <ApplicationsProvider>
             <TestComponent />
@@ -188,7 +193,7 @@ describe("ApplicationsContext", () => {
     }
 
     render(
-      <AuthProvider>
+      <AuthProvider keyManager={testKeyManager}>
         <ServicesProvider>
           <ApplicationsProvider>
             <TestNotFoundComponent />
