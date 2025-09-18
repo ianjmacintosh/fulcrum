@@ -146,7 +146,7 @@ describe("RouterAuthProvider", () => {
           auth: {
             user: {
               id: "admin",
-              email: undefined,
+              email: "admin@example.com",
               name: undefined,
               username: "admin",
               createdAt: adminUser.createdAt,
