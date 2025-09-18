@@ -97,51 +97,12 @@ export function AuthProvider({ children, keyManager }: AuthProviderProps) {
           let encryptionKey = state.encryptionKey;
           console.log("AuthContext DEBUG: Checking encryption key:", {
             hasKeyInMemory: !!encryptionKey,
-            keyManagerAvailable: keyManager.isAvailable(),
-            indexedDBAvailable: typeof indexedDB !== "undefined",
+            isStorageAvailable: keyManager.isAvailable(),
           });
 
           if (!encryptionKey && keyManager.isAvailable()) {
             try {
               const userId = data.user.id || data.user._id;
-
-              // First, let's see what keys are actually available in IndexedDB
-              console.log("AuthContext DEBUG: About to search for key:", {
-                userId: userId,
-                expectedKeyName: `userEncryptionKey_${userId}`,
-              });
-
-              // Check what keys exist in IndexedDB
-              try {
-                const db = await new Promise<IDBDatabase>((resolve, reject) => {
-                  const request = indexedDB.open("fulcrum-keys", 1);
-                  request.onerror = () => reject(request.error);
-                  request.onsuccess = () => resolve(request.result);
-                });
-
-                const transaction = db.transaction(["cryptoKeys"], "readonly");
-                const store = transaction.objectStore("cryptoKeys");
-
-                const availableKeys = await new Promise<string[]>((resolve) => {
-                  const request = store.getAllKeys();
-                  request.onsuccess = () => resolve(request.result as string[]);
-                  request.onerror = () => resolve([]);
-                });
-
-                console.log(
-                  "AuthContext DEBUG: Available keys in IndexedDB:",
-                  availableKeys,
-                );
-                console.log(
-                  "AuthContext DEBUG: Looking for key:",
-                  `userEncryptionKey_${userId}`,
-                );
-              } catch (dbError) {
-                console.error(
-                  "AuthContext DEBUG: Failed to list IndexedDB keys:",
-                  dbError,
-                );
-              }
 
               encryptionKey = await keyManager.getKey(userId);
               console.log(

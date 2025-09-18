@@ -34,16 +34,7 @@ interface IKeyStorage {
 class IndexedDBStorage implements IKeyStorage {
   async getKey(userId?: string): Promise<CryptoKey | null> {
     try {
-      console.log(
-        "KeyManager IndexedDBStorage: Attempting to retrieve key for userId:",
-        userId,
-      );
-      const result = await retrieveEncryptionKey(userId);
-      console.log(
-        "KeyManager IndexedDBStorage: Retrieved key result:",
-        !!result,
-      );
-      return result;
+      return await retrieveEncryptionKey(userId);
     } catch (error) {
       console.error("IndexedDBStorage: Failed to retrieve key:", error);
       return null;

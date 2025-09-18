@@ -71,29 +71,18 @@ export async function setupEncryptionForTest(page: Page): Promise<void> {
       const transaction = db.transaction([STORE_NAME], "readwrite");
       const store = transaction.objectStore(STORE_NAME);
       const keyId = `${USER_KEY_ID}_${userId}`;
-      console.log("E2E: Storing key with keyId:", keyId);
       const request = store.put(key, keyId);
 
       await new Promise<void>((resolve, reject) => {
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          console.log("E2E: Key stored successfully in IndexedDB");
-          resolve();
-        };
+        request.onsuccess = () => resolve();
         transaction.onerror = () => reject(transaction.error);
       });
-
-      console.log(
-        "E2E: Key setup complete, will refresh page to trigger auth reload",
-      );
     },
     { password: USER_PASSWORD, baseUrl },
   );
 
   // After storing the key, refresh the page so AuthContext picks it up
-  console.log(
-    "E2E: Refreshing page to trigger AuthContext to reload encryption key...",
-  );
   await page.reload();
   await page.waitForLoadState("networkidle");
 }
