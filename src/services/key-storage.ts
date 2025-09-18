@@ -70,11 +70,27 @@ export async function retrieveEncryptionKey(
       const store = transaction.objectStore(STORE_NAME);
 
       const keyId = userId ? `${USER_KEY_ID}_${userId}` : USER_KEY_ID;
+      console.log("KeyStorage: Attempting to get key with keyId:", keyId);
       const request = store.get(keyId);
 
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        console.error("KeyStorage: Request error:", request.error);
+        reject(request.error);
+      };
       request.onsuccess = () => {
         const result = request.result;
+        console.log("KeyStorage: Raw result from IndexedDB:", result);
+        console.log(
+          "KeyStorage: Is result a CryptoKey?",
+          result instanceof CryptoKey,
+        );
+        console.log("KeyStorage: Result type:", typeof result);
+        if (result) {
+          console.log(
+            "KeyStorage: Result constructor:",
+            result.constructor.name,
+          );
+        }
         resolve(result instanceof CryptoKey ? result : null);
       };
       transaction.onerror = () => reject(transaction.error);

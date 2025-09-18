@@ -27,6 +27,32 @@ test.describe("Applications", () => {
   });
 
   test("Encryption key is properly set up for tests", async ({ page }) => {
+    // Debug: Check what's actually on the page
+    console.log("Page URL:", await page.url());
+
+    // Check for error messages
+    const pageErrorMessages = await page
+      .locator(".error-message")
+      .allTextContents();
+    console.log("Error messages on page:", pageErrorMessages);
+
+    // Get full text of first error message if it exists
+    const firstError = page.locator(".error-message").first();
+    if (await firstError.isVisible()) {
+      const fullErrorText = await firstError.textContent();
+      console.log("Full error text:", fullErrorText);
+    }
+
+    // Check for loading messages
+    const loadingMessages = await page
+      .locator(".loading-message")
+      .allTextContents();
+    console.log("Loading messages on page:", loadingMessages);
+
+    // Check what headings exist
+    const headings = await page.locator("h1, h2, h3").allTextContents();
+    console.log("All headings on page:", headings);
+
     // Wait for the page to be fully loaded
     await expect(
       page.getByRole("heading", { name: "Applications" }),
