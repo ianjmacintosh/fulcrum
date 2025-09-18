@@ -4,7 +4,6 @@ import { setupEncryptionForTest } from "../utils/encryption-setup";
 test.describe("Applications", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/applications");
-    // Wait for page reload triggered by setupEncryptionForTest
     await page.waitForLoadState("networkidle");
     await setupEncryptionForTest(page);
   });
@@ -59,7 +58,7 @@ test.describe("Applications", () => {
     }
   });
 
-  test.only("Can create new job applications", async ({ page }) => {
+  test("can create new job applications", async ({ page }) => {
     // Check that both "add new application" buttons are visible
     const addButtons = page.getByRole("link", {
       name: "+ Add New Application",

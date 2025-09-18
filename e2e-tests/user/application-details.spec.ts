@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { setupEncryptionForTest } from "../utils/encryption-setup";
 
 test.describe("Application Details Page", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/applications");
+    await page.waitForLoadState("networkidle");
+    await setupEncryptionForTest(page);
+  });
+
   test("should load application details page from applications list", async ({
     page,
   }) => {

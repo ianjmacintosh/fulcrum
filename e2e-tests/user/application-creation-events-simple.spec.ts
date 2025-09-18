@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupEncryptionForTest } from "../utils/encryption-setup";
 
 /**
  * Simplified end-to-end test for application creation events
@@ -7,6 +8,12 @@ import { test, expect } from "@playwright/test";
  * but then verifies that the created application has the expected events in the timeline.
  */
 test.describe("Application Creation Events - Simple", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/applications");
+    await page.waitForLoadState("networkidle");
+    await setupEncryptionForTest(page);
+  });
+
   test("should create application and verify it has creation event in timeline", async ({
     page,
   }) => {

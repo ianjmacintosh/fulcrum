@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { setupEncryptionForTest } from "../utils/encryption-setup";
 
 /**
  * End-to-end test for application creation events
@@ -9,20 +10,9 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Application Creation Events", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the application and ensure we're logged in
-    await page.goto("/");
-
-    // Wait for the page to load and check if we need to log in
+    await page.goto("/applications");
     await page.waitForLoadState("networkidle");
-
-    // If we see a login form, fill it out
-    const loginButton = page.locator('button:has-text("Log In")');
-    if (await loginButton.isVisible()) {
-      await page.fill('input[type="email"]', "test@example.com");
-      await page.fill('input[type="password"]', "testpassword");
-      await loginButton.click();
-      await page.waitForLoadState("networkidle");
-    }
+    await setupEncryptionForTest(page);
   });
 
   test("should create application with creation event - no applied date", async ({

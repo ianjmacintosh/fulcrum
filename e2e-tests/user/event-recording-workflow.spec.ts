@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { setupEncryptionForTest } from "../utils/encryption-setup";
 
 test.describe("Event Recording Workflow", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to applications page
     await page.goto("/applications");
+    await page.waitForLoadState("networkidle");
+    await setupEncryptionForTest(page);
   });
 
   test("should complete full event recording workflow", async ({ page }) => {
