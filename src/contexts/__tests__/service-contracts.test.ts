@@ -128,23 +128,7 @@ describe("Service Contract Tests", () => {
       // This test verifies what ApplicationsContext expects from services
       // Based on how it would use ServicesProvider
 
-      interface ExpectedApplicationsService {
-        create(data: CreateApplicationData): Promise<{
-          success: boolean;
-          application?: any;
-          error?: string;
-        }>;
-        list(): Promise<{
-          success: boolean;
-          applications?: any[];
-          error?: string;
-        }>;
-        get(id: string): Promise<{
-          success: boolean;
-          application?: any;
-          error?: string;
-        }>;
-      }
+      // Test removed - interface was not being used
 
       // Verify CreateApplicationData has the expected shape
       const testData: CreateApplicationData = {

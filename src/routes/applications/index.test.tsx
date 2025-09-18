@@ -1,8 +1,5 @@
 import { describe, expect, test, beforeEach } from "vitest";
-import {
-  decryptFields,
-  isDataEncrypted,
-} from "../../services/encryption-service";
+import { decryptFields } from "../../services/encryption-service";
 import { createEncryptionKey } from "../../utils/client-crypto";
 
 // Mock applications data for testing logic

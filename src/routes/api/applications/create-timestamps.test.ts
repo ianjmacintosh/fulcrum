@@ -1,9 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createServices } from "../../../services/factory";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock the services factory
 vi.mock("../../../services/factory");
-const mockCreateServices = createServices as any;
 
 // Mock CSRF verification
 vi.mock("../../../utils/csrf-server", () => ({
@@ -101,7 +99,6 @@ describe("Application Creation API - Encrypted Timestamps Logic", () => {
     ];
 
     // But ServicesProvider now also sends these encrypted fields:
-    const newEncryptedFields = ["createdAt", "updatedAt"];
 
     // The API schema needs to be updated to accept these new fields
     expect(currentApiFields).not.toContain("createdAt");

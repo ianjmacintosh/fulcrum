@@ -1,11 +1,9 @@
-import { useMemo, useContext } from "react";
+import { useMemo } from "react";
 import {
   ServicesContext,
-  ClientServices,
   CreateApplicationData,
   ApplicationResponse,
 } from "../contexts/ServicesContext";
-import { AuthContext } from "../contexts/AuthContext";
 import {
   encryptFields,
   decryptFields,
@@ -13,13 +11,12 @@ import {
 } from "../services/encryption-service";
 import { useAuth } from "../hooks/useAuth";
 import { fetchCSRFTokens } from "../utils/csrf-client";
-import { ApplicationsContext } from "../contexts/ApplicationsContext";
 
 /**
  * ServicesProvider with HTTP handling and automatic encryption
  */
 export function ServicesProvider({ children }: { children: React.ReactNode }) {
-  const { encryptionKey, isLoggedIn, isLoading } = useAuth();
+  const { encryptionKey, isLoggedIn } = useAuth();
 
   // Helper function to inject timestamps and create events
   const prepareApplicationData = (data: CreateApplicationData) => {
@@ -171,6 +168,12 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
         }
 
         const rawApplications = result.applications || [];
+
+        if (!encryptionKey) {
+          throw new Error(
+            "No encryption key available, abandoning any request for the applications list (/api/applications/)",
+          );
+        }
 
         if (encryptionKey && rawApplications.length > 0) {
           // Check if any application has encrypted data

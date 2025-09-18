@@ -1,7 +1,6 @@
 import { Db, Collection, ObjectId } from "mongodb";
 import {
   JobApplication,
-  JobApplicationSchema,
   CurrentStatus,
   ApplicationCreateData,
   ApplicationEvent,

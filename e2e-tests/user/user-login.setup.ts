@@ -15,5 +15,5 @@ setup("Log in as the test user", async function loginAsUser({ page }) {
   // Wait for successful login by checking for logout button
   await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
 
-  await page.context().storageState({ path: STORAGE_STATE });
+  await page.context().storageState({ path: STORAGE_STATE, indexedDB: true });
 });

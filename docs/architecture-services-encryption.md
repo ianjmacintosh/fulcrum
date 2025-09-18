@@ -43,7 +43,9 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
 ```typescript
 // src/services/factory.ts
 export async function createServices(): Promise<ServicesContext> {
-  const client = new MongoClient(MONGODB_URI, { /* connection options */ });
+  const client = new MongoClient(MONGODB_URI, {
+    /* connection options */
+  });
   await client.connect();
   const db = client.db("fulcrum");
 
@@ -59,18 +61,20 @@ export async function createServices(): Promise<ServicesContext> {
 
 ```typescript
 // src/routes/api/applications/create.ts
-export const ServerRoute = createServerFileRoute("/api/applications/create")
-  .methods({
-    POST: async ({ request, context }) => {
-      // Services are created per request
-      const services = await createServices();
-      
-      // Use services for database operations
-      const application = await services.applicationService.createApplication(data);
-      
-      return createSuccessResponse({ application });
-    },
-  });
+export const ServerRoute = createServerFileRoute(
+  "/api/applications/create",
+).methods({
+  POST: async ({ request, context }) => {
+    // Services are created per request
+    const services = await createServices();
+
+    // Use services for database operations
+    const application =
+      await services.applicationService.createApplication(data);
+
+    return createSuccessResponse({ application });
+  },
+});
 ```
 
 ### Service Classes
@@ -92,6 +96,7 @@ Fulcrum implements **client-side encryption** where sensitive data is encrypted 
 The following fields contain sensitive user data and are automatically encrypted:
 
 ##### JobApplication Entity
+
 - **`companyName`** - Company name (PII - could reveal job search targets)
 - **`roleName`** - Job title/role name (PII - reveals career interests)
 - **`jobPostingUrl`** - URL to job posting (PII - reveals job search activity)
@@ -106,30 +111,42 @@ The following fields contain sensitive user data and are automatically encrypted
 - **`updatedAt`** - Record update timestamp (PII - reveals activity patterns)
 
 ##### ApplicationEvent Entity
+
 - **`title`** - Event title (PII - reveals specific activities/milestones)
 - **`description`** - Event description (PII - sensitive details about job search)
 - **`date`** - Event date (PII - reveals job search timeline)
 
 ##### User Entity
+
 - **`name`** - User's full name (PII - personally identifiable)
 - **`createdAt`** - Account creation date (PII - reveals user activity)
 - **`updatedAt`** - Profile update date (PII - reveals user activity)
 
 ##### Fields That Remain Unencrypted
+
 - **`User.email`** - Required for authentication and login functionality
-- **Entity IDs** - Database identifiers (_id fields) needed for queries and relationships
+- **Entity IDs** - Database identifiers (\_id fields) needed for queries and relationships
 - **Status fields** - Current workflow status indicators needed for filtering and display logic
 
 ```typescript
 // src/services/encryption-service.ts - Implementation
 export const ENCRYPTED_FIELDS = {
   JobApplication: [
-    "companyName", "roleName", "jobPostingUrl", "notes",
-    "appliedDate", "phoneScreenDate", "round1Date", "round2Date",
-    "acceptedDate", "declinedDate", "createdAt", "updatedAt"
+    "companyName",
+    "roleName",
+    "jobPostingUrl",
+    "notes",
+    "appliedDate",
+    "phoneScreenDate",
+    "round1Date",
+    "round2Date",
+    "acceptedDate",
+    "declinedDate",
+    "createdAt",
+    "updatedAt",
   ],
   ApplicationEvent: ["title", "description", "date"],
-  User: ["name", "createdAt", "updatedAt"]
+  User: ["name", "createdAt", "updatedAt"],
   // email remains unencrypted for authentication
 };
 ```
@@ -145,13 +162,19 @@ export const ENCRYPTED_FIELDS = {
 
 ```typescript
 // src/utils/client-crypto.ts
-export async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+export async function deriveKey(
+  password: string,
+  salt: Uint8Array,
+): Promise<CryptoKey> {
   // PBKDF2 with 100,000 iterations
   // SHA-256 hash function
   // 256-bit AES-GCM key
 }
 
-export async function encryptString(plaintext: string, key: CryptoKey): Promise<string> {
+export async function encryptString(
+  plaintext: string,
+  key: CryptoKey,
+): Promise<string> {
   // AES-GCM with random 12-byte IV
   // Returns base64(IV + ciphertext)
 }
@@ -214,9 +237,11 @@ export interface ServicesContext {
 export function createRouter() {
   return createTanStackRouter({
     context: {
-      auth: { /* auth state */ },
+      auth: {
+        /* auth state */
+      },
       services: undefined as any, // Client-side has no services
-    }
+    },
   });
 }
 ```
@@ -258,9 +283,12 @@ router.update({
 
 ```typescript
 // During migration, some data may be encrypted, some not
-export function isDataEncrypted(data: Record<string, any>, entityType: EntityType): boolean {
+export function isDataEncrypted(
+  data: Record<string, any>,
+  entityType: EntityType,
+): boolean {
   const fieldsToCheck = ENCRYPTED_FIELDS[entityType];
-  
+
   for (const field of fieldsToCheck) {
     if (data[field] && typeof data[field] === "string") {
       // Check if it looks like base64 encrypted data
@@ -281,7 +309,10 @@ try {
   const decryptedValue = await decryptString(result[field], key);
   result[field] = decryptedValue;
 } catch (error) {
-  console.warn(`Failed to decrypt field ${field}, assuming unencrypted:`, error);
+  console.warn(
+    `Failed to decrypt field ${field}, assuming unencrypted:`,
+    error,
+  );
   // Field remains as-is (unencrypted)
 }
 ```
@@ -306,18 +337,18 @@ try {
 
 ```typescript
 // Tests can use the encryption service directly
-import { encryptFields, decryptFields } from '../services/encryption-service';
+import { encryptFields, decryptFields } from "../services/encryption-service";
 
-const key = await createKeyFromPassword('test-password');
-const encrypted = await encryptFields(testData, key, 'JobApplication');
-const decrypted = await decryptFields(encrypted, key, 'JobApplication');
+const key = await createKeyFromPassword("test-password");
+const encrypted = await encryptFields(testData, key, "JobApplication");
+const decrypted = await decryptFields(encrypted, key, "JobApplication");
 ```
 
 ### Environment Configuration
 
 ```typescript
 // src/services/factory.ts
-const MONGODB_URI = 
+const MONGODB_URI =
   process.env.MONGO_URL ||
   process.env.MONGODB_URI ||
   process.env.DATABASE_URL ||

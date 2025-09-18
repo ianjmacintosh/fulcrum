@@ -219,7 +219,7 @@ test.describe("Application Details Page", () => {
     const pageContent = await page.textContent("body");
 
     // Look specifically for encrypted data patterns that match our encryption format
-    const encryptedDataPattern = /[A-Za-z0-9+\/]{44,48}={0,2}/g;
+    const encryptedDataPattern = /[A-Za-z0-9+/]{44,48}={0,2}/g;
     const matches = pageContent?.match(encryptedDataPattern) || [];
 
     // Filter out legitimate patterns

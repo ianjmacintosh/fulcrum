@@ -91,11 +91,6 @@ test.describe("Application Creation Events", () => {
 
     // Should have exactly 1 event (creation event only, no applied date provided)
     // Look for events in the timeline - each event should be in a list item or event container
-    const eventsList = page
-      .locator(
-        '.timeline-events, .events-list, [data-testid="timeline-events"]',
-      )
-      .first();
 
     // If no specific events container, look for individual events
     const eventItems = page.locator(':text("Application created")');

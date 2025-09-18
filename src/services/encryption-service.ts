@@ -6,11 +6,9 @@
 
 import {
   deriveKey,
-  generateSalt,
   encryptString,
   decryptString,
   saltToString,
-  saltFromString,
 } from "../utils/client-crypto";
 
 // Define which fields should be encrypted for each entity type

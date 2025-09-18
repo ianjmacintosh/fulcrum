@@ -29,19 +29,31 @@ Transform `ServicesProvider` into a **client-side API service layer** that provi
 export interface ClientServices {
   applications: {
     list(): Promise<{ success: boolean; applications: JobApplication[] }>;
-    create(data: CreateApplicationData): Promise<{ success: boolean; application: JobApplication }>;
+    create(
+      data: CreateApplicationData,
+    ): Promise<{ success: boolean; application: JobApplication }>;
     get(id: string): Promise<{ success: boolean; application: JobApplication }>;
-    update(id: string, data: Partial<JobApplication>): Promise<{ success: boolean; application: JobApplication }>;
+    update(
+      id: string,
+      data: Partial<JobApplication>,
+    ): Promise<{ success: boolean; application: JobApplication }>;
     delete(id: string): Promise<{ success: boolean }>;
-    createEvent(id: string, event: ApplicationEvent): Promise<{ success: boolean; event: ApplicationEvent }>;
+    createEvent(
+      id: string,
+      event: ApplicationEvent,
+    ): Promise<{ success: boolean; event: ApplicationEvent }>;
   };
   analytics: {
     dashboard(): Promise<{ success: boolean; metrics: DashboardMetrics }>;
-    projection(params: ProjectionParams): Promise<{ success: boolean; projection: ProjectionData }>;
+    projection(
+      params: ProjectionParams,
+    ): Promise<{ success: boolean; projection: ProjectionData }>;
   };
   jobBoards: {
     list(): Promise<{ success: boolean; jobBoards: JobBoard[] }>;
-    create(data: CreateJobBoardData): Promise<{ success: boolean; jobBoard: JobBoard }>;
+    create(
+      data: CreateJobBoardData,
+    ): Promise<{ success: boolean; jobBoard: JobBoard }>;
   };
   auth: {
     login(credentials: LoginData): Promise<{ success: boolean; user?: User }>;
@@ -55,7 +67,7 @@ const ServicesContext = createContext<ClientServices | null>(null);
 export function useServices(): ClientServices {
   const services = useContext(ServicesContext);
   if (!services) {
-    throw new Error('useServices must be used within ServicesProvider');
+    throw new Error("useServices must be used within ServicesProvider");
   }
   return services;
 }
@@ -65,46 +77,46 @@ export function useServices(): ClientServices {
 // src/components/ServicesProvider.tsx
 export function ServicesProvider({ children }: { children: React.ReactNode }) {
   const { encryptionKey } = useAuth();
-  
+
   const clientServices: ClientServices = useMemo(() => ({
     applications: {
       async list() {
         const response = await apiCall('/api/applications/', { method: 'GET' });
-        
+
         // Auto-decrypt if user has encryption key
         if (encryptionKey && response.success) {
           response.applications = await Promise.all(
             response.applications.map(app => decryptFields(app, encryptionKey, 'JobApplication'))
           );
         }
-        
+
         return response;
       },
-      
+
       async create(data) {
         // Auto-encrypt sensitive fields if user has encryption key
         let requestData = data;
         if (encryptionKey) {
           requestData = await encryptFields(data, encryptionKey, 'JobApplication');
         }
-        
+
         const formData = new FormData();
         // ... populate formData with requestData
-        
+
         return await apiCall('/api/applications/create', {
           method: 'POST',
           body: formData
         });
       },
-      
+
       // ... other methods
     },
-    
+
     analytics: {
       async dashboard() {
         return await apiCall('/api/analytics/dashboard');
       },
-      
+
       async projection(params) {
         return await apiCall('/api/analytics/projection', {
           method: 'POST',
@@ -113,7 +125,7 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    
+
     // ... other service categories
   }), [encryptionKey]);
 
@@ -156,7 +168,9 @@ if (!result.success) throw new Error("API error");
 // Manual decryption
 if (encryptionKey) {
   const decrypted = await Promise.all(
-    result.applications.map(app => decryptFields(app, encryptionKey, 'JobApplication'))
+    result.applications.map((app) =>
+      decryptFields(app, encryptionKey, "JobApplication"),
+    ),
   );
   setApplications(decrypted);
 }

@@ -51,14 +51,14 @@ function CreateApplicationForm() {
         roleName: formData.roleName,
         jobPostingUrl: formData.jobPostingUrl,
         appliedDate: formData.appliedDate,
-        notes: formData.notes
+        notes: formData.notes,
         // Sensitive fields automatically encrypted before sending!
       });
-      
-      console.log('Created:', application); // Already decrypted response!
+
+      console.log("Created:", application); // Already decrypted response!
       // Redirect or update UI
     } catch (error) {
-      console.error('Failed to create application:', error);
+      console.error("Failed to create application:", error);
     } finally {
       setLoading(false);
     }
@@ -106,52 +106,59 @@ function DashboardMetrics() {
 function Applications() {
   const { encryptionKey } = useAuth();
   const [applications, setApplications] = useState([]);
-  const [decryptionError, setDecryptionError] = useState('');
+  const [decryptionError, setDecryptionError] = useState("");
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
         // Manual fetch call
-        const response = await fetch('/api/applications/', {
-          credentials: 'include'
+        const response = await fetch("/api/applications/", {
+          credentials: "include",
         });
-        
+
         if (!response.ok) {
-          throw new Error('Failed to fetch applications');
+          throw new Error("Failed to fetch applications");
         }
-        
+
         const result = await response.json();
-        
+
         if (!result.success) {
-          throw new Error('Applications API returned error');
+          throw new Error("Applications API returned error");
         }
 
         let apps = result.applications;
 
         // Manual encryption detection and decryption
         if (encryptionKey && apps.length > 0) {
-          const hasEncryptedData = apps.some(app => 
-            isDataEncrypted(app, 'JobApplication')
+          const hasEncryptedData = apps.some((app) =>
+            isDataEncrypted(app, "JobApplication"),
           );
 
           if (hasEncryptedData) {
             apps = await Promise.all(
               apps.map(async (app) => {
                 try {
-                  return await decryptFields(app, encryptionKey, 'JobApplication');
+                  return await decryptFields(
+                    app,
+                    encryptionKey,
+                    "JobApplication",
+                  );
                 } catch (error) {
-                  console.warn(`Failed to decrypt application ${app._id}:`, error);
+                  console.warn(
+                    `Failed to decrypt application ${app._id}:`,
+                    error,
+                  );
                   return app;
                 }
-              })
+              }),
             );
           }
         }
 
         setApplications(apps);
       } catch (error) {
-        console.error('Applications loader error:', error);
-        setDecryptionError('Failed to load applications');
+        console.error("Applications loader error:", error);
+        setDecryptionError("Failed to load applications");
       }
     };
 
@@ -169,20 +176,24 @@ function Applications() {
 function Applications() {
   const { applications } = useServices();
   const [apps, setApps] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadApplications = async () => {
       try {
-        const { applications: appList, success, error } = await applications.list();
-        
+        const {
+          applications: appList,
+          success,
+          error,
+        } = await applications.list();
+
         if (success) {
           setApps(appList); // Automatically decrypted!
         } else {
-          setError(error || 'Failed to load applications');
+          setError(error || "Failed to load applications");
         }
       } catch (err) {
-        setError('Failed to load applications');
+        setError("Failed to load applications");
       }
     };
 
@@ -232,9 +243,9 @@ const { metrics } = await analytics.dashboard();
 
 // Get projection data
 const { projection } = await analytics.projection({
-  startDate: '2025-01-01',
-  endDate: '2025-12-31',
-  targetRole: 'Senior Developer'
+  startDate: "2025-01-01",
+  endDate: "2025-12-31",
+  targetRole: "Senior Developer",
 });
 ```
 
@@ -248,8 +259,8 @@ const { jobBoards } = await jobBoards.list();
 
 // Create job board
 const { jobBoard } = await jobBoards.create({
-  name: 'LinkedIn',
-  url: 'https://linkedin.com/jobs'
+  name: "LinkedIn",
+  url: "https://linkedin.com/jobs",
 });
 ```
 
@@ -269,12 +280,21 @@ The ServicesProvider automatically handles encryption/decryption based on:
 // From encryption-service.ts
 export const ENCRYPTED_FIELDS = {
   JobApplication: [
-    'companyName', 'roleName', 'jobPostingUrl', 'notes',
-    'appliedDate', 'phoneScreenDate', 'round1Date', 'round2Date',
-    'acceptedDate', 'declinedDate', 'createdAt', 'updatedAt'
+    "companyName",
+    "roleName",
+    "jobPostingUrl",
+    "notes",
+    "appliedDate",
+    "phoneScreenDate",
+    "round1Date",
+    "round2Date",
+    "acceptedDate",
+    "declinedDate",
+    "createdAt",
+    "updatedAt",
   ],
-  ApplicationEvent: ['title', 'description', 'date'],
-  User: ['name', 'createdAt', 'updatedAt']
+  ApplicationEvent: ["title", "description", "date"],
+  User: ["name", "createdAt", "updatedAt"],
   // email remains unencrypted for authentication
 };
 ```
@@ -299,14 +319,14 @@ const { applications } = useServices();
 
 try {
   const result = await applications.create(applicationData);
-  
+
   if (result.success) {
-    console.log('Created:', result.application);
+    console.log("Created:", result.application);
   } else {
-    console.error('API Error:', result.error);
+    console.error("API Error:", result.error);
   }
 } catch (error) {
-  console.error('Network Error:', error);
+  console.error("Network Error:", error);
 }
 ```
 
@@ -315,7 +335,11 @@ try {
 Full TypeScript support with proper interfaces:
 
 ```typescript
-import { useServices, JobApplication, CreateApplicationData } from '../contexts/ServicesContext';
+import {
+  useServices,
+  JobApplication,
+  CreateApplicationData,
+} from "../contexts/ServicesContext";
 
 const { applications } = useServices(); // Fully typed!
 
