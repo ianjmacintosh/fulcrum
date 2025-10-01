@@ -531,5 +531,96 @@ describe("ServicesProvider", () => {
       expect(formData.get("jobBoard")).toBe("LinkedIn"); // Unencrypted reference data
       expect(formData.get("applicationType")).toBe("cold"); // Unencrypted enum
     });
+
+    it("should include encrypted events array in FormData when appliedDate is provided", async () => {
+      const mockEncryptionKey = {} as CryptoKey;
+
+      mockUseAuth.mockReturnValue({
+        encryptionKey: mockEncryptionKey,
+        isLoggedIn: true,
+      });
+
+      const mockEncryptedEvents = [
+        {
+          id: expect.stringContaining("event_"),
+          title: "encrypted_title_base64==",
+          description: "encrypted_desc_base64==",
+          date: "encrypted_date_base64==",
+        },
+      ];
+
+      mockEncryptFields.mockImplementation(
+        async (data: any, key: any, type: string) => {
+          if (type === "ApplicationEvent") {
+            return {
+              ...data,
+              title: "encrypted_title_base64==",
+              description: "encrypted_desc_base64==",
+              date: "encrypted_date_base64==",
+            };
+          }
+          return {
+            ...data,
+            companyName: "encrypted_company==",
+            roleName: "encrypted_role==",
+            createdAt: "encrypted_created==",
+            updatedAt: "encrypted_updated==",
+            events: mockEncryptedEvents,
+          };
+        },
+      );
+
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true, application: {} }),
+      });
+
+      function CreateTestComponent() {
+        const services = useServices();
+
+        const handleCreate = async () => {
+          await services.applications.create({
+            companyName: "Test Company",
+            roleName: "Engineer",
+            appliedDate: "2024-01-15",
+            notes: "Test notes",
+          });
+        };
+
+        return (
+          <button onClick={handleCreate} data-testid="create-button">
+            Create Application
+          </button>
+        );
+      }
+
+      render(
+        <ServicesProvider>
+          <CreateTestComponent />
+        </ServicesProvider>,
+      );
+
+      const button = screen.getByTestId("create-button");
+      button.click();
+
+      await waitFor(() => {
+        expect(fetch).toHaveBeenCalled();
+      });
+
+      const fetchCall = (fetch as any).mock.calls[0];
+      const formData = fetchCall[1].body as FormData;
+
+      const eventsData = formData.get("events");
+      expect(eventsData).toBeTruthy();
+
+      const parsedEvents = JSON.parse(eventsData as string);
+      expect(Array.isArray(parsedEvents)).toBe(true);
+      expect(parsedEvents).toHaveLength(1);
+      expect(parsedEvents[0]).toMatchObject({
+        title: "encrypted_title_base64==",
+        description: "encrypted_desc_base64==",
+        date: "encrypted_date_base64==",
+      });
+    });
   });
 });

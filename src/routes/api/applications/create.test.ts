@@ -490,5 +490,38 @@ describe("Application Creation API Validation", () => {
         }),
       );
     });
+
+    it("should parse events from FormData JSON string", () => {
+      const formData = new FormData();
+      formData.append("companyName", "encrypted_company==");
+      formData.append("roleName", "encrypted_role==");
+      formData.append("createdAt", "encrypted_created==");
+      formData.append("updatedAt", "encrypted_updated==");
+      formData.append("csrf_token", "test-token");
+      formData.append("csrf_hash", "test-hash");
+
+      const encryptedEvents = [
+        {
+          id: "event_123",
+          title: "encrypted_title==",
+          description: "encrypted_desc==",
+          date: "encrypted_date==",
+        },
+      ];
+      formData.append("events", JSON.stringify(encryptedEvents));
+
+      const eventsString = formData.get("events") as string;
+      expect(eventsString).toBeTruthy();
+
+      const parsedEvents = JSON.parse(eventsString);
+      expect(Array.isArray(parsedEvents)).toBe(true);
+      expect(parsedEvents).toHaveLength(1);
+      expect(parsedEvents[0]).toMatchObject({
+        id: "event_123",
+        title: "encrypted_title==",
+        description: "encrypted_desc==",
+        date: "encrypted_date==",
+      });
+    });
   });
 });

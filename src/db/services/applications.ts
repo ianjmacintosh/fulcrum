@@ -169,30 +169,55 @@ export class ApplicationService {
       return [];
     }
 
+    const now = new Date();
+
     const newApplications: JobApplication[] = applications.map(
       (application) => {
-        // Validate that required encrypted timestamps are provided for each application
-        this.validateEncryptedTimestamps(application);
+        // Check if timestamps are provided (encrypted from client)
+        const hasEncryptedTimestamps =
+          application.createdAt && application.updatedAt;
 
-        // Validate that all event dates are encrypted for each application
-        this.validateEncryptedEventDates(application.events);
+        // For encrypted applications, validate timestamps
+        if (hasEncryptedTimestamps) {
+          this.validateEncryptedTimestamps(application);
+          // Validate that all event dates are encrypted for each application
+          this.validateEncryptedEventDates(application.events);
 
-        // Always generate "Application created" event using client-provided encrypted timestamp
-        const creationEvent: ApplicationEvent = {
-          id: this.generateEventId(),
-          title: "Application created",
-          description: "Application tracking started",
-          date: application.createdAt!, // Use client-provided encrypted timestamp
-        };
+          // Always generate "Application created" event using client-provided encrypted timestamp
+          const creationEvent: ApplicationEvent = {
+            id: this.generateEventId(),
+            title: "Application created",
+            description: "Application tracking started",
+            date: application.createdAt!, // Use client-provided encrypted timestamp
+          };
 
-        return {
-          ...application,
-          // Add creation event to existing client events (preserves any events client sent)
-          events: [...application.events, creationEvent],
-          // Use client-provided encrypted timestamps - no server-side generation
-          createdAt: application.createdAt!,
-          updatedAt: application.updatedAt!,
-        };
+          return {
+            ...application,
+            // Add creation event to existing client events (preserves any events client sent)
+            events: [...application.events, creationEvent],
+            // Use client-provided encrypted timestamps - no server-side generation
+            createdAt: application.createdAt!,
+            updatedAt: application.updatedAt!,
+          };
+        } else {
+          // For bulk imports without encryption (e.g., CSV import)
+          // Generate timestamps and events server-side
+          const creationEvent: ApplicationEvent = {
+            id: this.generateEventId(),
+            title: "Application created",
+            description: "Application tracking started",
+            date: now.toISOString(),
+          };
+
+          return {
+            ...application,
+            // Add creation event to existing events (if any)
+            events: [...application.events, creationEvent],
+            // Generate timestamps server-side
+            createdAt: now as any,
+            updatedAt: now as any,
+          };
+        }
       },
     );
 

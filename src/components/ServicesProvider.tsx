@@ -79,6 +79,13 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
     formData.append("createdAt", encryptedData.createdAt || "");
     formData.append("updatedAt", encryptedData.updatedAt || "");
 
+    // Add encrypted events as JSON string (empty string if no events)
+    if (encryptedData.events && encryptedData.events.length > 0) {
+      formData.append("events", JSON.stringify(encryptedData.events));
+    } else {
+      formData.append("events", "");
+    }
+
     // Add unencrypted reference data
     formData.append("jobBoard", originalData.jobBoard || "");
     formData.append("applicationType", originalData.applicationType || "cold");

@@ -17,6 +17,7 @@ import {
   requiresRefresh,
   ImportErrorInfo,
 } from "../../../utils/import-error-handling";
+import { useApplications } from "../../../contexts/ApplicationsContext";
 import "./confirm.css";
 
 export const Route = createFileRoute("/applications/import/confirm")({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/applications/import/confirm")({
 
 function ConfirmImportApplications() {
   const router = useRouter();
+  const { refreshApplications } = useApplications();
   const [csrfTokens, setCsrfTokens] = useState<CSRFTokens | null>(null);
   const [importData, setImportData] = useState<ImportApplication[]>([]);
   const [editingCell, setEditingCell] = useState<{
@@ -161,6 +163,9 @@ function ConfirmImportApplications() {
 
       // Success case
       setImportSuccess(true);
+
+      // Refresh applications list to include newly imported data
+      await refreshApplications();
 
       // Clear stored CSV data
       sessionStorage.removeItem("csvImportData");

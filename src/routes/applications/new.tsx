@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
 import { useServices } from "../../contexts/ServicesContext";
+import { useApplications } from "../../contexts/ApplicationsContext";
 import "./new.css";
 
 export const Route = createFileRoute("/applications/new")({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/applications/new")({
 export function NewApplication() {
   const router = useRouter();
   const services = useServices();
+  const { refreshApplications } = useApplications();
   const [formData, setFormData] = useState({
     companyName: "",
     roleName: "",
@@ -122,7 +124,8 @@ export function NewApplication() {
       if (result.success) {
         setSuccessMessage("Job added successfully!");
 
-        // Redirect to applications list after a brief delay
+        await refreshApplications();
+
         setTimeout(() => {
           router.navigate({ to: "/applications" });
         }, 1500);

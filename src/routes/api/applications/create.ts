@@ -26,6 +26,7 @@ const CreateApplicationSchema = z.object({
   notes: z.string().optional().or(z.literal("")), // Encrypted - basic string validation
   createdAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
   updatedAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
+  events: z.string().optional().or(z.literal("")), // JSON string of encrypted events array
 
   // Non-encrypted fields - full validation
   jobBoard: z.string().optional().or(z.literal("")),
@@ -114,6 +115,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           // Extract encrypted timestamps from ServicesProvider (if present)
           const createdAt = formData.get("createdAt") as string;
           const updatedAt = formData.get("updatedAt") as string;
+          const eventsJson = formData.get("events") as string;
 
           // Validate input
           const validation = CreateApplicationSchema.safeParse({
@@ -128,6 +130,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             notes,
             createdAt,
             updatedAt,
+            events: eventsJson,
           });
 
           if (!validation.success) {
@@ -189,7 +192,24 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             const hasAppliedDate =
               appData.appliedDate && appData.appliedDate.trim() !== "";
 
-            return {
+            // Parse events from JSON string if provided
+            let appEvents: any[] = [];
+            if (appData.events && appData.events.trim() !== "") {
+              try {
+                appEvents = JSON.parse(appData.events);
+                if (!Array.isArray(appEvents)) {
+                  appEvents = [];
+                }
+              } catch {
+                appEvents = [];
+              }
+            }
+
+            // For bulk operations (CSV import), timestamps are optional
+            // They will be generated server-side if not provided
+            const hasTimestamps = appData.createdAt && appData.updatedAt;
+
+            const applicationData: any = {
               userId,
               companyName: appData.companyName,
               roleName: appData.roleName,
@@ -205,8 +225,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               applicationType: applicationType as "cold" | "warm",
               roleType: roleType as "manager" | "engineer",
               locationType: locationType as "on-site" | "hybrid" | "remote",
-              // No server-side event generation - all events must come from client with encrypted dates
-              events: [],
+              // Use events from client (encrypted events array)
+              events: appEvents,
               appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               notes: appData.notes || undefined,
               currentStatus: services.applicationService.calculateCurrentStatus(
@@ -215,6 +235,14 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 },
               ),
             };
+
+            // Add timestamps if provided (encrypted from client)
+            if (hasTimestamps) {
+              applicationData.createdAt = appData.createdAt;
+              applicationData.updatedAt = appData.updatedAt;
+            }
+
+            return applicationData;
           });
 
           // Batch create all applications at once
@@ -278,6 +306,19 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             );
           }
 
+          // Parse encrypted events from client if provided
+          let clientEvents: any[] = [];
+          if (validatedData.events && validatedData.events.trim() !== "") {
+            try {
+              clientEvents = JSON.parse(validatedData.events);
+              if (!Array.isArray(clientEvents)) {
+                return createErrorResponse("Events must be an array", 400);
+              }
+            } catch {
+              return createErrorResponse("Invalid events JSON format", 400);
+            }
+          }
+
           // Create application data - timestamps are required and validated by schema
           const applicationData = {
             userId,
@@ -295,8 +336,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             applicationType: applicationType as "cold" | "warm",
             roleType: roleType as "manager" | "engineer",
             locationType: locationType as "on-site" | "hybrid" | "remote",
-            // No server-side event generation - all events must come from client with encrypted dates
-            events: [],
+            // Use events from client (encrypted events array)
+            events: clientEvents,
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
             // Always include encrypted timestamps from client - server cannot generate them

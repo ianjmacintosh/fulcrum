@@ -15,7 +15,7 @@ test.describe("Application Creation Events", () => {
     await setupEncryptionForTest(page);
   });
 
-  test.only("should create application with creation event - no applied date", async ({
+  test("should create application with creation event - no applied date", async ({
     page,
   }) => {
     // Navigate to the new application form
