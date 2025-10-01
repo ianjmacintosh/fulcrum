@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 
-// Mock the router
 const mockNavigate = vi.fn();
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: vi.fn(() => (config: any) => ({
@@ -14,19 +13,19 @@ vi.mock("@tanstack/react-router", () => ({
   }),
 }));
 
-// Mock route guards
 vi.mock("../../utils/route-guards", () => ({
   requireUserAuth: vi.fn(),
 }));
 
-// Mock dependencies
 vi.mock("../../hooks/useAuth");
 vi.mock("../../contexts/ServicesContext");
+vi.mock("../../contexts/ApplicationsContext");
 vi.mock("../../utils/csrf-client");
 
 import { AuthProvider } from "../../contexts/AuthContext";
 import { ServicesProvider } from "../../components/ServicesProvider";
 import { useServices } from "../../contexts/ServicesContext";
+import { useApplications } from "../../contexts/ApplicationsContext";
 import { useAuth } from "../../hooks/useAuth";
 import { fetchCSRFTokens } from "../../utils/csrf-client";
 import { KeyManager } from "../../services/key-manager";
@@ -34,14 +33,15 @@ import { NewApplication } from "./new";
 
 const mockUseAuth = useAuth as any;
 const mockUseServices = useServices as any;
+const mockUseApplications = useApplications as any;
 const mockFetchCSRFTokens = fetchCSRFTokens as any;
 
-// Mock job boards API
 global.fetch = vi.fn();
 
 describe("NewApplication Component", () => {
   let testKeyManager: KeyManager;
   const mockCreateApplication = vi.fn();
+  const mockRefreshApplications = vi.fn();
   const mockServices = {
     applications: {
       create: mockCreateApplication,
@@ -66,10 +66,8 @@ describe("NewApplication Component", () => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
 
-    // Create a test KeyManager with memory strategy
     testKeyManager = new KeyManager("memory");
 
-    // Setup default mocks
     mockUseAuth.mockReturnValue({
       encryptionKey: {} as CryptoKey,
       isLoggedIn: true,
@@ -78,12 +76,20 @@ describe("NewApplication Component", () => {
 
     mockUseServices.mockReturnValue(mockServices);
 
+    mockUseApplications.mockReturnValue({
+      applications: [],
+      isLoading: false,
+      error: null,
+      decryptionError: null,
+      refreshApplications: mockRefreshApplications,
+      getApplication: vi.fn(),
+    });
+
     mockFetchCSRFTokens.mockResolvedValue({
       csrfToken: "test-token",
       csrfHash: "test-hash",
     });
 
-    // Mock job boards API
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: () =>
@@ -110,23 +116,19 @@ describe("NewApplication Component", () => {
       </AuthProvider>,
     );
 
-    // Wait for form to load
     await waitFor(() => {
       expect(screen.getByText("Add New Job")).toBeDefined();
     });
 
-    // Fill out required fields
     const companyInput = screen.getByLabelText(/Company Name/);
     const roleInput = screen.getByLabelText(/Job Title/);
 
     fireEvent.change(companyInput, { target: { value: "Test Company" } });
     fireEvent.change(roleInput, { target: { value: "Software Engineer" } });
 
-    // Submit form
     const submitButton = screen.getByRole("button", { name: /Add Job/ });
     fireEvent.click(submitButton);
 
-    // Verify that services.applications.create was called instead of fetch
     await waitFor(() => {
       expect(mockCreateApplication).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -136,7 +138,6 @@ describe("NewApplication Component", () => {
       );
     });
 
-    // Verify direct fetch was NOT called for application creation
     const fetchCalls = (global.fetch as any).mock.calls;
     const applicationCreateCalls = fetchCalls.filter((call: any) =>
       call[0].includes("/api/applications/create"),
@@ -157,7 +158,6 @@ describe("NewApplication Component", () => {
       expect(screen.getByText("Add New Job")).toBeDefined();
     });
 
-    // Fill out all form fields
     fireEvent.change(screen.getByLabelText(/Company Name/), {
       target: { value: "Test Company" },
     });
@@ -220,7 +220,6 @@ describe("NewApplication Component", () => {
       expect(screen.getByText("Add New Job")).toBeDefined();
     });
 
-    // Fill required fields and submit
     fireEvent.change(screen.getByLabelText(/Company Name/), {
       target: { value: "Test Company" },
     });
@@ -230,7 +229,6 @@ describe("NewApplication Component", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Add Job/ }));
 
-    // Verify error message is displayed
     await waitFor(() => {
       expect(screen.getByText("Service error occurred")).toBeDefined();
     });
@@ -262,9 +260,8 @@ describe("NewApplication Component", () => {
       expect(mockCreateApplication).toHaveBeenCalled();
     });
 
-    // Verify the data passed to service is NOT encrypted (plain text)
     const callArgs = mockCreateApplication.mock.calls[0][0];
-    expect(callArgs.companyName).toBe("Test Company"); // Plain text, not encrypted
-    expect(callArgs.roleName).toBe("Engineer"); // Plain text, not encrypted
+    expect(callArgs.companyName).toBe("Test Company");
+    expect(callArgs.roleName).toBe("Engineer");
   });
 });
