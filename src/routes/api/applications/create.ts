@@ -10,27 +10,28 @@ import { z } from "zod";
 /**
  * Schema for application creation validation
  *
- * All submissions must include encrypted timestamps from client.
- * Server cannot generate timestamps due to encryption requirements.
+ * Fields are validated differently based on whether they are encrypted:
+ * - Encrypted fields: Basic presence/structure validation only (client handles content validation)
+ * - Non-encrypted fields: Full validation (enums, formats, etc.)
+ *
+ * Encrypted fields: companyName, roleName, jobPostingUrl, notes, appliedDate, createdAt, updatedAt
+ * Non-encrypted fields: jobBoard, applicationType, roleType, locationType
  */
 const CreateApplicationSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  roleName: z.string().min(1, "Job title is required"),
-  jobPostingUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  appliedDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
-    .optional()
-    .or(z.literal("")),
+  // Encrypted fields - validate structure only, not content
+  companyName: z.string().min(1, "companyName is required"),
+  roleName: z.string().min(1, "roleName is required"),
+  jobPostingUrl: z.string().optional().or(z.literal("")), // Encrypted - no URL validation
+  appliedDate: z.string().optional().or(z.literal("")), // Encrypted - no date format validation
+  notes: z.string().optional().or(z.literal("")), // Encrypted - basic string validation
+  createdAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
+  updatedAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
+
+  // Non-encrypted fields - full validation
   jobBoard: z.string().optional().or(z.literal("")),
   applicationType: z.enum(["cold", "warm"]).optional(),
   roleType: z.enum(["manager", "engineer"]).optional(),
   locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
-  notes: z.string().optional().or(z.literal("")),
-  // Encrypted timestamp fields from client (base64-encoded strings)
-  // Optional for backward compatibility, but server will require them for security
-  createdAt: z.string().optional().or(z.literal("")),
-  updatedAt: z.string().optional().or(z.literal("")),
 });
 
 // Schema for bulk application creation
@@ -89,10 +90,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               BulkCreateApplicationSchema.safeParse(parsedApplications);
 
             if (!bulkValidation.success) {
-              return createErrorResponse(
-                bulkValidation.error.issues[0].message,
-                400,
-              );
+              const issue = bulkValidation.error.issues[0];
+              const fieldName =
+                issue.path.length > 0 ? issue.path.join(".") : "unknown field";
+              return createErrorResponse(`${fieldName}: ${issue.message}`, 400);
             }
 
             bulkValidatedData = bulkValidation.data;
@@ -130,7 +131,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           });
 
           if (!validation.success) {
-            return createErrorResponse(validation.error.issues[0].message, 400);
+            const issue = validation.error.issues[0];
+            const fieldName =
+              issue.path.length > 0 ? issue.path.join(".") : "unknown field";
+            return createErrorResponse(`${fieldName}: ${issue.message}`, 400);
           }
 
           validatedData = validation.data;

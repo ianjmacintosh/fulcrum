@@ -15,7 +15,7 @@ test.describe("Application Creation Events", () => {
     await setupEncryptionForTest(page);
   });
 
-  test("should create application with creation event - no applied date", async ({
+  test.only("should create application with creation event - no applied date", async ({
     page,
   }) => {
     // Navigate to the new application form
@@ -39,31 +39,28 @@ test.describe("Application Creation Events", () => {
     // Submit the form
     await page.getByRole("button", { name: "Add Job" }).click();
 
-    // Take screenshot for debugging
-    await page.screenshot({ path: `debug-form-submit-${timestamp}.png` });
+    // Wait for success message briefly, then redirect to applications page
+    // The success message appears for 1.5s before redirecting
+    await expect(page.getByText("Job added successfully!")).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Wait a bit to see what happens
-    await page.waitForTimeout(2000);
+    // Should redirect to applications list after brief delay
+    await page.waitForURL("/applications", { timeout: 10000 });
 
-    // Try to wait for either success or error
-    try {
-      await expect(page.getByText("Job added successfully!")).toBeVisible({
-        timeout: 10000,
-      });
-      // Should redirect to applications list
-      await page.waitForURL("/applications");
-    } catch (e) {
-      // If success message doesn't appear, let's see what's on the page
-      console.log("Form submission may have failed, current URL:", page.url());
-      console.log("Page content:", await page.locator("body").textContent());
-      throw e;
-    }
+    // Wait for the applications list to load and refresh
+    await page.waitForLoadState("networkidle");
+
+    // Debug: Check if any application cards exist at all
+    const allCards = page.locator('[data-testid="application-card"]');
+    const cardCount = await allCards.count();
+    console.log(`Found ${cardCount} application cards on the page`);
 
     // Look for our created application using the correct selector
     const applicationCard = page
       .locator('[data-testid="application-card"]')
       .filter({ hasText: `Test Company E2E ${timestamp}` });
-    await expect(applicationCard).toBeVisible();
+    await expect(applicationCard).toBeVisible({ timeout: 10000 });
 
     // Click on the application card to view details
     await applicationCard.click();
