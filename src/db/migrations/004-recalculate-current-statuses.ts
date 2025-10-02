@@ -1,5 +1,5 @@
 import { Migration } from "./migration-runner";
-import { applicationService } from "../services/applications";
+import { ApplicationService } from "../services/applications";
 
 /**
  * Migration: Recalculate Current Status for All Applications
@@ -23,6 +23,8 @@ export const recalculateCurrentStatuses: Migration = {
 
     try {
       if (!dryRun) {
+        // Create service with the provided db connection
+        const applicationService = new ApplicationService(db);
         const updatedCount =
           await applicationService.recalculateAllCurrentStatuses();
 

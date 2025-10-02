@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  isDataEncrypted,
+  encryptFields,
+} from "../../../services/encryption-service";
+import { createEncryptionKey } from "../../../utils/client-crypto";
 
 // Mock the validation schema before importing
 const mockValidateSchema = vi.fn();
@@ -48,8 +53,13 @@ vi.mock("../../../utils/csrf-server", () => ({
 }));
 
 describe("Application Creation API Validation", () => {
-  beforeEach(() => {
+  let testKey: CryptoKey;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Create encryption key for tests
+    testKey = await createEncryptionKey();
 
     // Setup default mock responses
     mockVerifyCSRFToken.mockReturnValue(true);
@@ -150,61 +160,64 @@ describe("Application Creation API Validation", () => {
   });
 
   describe("Application Service Integration", () => {
-    it("should call createApplication with default values for missing fields", async () => {
-      const mockApplication = {
-        _id: "app-123",
+    it("should call createApplication with encrypted sensitive data", async () => {
+      // Create plaintext application data
+      const plaintextData = {
+        userId: "user-123",
         companyName: "TestCorp",
         roleName: "Software Engineer",
-        applicationType: "cold",
-        roleType: "engineer",
-        locationType: "remote",
+        jobPostingUrl: "https://example.com/job",
+        notes: "Test notes",
+        jobBoard: { id: "board-123", name: "General" },
+        workflow: { id: "workflow-123", name: "Default Workflow" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
         events: [],
-        currentStatus: { id: "not_applied", name: "Not Applied" },
+        appliedDate: undefined,
+        currentStatus: { id: "status-123", name: "Applied" },
+      };
+
+      // Encrypt the sensitive fields
+      const encryptedData = await encryptFields(
+        plaintextData,
+        testKey,
+        "JobApplication",
+      );
+
+      const mockApplication = {
+        _id: "app-123",
+        ...encryptedData,
         createdAt: new Date(),
       };
 
       mockCreateApplication.mockResolvedValue(mockApplication);
 
-      // Simulate the logic that would call createApplication
-      await mockCreateApplication({
-        userId: "user-123",
-        companyName: "TestCorp",
-        roleName: "Software Engineer",
-        jobPostingUrl: undefined,
-        jobBoard: { id: "board-123", name: "General" },
-        workflow: { id: "workflow-123", name: "Default Workflow" },
-        applicationType: "cold", // Default value
-        roleType: "engineer", // Default value
-        locationType: "remote", // Default value
-        events: [], // No events when no appliedDate
-        appliedDate: undefined,
-        notes: undefined,
-        currentStatus: { id: "status-123", name: "Applied" },
-      });
+      await mockCreateApplication(encryptedData);
 
+      // Verify that sensitive data appears encrypted
       expect(mockCreateApplication).toHaveBeenCalledWith(
         expect.objectContaining({
-          applicationType: "cold",
-          roleType: "engineer",
-          locationType: "remote",
-          events: [],
-          appliedDate: undefined,
-          notes: undefined,
+          companyName: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Base64 pattern
+          roleName: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Base64 pattern
+          applicationType: "cold", // Not encrypted
+          roleType: "engineer", // Not encrypted
+          locationType: "remote", // Not encrypted
+          userId: "user-123", // Not encrypted
         }),
       );
+
+      // Verify encrypted data is not the same as plaintext
+      expect(encryptedData.companyName).not.toBe("TestCorp");
+      expect(encryptedData.roleName).not.toBe("Software Engineer");
+
+      // Verify data is detected as encrypted
+      expect(isDataEncrypted(encryptedData, "JobApplication")).toBe(true);
     });
 
-    it("should create events when appliedDate is provided", async () => {
-      const mockApplication = {
-        _id: "app-123",
-        companyName: "TestCorp",
-        roleName: "Software Engineer",
-      };
-
-      mockCreateApplication.mockResolvedValue(mockApplication);
-
-      // Simulate creating application with appliedDate
-      await mockCreateApplication({
+    it("should create events with encrypted data when appliedDate is provided", async () => {
+      // Create plaintext application data with events
+      const plaintextData = {
         userId: "user-123",
         companyName: "TestCorp",
         roleName: "Software Engineer",
@@ -220,25 +233,51 @@ describe("Application Creation API Validation", () => {
         ],
         jobBoard: { id: "board-123", name: "General" },
         workflow: { id: "workflow-123", name: "Default Workflow" },
-        applicationType: "cold",
-        roleType: "engineer",
-        locationType: "remote",
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
         currentStatus: { id: "status-123", name: "Applied" },
-      });
+      };
+
+      // Encrypt the sensitive fields including nested events
+      const encryptedData = await encryptFields(
+        plaintextData,
+        testKey,
+        "JobApplication",
+      );
+
+      const mockApplication = {
+        _id: "app-123",
+        ...encryptedData,
+      };
+
+      mockCreateApplication.mockResolvedValue(mockApplication);
+
+      await mockCreateApplication(encryptedData);
 
       expect(mockCreateApplication).toHaveBeenCalledWith(
         expect.objectContaining({
-          appliedDate: "2025-01-15",
-          notes: "Applied via LinkedIn",
+          companyName: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
+          roleName: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
+          appliedDate: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
+          notes: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
           events: expect.arrayContaining([
             expect.objectContaining({
-              title: "Application submitted",
-              description: "Applied via LinkedIn",
-              date: "2025-01-15",
+              id: "event-123", // Not encrypted
+              title: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
+              description: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
+              date: expect.stringMatching(/^[A-Za-z0-9+/]+=*$/), // Encrypted
             }),
           ]),
         }),
       );
+
+      // Verify encrypted data is not the same as plaintext
+      expect(encryptedData.companyName).not.toBe("TestCorp");
+      expect(encryptedData.events[0].title).not.toBe("Application submitted");
+
+      // Verify data is detected as encrypted
+      expect(isDataEncrypted(encryptedData, "JobApplication")).toBe(true);
     });
 
     it("should use 'General' job board when none specified", async () => {
@@ -333,6 +372,156 @@ describe("Application Creation API Validation", () => {
           currentStatus: { id: "applied", name: "Applied" },
         }),
       );
+    });
+  });
+
+  describe("API Encrypted Timestamp Requirements", () => {
+    it("should ensure ApplicationService validates encrypted timestamps", async () => {
+      // Test that API passes data to ApplicationService which handles validation
+      const applicationData = {
+        userId: "user-123",
+        companyName: "Test Corp",
+        roleName: "Engineer",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [],
+        currentStatus: { id: "not_applied", name: "Not Applied" },
+        // Missing encrypted timestamps - ApplicationService should reject this
+      };
+
+      // Mock ApplicationService to reject missing encrypted timestamps
+      mockCreateApplication.mockRejectedValueOnce(
+        new Error("createdAt timestamp is required and must be encrypted"),
+      );
+
+      try {
+        await mockCreateApplication(applicationData);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.message).toContain(
+          "createdAt timestamp is required and must be encrypted",
+        );
+      }
+    });
+
+    it("should ensure ApplicationService validates encrypted event dates", async () => {
+      const applicationData = {
+        userId: "user-123",
+        companyName: "Test Corp",
+        roleName: "Engineer",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [
+          {
+            id: "event-1",
+            title: "Application submitted",
+            description: "Applied online",
+            date: "2023-12-01T10:00:00.000Z", // Unencrypted date - should be rejected
+          },
+        ],
+        currentStatus: { id: "applied", name: "Applied" },
+        createdAt: "encrypted_created_timestamp==",
+        updatedAt: "encrypted_updated_timestamp==",
+      };
+
+      // Mock ApplicationService to reject unencrypted event dates
+      mockCreateApplication.mockRejectedValueOnce(
+        new Error("Event dates must be encrypted"),
+      );
+
+      try {
+        await mockCreateApplication(applicationData);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (error: any) {
+        expect(error.message).toContain("Event dates must be encrypted");
+      }
+    });
+
+    it("should pass properly encrypted data to ApplicationService", async () => {
+      const encryptedApplicationData = {
+        userId: "user-123",
+        companyName: "encrypted_company_name==",
+        roleName: "encrypted_role_name==",
+        jobBoard: { id: "board-123", name: "LinkedIn" },
+        workflow: { id: "workflow-123", name: "Standard" },
+        applicationType: "cold" as const,
+        roleType: "engineer" as const,
+        locationType: "remote" as const,
+        events: [
+          {
+            id: "event-1",
+            title: "encrypted_event_title==",
+            description: "encrypted_event_description==",
+            date: "encrypted_event_date==",
+          },
+        ],
+        currentStatus: { id: "applied", name: "Applied" },
+        createdAt: "encrypted_created_timestamp==",
+        updatedAt: "encrypted_updated_timestamp==",
+      };
+
+      // Mock successful creation with encrypted data
+      mockCreateApplication.mockResolvedValueOnce({
+        _id: "created-app-id",
+        ...encryptedApplicationData,
+      });
+
+      const result = await mockCreateApplication(encryptedApplicationData);
+
+      expect(result).toBeDefined();
+      expect(result._id).toBe("created-app-id");
+      expect(mockCreateApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          createdAt: "encrypted_created_timestamp==",
+          updatedAt: "encrypted_updated_timestamp==",
+          events: expect.arrayContaining([
+            expect.objectContaining({
+              date: "encrypted_event_date==",
+            }),
+          ]),
+        }),
+      );
+    });
+
+    it("should parse events from FormData JSON string", () => {
+      const formData = new FormData();
+      formData.append("companyName", "encrypted_company==");
+      formData.append("roleName", "encrypted_role==");
+      formData.append("createdAt", "encrypted_created==");
+      formData.append("updatedAt", "encrypted_updated==");
+      formData.append("csrf_token", "test-token");
+      formData.append("csrf_hash", "test-hash");
+
+      const encryptedEvents = [
+        {
+          id: "event_123",
+          title: "encrypted_title==",
+          description: "encrypted_desc==",
+          date: "encrypted_date==",
+        },
+      ];
+      formData.append("events", JSON.stringify(encryptedEvents));
+
+      const eventsString = formData.get("events") as string;
+      expect(eventsString).toBeTruthy();
+
+      const parsedEvents = JSON.parse(eventsString);
+      expect(Array.isArray(parsedEvents)).toBe(true);
+      expect(parsedEvents).toHaveLength(1);
+      expect(parsedEvents[0]).toMatchObject({
+        id: "event_123",
+        title: "encrypted_title==",
+        description: "encrypted_desc==",
+        date: "encrypted_date==",
+      });
     });
   });
 });

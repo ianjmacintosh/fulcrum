@@ -1,7 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { setupEncryptionForTest } from "../utils/encryption-setup";
 
 test.describe("Navigation and Session Persistence", () => {
   test.describe("User Session Tests", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/applications");
+      await page.waitForLoadState("networkidle");
+      await setupEncryptionForTest(page);
+    });
+
     test("Client-side navigation preserves user session", async ({ page }) => {
       // Navigate to applications page
       await page.goto("/applications");
@@ -42,12 +49,18 @@ test.describe("Navigation and Session Persistence", () => {
   });
 
   test.describe("Authorization and Deep Links", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/applications");
+      await page.waitForLoadState("networkidle");
+      await setupEncryptionForTest(page);
+    });
+
     test("Regular user cannot access admin routes", async ({ page }) => {
       // Try to access admin route
       await page.goto("/admin/users");
 
       // Wait for authentication state to be fully loaded after navigation
-      await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
+      await expect(page.locator("button.logout-button")).toBeVisible();
 
       // Should be redirected or see unauthorized message
       // The exact behavior depends on your auth implementation

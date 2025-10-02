@@ -1,6 +1,9 @@
 // src/router.tsx
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { ApplicationService } from "./db/services/applications";
+import { WorkflowService } from "./db/services/workflows";
+import { JobBoardService } from "./db/services/job-boards";
 
 // Auth context type for router
 export interface AuthContext {
@@ -21,6 +24,13 @@ export interface AuthContext {
   } | null;
 }
 
+// Services context type for dependency injection
+export interface ServicesContext {
+  applicationService: ApplicationService;
+  workflowService: WorkflowService;
+  jobBoardService: JobBoardService;
+}
+
 export function createRouter() {
   const router = createTanStackRouter({
     routeTree,
@@ -32,7 +42,8 @@ export function createRouter() {
         authenticated: false,
         session: null,
       },
-    } as { auth: AuthContext },
+      services: undefined as any, // Will be set during app initialization
+    } as { auth: AuthContext; services: ServicesContext },
   });
 
   return router;

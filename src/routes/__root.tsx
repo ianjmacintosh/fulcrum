@@ -10,11 +10,17 @@ import {
 import { Navigation } from "../components/Navigation";
 import { Footer } from "../components/Footer";
 import { RouterAuthProvider } from "../components/RouterAuthProvider";
+import { ServicesProvider } from "../components/ServicesProvider";
 import { AuthProvider } from "../contexts/AuthContext";
-import { AuthContext } from "../router";
+import { ApplicationsProvider } from "../contexts/ApplicationsContext";
+import { KeyManager } from "../services/key-manager";
+import { AuthContext, ServicesContext } from "../router";
 import "../styles/global.css";
 
-export const Route = createRootRouteWithContext<{ auth: AuthContext }>()({
+export const Route = createRootRouteWithContext<{
+  auth: AuthContext;
+  services: ServicesContext;
+}>()({
   head: () => ({
     meta: [
       {
@@ -34,14 +40,20 @@ export const Route = createRootRouteWithContext<{ auth: AuthContext }>()({
 });
 
 function RootComponent() {
+  const keyManager = new KeyManager("indexeddb");
+
   return (
     <RootDocument>
-      <AuthProvider>
-        <RouterAuthProvider>
-          <Navigation />
-          <Outlet />
-          <Footer />
-        </RouterAuthProvider>
+      <AuthProvider keyManager={keyManager}>
+        <ServicesProvider>
+          <ApplicationsProvider>
+            <RouterAuthProvider>
+              <Navigation />
+              <Outlet />
+              <Footer />
+            </RouterAuthProvider>
+          </ApplicationsProvider>
+        </ServicesProvider>
       </AuthProvider>
     </RootDocument>
   );

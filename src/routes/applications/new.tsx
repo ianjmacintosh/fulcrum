@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
-import { fetchCSRFTokens } from "../../utils/csrf-client";
+import { useServices } from "../../contexts/ServicesContext";
+import { useApplications } from "../../contexts/ApplicationsContext";
 import "./new.css";
 
 export const Route = createFileRoute("/applications/new")({
@@ -9,8 +10,14 @@ export const Route = createFileRoute("/applications/new")({
   component: NewApplication,
 });
 
-function NewApplication() {
+/**
+ * New Application form component
+ * Uses ServicesProvider for automatic encryption, timestamp injection, and HTTP handling
+ */
+export function NewApplication() {
   const router = useRouter();
+  const services = useServices();
+  const { refreshApplications } = useApplications();
   const [formData, setFormData] = useState({
     companyName: "",
     roleName: "",
@@ -25,23 +32,15 @@ function NewApplication() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [csrfTokens, setCsrfTokens] = useState<{
-    csrfToken: string;
-    csrfHash: string;
-  } | null>(null);
   const [jobBoards, setJobBoards] = useState<
     Array<{ id: string; name: string; url: string }>
   >([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Fetch CSRF tokens and job boards on component mount
+  // Fetch job boards on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load CSRF tokens
-        const tokens = await fetchCSRFTokens();
-        setCsrfTokens(tokens);
-
         // Load job boards
         const response = await fetch("/api/job-boards/");
         const result = await response.json();
@@ -90,45 +89,43 @@ function NewApplication() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Handle form submission using ServicesProvider
+   * ServicesProvider automatically handles:
+   * - Field-level encryption of sensitive data
+   * - Timestamp injection (createdAt, updatedAt)
+   * - Event creation from applied date
+   * - CSRF token management
+   * - HTTP request formatting and submission
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSuccessMessage("");
     setErrorMessage("");
 
-    if (!csrfTokens) {
-      setErrorMessage("Security tokens not loaded. Please refresh the page.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      // Create form data for submission
-      const submitFormData = new FormData();
-      submitFormData.append("companyName", formData.companyName);
-      submitFormData.append("roleName", formData.roleName);
-      submitFormData.append("jobPostingUrl", formData.jobPostingUrl);
-      submitFormData.append("appliedDate", formData.appliedDate);
-      submitFormData.append("jobBoard", formData.jobBoard);
-      submitFormData.append("applicationType", formData.applicationType);
-      submitFormData.append("roleType", formData.roleType);
-      submitFormData.append("locationType", formData.locationType);
-      submitFormData.append("notes", formData.notes);
-      submitFormData.append("csrf_token", csrfTokens.csrfToken);
-      submitFormData.append("csrf_hash", csrfTokens.csrfHash);
+      // Prepare application data - pass plain text, ServicesProvider handles encryption
+      const applicationData = {
+        companyName: formData.companyName,
+        roleName: formData.roleName,
+        jobPostingUrl: formData.jobPostingUrl || undefined,
+        appliedDate: formData.appliedDate || undefined,
+        jobBoard: formData.jobBoard || undefined,
+        applicationType: formData.applicationType,
+        roleType: formData.roleType,
+        locationType: formData.locationType,
+        notes: formData.notes || undefined,
+      };
 
-      // Submit to API
-      const response = await fetch("/api/applications/create", {
-        method: "POST",
-        body: submitFormData,
-      });
-
-      const result = await response.json();
+      // ServicesProvider handles all encryption, timestamps, and HTTP logic
+      const result = await services.applications.create(applicationData);
 
       if (result.success) {
         setSuccessMessage("Job added successfully!");
 
-        // Redirect to applications list after a brief delay
+        await refreshApplications();
+
         setTimeout(() => {
           router.navigate({ to: "/applications" });
         }, 1500);
@@ -170,7 +167,7 @@ function NewApplication() {
                   value={formData.companyName}
                   onChange={handleInputChange}
                   required
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                   placeholder="e.g., TechCorp Inc."
                 />
               </div>
@@ -184,7 +181,7 @@ function NewApplication() {
                   value={formData.roleName}
                   onChange={handleInputChange}
                   required
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                   placeholder="e.g., Senior Software Engineer"
                 />
               </div>
@@ -199,7 +196,7 @@ function NewApplication() {
                   name="jobPostingUrl"
                   value={formData.jobPostingUrl}
                   onChange={handleInputChange}
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                   placeholder="https://company.com/careers/job-id"
                 />
               </div>
@@ -212,7 +209,7 @@ function NewApplication() {
                   name="appliedDate"
                   value={formData.appliedDate}
                   onChange={handleInputChange}
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                   placeholder="Leave empty if not yet applied"
                 />
               </div>
@@ -226,7 +223,7 @@ function NewApplication() {
                   name="jobBoard"
                   value={formData.jobBoard}
                   onChange={handleInputChange}
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                 >
                   <option value="">Select job board (optional)...</option>
                   {jobBoards.map((board) => (
@@ -244,7 +241,7 @@ function NewApplication() {
                   name="roleType"
                   value={formData.roleType}
                   onChange={handleInputChange}
-                  disabled={isSubmitting || !csrfTokens || isLoadingData}
+                  disabled={isSubmitting || isLoadingData}
                 >
                   <option value="engineer">Engineer (default)</option>
                   <option value="manager">Manager</option>
@@ -263,7 +260,7 @@ function NewApplication() {
                       value="cold"
                       checked={formData.applicationType === "cold"}
                       onChange={handleInputChange}
-                      disabled={isSubmitting || !csrfTokens || isLoadingData}
+                      disabled={isSubmitting || isLoadingData}
                     />
                     <span>Cold Apply</span>
                   </label>
@@ -274,7 +271,7 @@ function NewApplication() {
                       value="warm"
                       checked={formData.applicationType === "warm"}
                       onChange={handleInputChange}
-                      disabled={isSubmitting || !csrfTokens || isLoadingData}
+                      disabled={isSubmitting || isLoadingData}
                     />
                     <span>Warm Apply</span>
                   </label>
@@ -291,7 +288,7 @@ function NewApplication() {
                       value="on-site"
                       checked={formData.locationType === "on-site"}
                       onChange={handleInputChange}
-                      disabled={isSubmitting || !csrfTokens || isLoadingData}
+                      disabled={isSubmitting || isLoadingData}
                     />
                     <span>On-site</span>
                   </label>
@@ -302,7 +299,7 @@ function NewApplication() {
                       value="hybrid"
                       checked={formData.locationType === "hybrid"}
                       onChange={handleInputChange}
-                      disabled={isSubmitting || !csrfTokens || isLoadingData}
+                      disabled={isSubmitting || isLoadingData}
                     />
                     <span>Hybrid</span>
                   </label>
@@ -313,7 +310,7 @@ function NewApplication() {
                       value="remote"
                       checked={formData.locationType === "remote"}
                       onChange={handleInputChange}
-                      disabled={isSubmitting || !csrfTokens || isLoadingData}
+                      disabled={isSubmitting || isLoadingData}
                     />
                     <span>Remote</span>
                   </label>
@@ -328,7 +325,7 @@ function NewApplication() {
                 name="notes"
                 value={formData.notes}
                 onChange={handleInputChange}
-                disabled={isSubmitting || !csrfTokens || isLoadingData}
+                disabled={isSubmitting || isLoadingData}
                 placeholder="Any additional notes about this application..."
                 rows={4}
               />
@@ -347,18 +344,18 @@ function NewApplication() {
                 type="button"
                 onClick={handleCancel}
                 className="cancel-button"
-                disabled={isSubmitting || !csrfTokens || isLoadingData}
+                disabled={isSubmitting || isLoadingData}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="submit-button"
-                disabled={isSubmitting || !csrfTokens || isLoadingData}
+                disabled={isSubmitting || isLoadingData}
               >
                 {isSubmitting
                   ? "Adding..."
-                  : !csrfTokens || isLoadingData
+                  : isLoadingData
                     ? "Loading..."
                     : "Add Job"}
               </button>

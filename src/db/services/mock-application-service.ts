@@ -6,15 +6,33 @@ let applications: JobApplication[] = [];
 let nextId = 1;
 
 export const mockApplicationService = {
+  // Helper to generate event ID like the real service
+  generateEventId(): string {
+    return `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  },
+
   async createApplication(
     application: Omit<JobApplication, "_id" | "createdAt" | "updatedAt">,
   ): Promise<JobApplication> {
     const now = new Date();
+
+    // Always generate creation event using an early date to ensure chronological order
+    const creationEvent = {
+      id: this.generateEventId(),
+      title: "Application created",
+      description: "Application tracking started",
+      // Use an early date to ensure it comes first chronologically
+      date: (application as any).createdAt || "2025-01-01T00:00:00.000Z",
+    };
+
     const newApplication: JobApplication = {
       ...application,
       _id: new ObjectId(`${nextId++}`.padStart(24, "0")),
-      createdAt: now,
-      updatedAt: now,
+      // Add creation event to existing client events (preserves any events client sent)
+      events: [...(application.events || []), creationEvent],
+      // Use client-provided timestamps if available (for encrypted data tests)
+      createdAt: (application as any).createdAt || now,
+      updatedAt: (application as any).updatedAt || now,
     };
 
     applications.push(newApplication);

@@ -73,7 +73,7 @@ describe("POST /api/applications/:id/events", () => {
     );
 
     expect(updatedApp).toBeTruthy();
-    expect(updatedApp?.events).toHaveLength(2);
+    expect(updatedApp?.events).toHaveLength(3); // Auto-created "Application created" event + 1 existing + 1 new event
     // Events API should not update status dates
     expect(updatedApp?.phoneScreenDate).toBeUndefined();
 
@@ -150,7 +150,7 @@ describe("POST /api/applications/:id/events", () => {
       },
     );
 
-    expect(updatedApp?.events).toHaveLength(originalEventCount + 1);
+    expect(updatedApp?.events).toHaveLength(originalEventCount + 1); // Preserves count logic
 
     // Original event should still exist
     const originalEvent = updatedApp?.events.find(
@@ -181,7 +181,7 @@ describe("POST /api/applications/:id/events", () => {
       },
     );
 
-    expect(updatedApp?.events).toHaveLength(2);
+    expect(updatedApp?.events).toHaveLength(3); // Auto-created "Application created" event + 1 existing + 1 new event
     expect(updatedApp?.events.find((e) => e.id === eventId)?.title).toBe(
       "rejected_by_employer",
     );

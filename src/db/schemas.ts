@@ -115,6 +115,9 @@ export interface ApplicationCreateData {
   declinedDate?: string;
   notes?: string;
   currentStatus: CurrentStatus;
+  // Required encrypted timestamps from client - server cannot generate these
+  createdAt?: string; // Encrypted timestamp string
+  updatedAt?: string; // Encrypted timestamp string
 }
 
 // TypeScript interfaces (for use in application code)
@@ -162,8 +165,8 @@ export interface JobApplication {
   declinedDate?: string; // ISO date string
   notes?: string; // Additional notes about the application
   currentStatus: CurrentStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | Date; // Encrypted string or Date
+  updatedAt: string | Date; // Encrypted string or Date
 }
 
 export interface ApplicationStatus {

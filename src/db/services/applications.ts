@@ -1,51 +1,18 @@
 import { Db, Collection, ObjectId } from "mongodb";
-import { connectToDatabase } from "../connection";
 import {
   JobApplication,
-  JobApplicationSchema,
   CurrentStatus,
   ApplicationCreateData,
   ApplicationEvent,
 } from "../schemas";
 
 export class ApplicationService {
-  private db: Db | null = null;
   private collection: Collection<JobApplication> | null = null;
-  private testMode: boolean = false;
-  private testStorage: JobApplication[] = [];
-  private testIdCounter: number = 1;
 
-  /**
-   * Enable test mode - uses in-memory storage instead of database
-   */
-  public enableTestMode(): void {
-    this.testMode = true;
-    this.testStorage = [];
-    this.testIdCounter = 1;
-  }
+  constructor(private db: Db) {}
 
-  /**
-   * Disable test mode - returns to normal database operations
-   */
-  public disableTestMode(): void {
-    this.testMode = false;
-    this.testStorage = [];
-    this.testIdCounter = 1;
-  }
-
-  /**
-   * Clear test storage (only works in test mode)
-   */
-  public clearTestStorage(): void {
-    if (this.testMode) {
-      this.testStorage = [];
-      this.testIdCounter = 1;
-    }
-  }
-
-  private async getCollection(): Promise<Collection<JobApplication>> {
+  private getCollection(): Collection<JobApplication> {
     if (!this.collection) {
-      this.db = await connectToDatabase();
       this.collection = this.db.collection<JobApplication>("applications");
     }
     return this.collection;
@@ -58,49 +25,140 @@ export class ApplicationService {
     return `event_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
+  /**
+   * Validate that required encrypted timestamps are provided by client
+   * Server cannot generate timestamps because it lacks encryption capabilities
+   */
+  private validateEncryptedTimestamps(
+    application: ApplicationCreateData,
+  ): void {
+    const { createdAt, updatedAt } = application;
+
+    // Ensure both timestamps are present
+    if (!createdAt) {
+      throw new Error("createdAt timestamp is required and must be encrypted");
+    }
+
+    if (!updatedAt) {
+      throw new Error("updatedAt timestamp is required and must be encrypted");
+    }
+
+    // Prevent accidental use of Date objects
+    if (
+      (createdAt as any) instanceof Date ||
+      (updatedAt as any) instanceof Date
+    ) {
+      throw new Error("Timestamps must be encrypted strings, not Date objects");
+    }
+
+    // Validate string format
+    if (typeof createdAt !== "string" || typeof updatedAt !== "string") {
+      throw new Error("Timestamps must be encrypted strings");
+    }
+
+    // Verify base64 encryption format
+    if (
+      !this.isValidEncryptedString(createdAt) ||
+      !this.isValidEncryptedString(updatedAt)
+    ) {
+      throw new Error("Timestamps must be properly encrypted (base64 format)");
+    }
+  }
+
+  /**
+   * Check if a string appears to be properly encrypted (base64 format)
+   */
+  private isValidEncryptedString(value: string): boolean {
+    const base64Pattern = /^[A-Za-z0-9+/]+=*$/;
+    return base64Pattern.test(value) && value.length > 10; // Basic length check
+  }
+
+  /**
+   * Validate that all event dates are encrypted
+   * Server cannot generate event dates because it lacks encryption capabilities
+   */
+  private validateEncryptedEventDates(events: ApplicationEvent[]): void {
+    if (!events || events.length === 0) {
+      return; // Empty events are fine - no validation needed
+    }
+
+    events.forEach((event, index) => {
+      this.validateSingleEventDate(event, index);
+    });
+  }
+
+  /**
+   * Validate a single event's date field
+   */
+  private validateSingleEventDate(
+    event: ApplicationEvent,
+    index: number,
+  ): void {
+    if (!event.date) {
+      throw new Error(`Event at index ${index} missing date field`);
+    }
+
+    // Ensure date is a string (not Date object or other type)
+    if (typeof event.date !== "string") {
+      throw new Error(
+        `Event dates must be encrypted strings, found ${typeof event.date} at index ${index}`,
+      );
+    }
+
+    // Detect unencrypted ISO date strings
+    if (this.isISODateString(event.date)) {
+      throw new Error("Event dates must be encrypted");
+    }
+
+    // Verify it looks like encrypted data (base64)
+    if (!this.isValidEncryptedString(event.date)) {
+      throw new Error("All event dates must be encrypted");
+    }
+  }
+
+  /**
+   * Check if a string looks like an ISO date string (unencrypted)
+   */
+  private isISODateString(dateString: string): boolean {
+    const isoDatePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    return isoDatePattern.test(dateString);
+  }
+
   async createApplication(
     application: ApplicationCreateData,
   ): Promise<JobApplication> {
-    const now = new Date();
+    // Validate that required encrypted timestamps are provided
+    this.validateEncryptedTimestamps(application);
 
-    // Always generate "Application created" event
-    const createdEvent: ApplicationEvent = {
+    // Validate that all event dates are encrypted
+    this.validateEncryptedEventDates(application.events);
+
+    // Always generate "Application created" event using client-provided encrypted timestamp
+    const creationEvent: ApplicationEvent = {
       id: this.generateEventId(),
       title: "Application created",
       description: "Application tracking started",
-      date: now.toISOString().split("T")[0],
+      date: application.createdAt!, // Use client-provided encrypted timestamp
     };
 
+    // Use application data exactly as provided by client, but ADD creation event to existing events
     const newApplication: JobApplication = {
       ...application,
-      events: [...application.events, createdEvent],
-      createdAt: now,
-      updatedAt: now,
+      // Add creation event to existing client events (preserves any events client sent)
+      events: [...application.events, creationEvent],
+      // Use client-provided encrypted timestamps - no server-side generation
+      createdAt: application.createdAt!,
+      updatedAt: application.updatedAt!,
     };
 
-    // Validate with Zod (excluding _id since MongoDB will generate it)
-    const validationResult = JobApplicationSchema.safeParse({
-      ...newApplication,
-      createdAt: newApplication.createdAt,
-      updatedAt: newApplication.updatedAt,
-    });
+    // Skip Zod validation for encrypted data - the client handles encryption
+    // and we can't validate encrypted strings with the standard schema.
+    // Basic structure validation was done in validateEncryptedTimestamps().
 
-    if (!validationResult.success) {
-      throw new Error(`Validation error: ${validationResult.error.message}`);
-    }
-
-    if (this.testMode) {
-      // In test mode, use in-memory storage
-      const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
-      const applicationWithId = { ...newApplication, _id: id };
-      this.testStorage.push(applicationWithId);
-      return applicationWithId;
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      const result = await collection.insertOne(newApplication);
-      return { ...newApplication, _id: result.insertedId };
-    }
+    // Store application as-is (client handles encryption)
+    const collection = this.getCollection();
+    const result = await collection.insertOne(newApplication);
+    return { ...newApplication, _id: result.insertedId };
   }
 
   // Batch create multiple applications efficiently
@@ -115,57 +173,67 @@ export class ApplicationService {
 
     const newApplications: JobApplication[] = applications.map(
       (application) => {
-        // Always generate "Application created" event for batch operations too
-        const createdEvent: ApplicationEvent = {
-          id: this.generateEventId(),
-          title: "Application created",
-          description: "Application tracking started",
-          date: now.toISOString().split("T")[0],
-        };
+        // Check if timestamps are provided (encrypted from client)
+        const hasEncryptedTimestamps =
+          application.createdAt && application.updatedAt;
 
-        return {
-          ...application,
-          events: [...application.events, createdEvent],
-          createdAt: now,
-          updatedAt: now,
-        };
+        // For encrypted applications, validate timestamps
+        if (hasEncryptedTimestamps) {
+          this.validateEncryptedTimestamps(application);
+          // Validate that all event dates are encrypted for each application
+          this.validateEncryptedEventDates(application.events);
+
+          // Always generate "Application created" event using client-provided encrypted timestamp
+          const creationEvent: ApplicationEvent = {
+            id: this.generateEventId(),
+            title: "Application created",
+            description: "Application tracking started",
+            date: application.createdAt!, // Use client-provided encrypted timestamp
+          };
+
+          return {
+            ...application,
+            // Add creation event to existing client events (preserves any events client sent)
+            events: [...application.events, creationEvent],
+            // Use client-provided encrypted timestamps - no server-side generation
+            createdAt: application.createdAt!,
+            updatedAt: application.updatedAt!,
+          };
+        } else {
+          // For bulk imports without encryption (e.g., CSV import)
+          // Generate timestamps and events server-side
+          const creationEvent: ApplicationEvent = {
+            id: this.generateEventId(),
+            title: "Application created",
+            description: "Application tracking started",
+            date: now.toISOString(),
+          };
+
+          return {
+            ...application,
+            // Add creation event to existing events (if any)
+            events: [...application.events, creationEvent],
+            // Generate timestamps server-side
+            createdAt: now as any,
+            updatedAt: now as any,
+          };
+        }
       },
     );
 
-    // Validate all applications before inserting
-    for (const [index, application] of newApplications.entries()) {
-      const validationResult = JobApplicationSchema.safeParse({
-        ...application,
-        createdAt: application.createdAt,
-        updatedAt: application.updatedAt,
-      });
+    // Skip Zod validation for encrypted data - the client handles encryption
+    // and we can't validate encrypted strings with the standard schema.
+    // Basic structure validation was done in validateEncryptedTimestamps().
 
-      if (!validationResult.success) {
-        throw new Error(
-          `Validation error for application ${index} (${application.companyName} - ${application.roleName}): ${validationResult.error.message}`,
-        );
-      }
-    }
+    // Store applications as-is (client handles encryption)
+    const collection = this.getCollection();
+    const result = await collection.insertMany(newApplications);
 
-    if (this.testMode) {
-      // In test mode, use in-memory storage
-      const applicationsWithIds = newApplications.map((application) => {
-        const id = new ObjectId(`${this.testIdCounter++}`.padStart(24, "0"));
-        return { ...application, _id: id };
-      });
-      this.testStorage.push(...applicationsWithIds);
-      return applicationsWithIds;
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      const result = await collection.insertMany(newApplications);
-
-      // Return applications with their generated IDs
-      return newApplications.map((application, index) => ({
-        ...application,
-        _id: result.insertedIds[index],
-      }));
-    }
+    // Return applications with their generated IDs
+    return newApplications.map((application, index) => ({
+      ...application,
+      _id: result.insertedIds[index],
+    }));
   }
 
   // Helper to extract unique job board names from application data
@@ -192,7 +260,13 @@ export class ApplicationService {
       query.limit(limit);
     }
 
-    return await query.skip(skip).sort({ createdAt: -1 }).toArray();
+    // Return applications as-is (client handles decryption)
+    const applications = await query
+      .skip(skip)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return applications;
   }
 
   async getApplicationById(
@@ -415,29 +489,20 @@ export class ApplicationService {
     id: string | ObjectId,
     updates: Partial<JobApplication>,
   ): Promise<JobApplication | null> {
-    // First get the current application to merge with updates
+    // Get the current application to merge with updates
+    const collection = this.getCollection();
     let currentApplication: any = null;
 
-    if (this.testMode) {
-      // In test mode, find in memory storage
-      const searchId = typeof id === "string" ? id : id.toString();
-      currentApplication = this.testStorage.find(
-        (app) => app._id?.toString() === searchId && app.userId === userId,
-      );
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      try {
-        // Convert string to ObjectId if needed
-        const objectId = typeof id === "string" ? new ObjectId(id) : id;
-        currentApplication = await collection.findOne({
-          _id: objectId,
-          userId,
-        });
-      } catch {
-        // Return null if ObjectId conversion fails
-        return null;
-      }
+    try {
+      // Convert string to ObjectId if needed
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      currentApplication = await collection.findOne({
+        _id: objectId,
+        userId,
+      });
+    } catch {
+      // Return null if ObjectId conversion fails
+      return null;
     }
 
     if (!currentApplication) {
@@ -493,7 +558,7 @@ export class ApplicationService {
         const today = new Date().toISOString().split("T")[0];
 
         let eventTitle = title;
-        let eventDescription;
+        let eventDescription: string = "";
 
         // Create proper descriptions based on the field
         if (field === "appliedDate") {
@@ -566,38 +631,19 @@ export class ApplicationService {
     delete updateDoc._id; // Don't update the _id field
     delete updateDoc.userId; // Don't allow userId to be changed
 
-    if (this.testMode) {
-      // In test mode, update in memory storage
-      const searchId = typeof id === "string" ? id : id.toString();
-      const appIndex = this.testStorage.findIndex(
-        (app) => app._id?.toString() === searchId && app.userId === userId,
+    // Update application in database
+    try {
+      // Convert string to ObjectId if needed
+      const objectId = typeof id === "string" ? new ObjectId(id) : id;
+      const result = await collection.findOneAndUpdate(
+        { _id: objectId, userId },
+        { $set: updateDoc },
+        { returnDocument: "after" },
       );
-
-      if (appIndex === -1) return null;
-
-      const updatedApp = {
-        ...currentApplication,
-        ...updateDoc,
-        updatedAt: new Date(),
-      };
-      this.testStorage[appIndex] = updatedApp;
-      return updatedApp;
-    } else {
-      // Normal database operation
-      const collection = await this.getCollection();
-      try {
-        // Convert string to ObjectId if needed
-        const objectId = typeof id === "string" ? new ObjectId(id) : id;
-        const result = await collection.findOneAndUpdate(
-          { _id: objectId, userId },
-          { $set: updateDoc },
-          { returnDocument: "after" },
-        );
-        return result;
-      } catch {
-        // Return null if ObjectId conversion fails or update fails
-        return null;
-      }
+      return result;
+    } catch {
+      // Return null if ObjectId conversion fails or update fails
+      return null;
     }
   }
 
@@ -637,5 +683,4 @@ export class ApplicationService {
   }
 }
 
-// Export singleton instance
-export const applicationService = new ApplicationService();
+// ApplicationService uses dependency injection - no singleton export

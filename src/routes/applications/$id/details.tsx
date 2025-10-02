@@ -1,48 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireUserAuth } from "../../../utils/route-guards";
 import { EventRecordingForm } from "../../../components/EventRecordingForm";
+import { useApplications } from "../../../contexts/ApplicationsContext";
 import "./details.css";
 
 export const Route = createFileRoute("/applications/$id/details")({
   beforeLoad: requireUserAuth,
-  loader: async ({ params }) => {
-    // On server-side, skip loading data if user is not authenticated
-    // Client will reload once auth context is available
-    if (typeof window === "undefined") {
-      return { application: null };
-    }
-
-    try {
-      const response = await fetch(`/api/applications/${params.id}`, {
-        credentials: "include",
-      });
-
-      if (response.status === 404) {
-        // Application not found - return null to show "Application not found" message
-        return { application: null };
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch application: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error("Application API returned error");
-      }
-
-      return { application: result.application };
-    } catch (error) {
-      console.error("Application details loader error:", error);
-      throw error;
-    }
-  },
   component: ApplicationDetails,
 });
 
 function ApplicationDetails() {
-  const { application } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const {
+    getApplication,
+    isLoading,
+    error,
+    decryptionError,
+    refreshApplications,
+  } = useApplications();
+
+  const application = getApplication(id);
+
+  if (error) {
+    return (
+      <div className="page">
+        <div className="page-content">
+          <div className="error-message">
+            Failed to load applications: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="page">
+        <div className="page-content">
+          <div className="loading-message">Loading application...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!application) {
     return (
@@ -63,8 +62,8 @@ function ApplicationDetails() {
   };
 
   const handleEventCreated = () => {
-    // Refresh the page to show the new event
-    window.location.reload();
+    // Refresh applications from context to show the new event
+    refreshApplications();
   };
 
   const handleStatusDateChange = async (dateField: string, value: string) => {
@@ -84,8 +83,8 @@ function ApplicationDetails() {
         throw new Error(`Failed to update ${dateField}`);
       }
 
-      // Refresh the page to show the updated status
-      window.location.reload();
+      // Refresh applications from context to show the updated status
+      refreshApplications();
     } catch (error) {
       console.error(`Error updating ${dateField}:`, error);
       // Could add a toast notification here
@@ -100,6 +99,10 @@ function ApplicationDetails() {
       </header>
 
       <main className="page-content">
+        {decryptionError && (
+          <div className="error-message">{decryptionError}</div>
+        )}
+
         <section className="application-info">
           <div className="info-card">
             <h2>{application.companyName}</h2>
@@ -238,7 +241,7 @@ function ApplicationDetails() {
         <section className="event-actions">
           <h2>Add Event</h2>
           <EventRecordingForm
-            applicationId={application._id}
+            applicationId={application._id?.toString() || ""}
             onEventCreated={handleEventCreated}
           />
         </section>

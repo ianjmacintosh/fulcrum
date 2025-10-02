@@ -1,10 +1,12 @@
-import { applicationService } from "./applications";
+import { ApplicationService } from "./applications";
 import { JobApplication } from "../schemas";
 
 export class AnalyticsService {
+  constructor(private applicationService: ApplicationService) {}
+
   async getDashboardMetrics(userId: string) {
     // Get all applications for user
-    const applications = await applicationService.getApplications(
+    const applications = await this.applicationService.getApplications(
       userId,
       {},
       0,
@@ -46,7 +48,7 @@ export class AnalyticsService {
   }
 
   async getJobProjection(userId: string) {
-    const applications = await applicationService.getApplications(
+    const applications = await this.applicationService.getApplications(
       userId,
       {},
       0,
@@ -322,5 +324,4 @@ export class AnalyticsService {
   }
 }
 
-// Export singleton instance
-export const analyticsService = new AnalyticsService();
+// AnalyticsService uses dependency injection - no singleton export

@@ -4,7 +4,7 @@ import {
   createErrorResponse,
 } from "../../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../../middleware/auth";
-import { applicationService } from "../../../../db/services/applications";
+import { createServices } from "../../../../services/factory";
 
 export const ServerRoute = createServerFileRoute("/api/applications/$id/")
   .middleware([requireUserAuth])
@@ -22,10 +22,14 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/")
       }
 
       try {
-        const application = await applicationService.getApplicationById(
-          auth.user.id,
-          id,
-        );
+        // Initialize services
+        const services = await createServices();
+
+        const application =
+          await services.applicationService.getApplicationById(
+            auth.user.id,
+            id,
+          );
 
         if (!application) {
           return createErrorResponse("Application not found", 404);
@@ -62,6 +66,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/")
       }
 
       try {
+        // Initialize services
+        const services = await createServices();
+
         const body = await request.json();
 
         // Validate that we're only updating status date fields
@@ -83,7 +90,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/$id/")
         }
 
         const updatedApplication =
-          await applicationService.updateApplicationWithStatusCalculation(
+          await services.applicationService.updateApplicationWithStatusCalculation(
             auth.user.id,
             id,
             body,

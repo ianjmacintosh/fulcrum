@@ -1,29 +1,38 @@
 import { createServerFileRoute } from "@tanstack/react-start/server";
-import { applicationService } from "../../../db/services/applications";
-import { workflowService } from "../../../db/services/workflows";
-import { jobBoardService } from "../../../db/services/job-boards";
 import {
   createSuccessResponse,
   createErrorResponse,
 } from "../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../middleware/auth";
+import { createServices } from "../../../services/factory";
 import { z } from "zod";
 
-// Schema for application creation validation
+/**
+ * Schema for application creation validation
+ *
+ * Fields are validated differently based on whether they are encrypted:
+ * - Encrypted fields: Basic presence/structure validation only (client handles content validation)
+ * - Non-encrypted fields: Full validation (enums, formats, etc.)
+ *
+ * Encrypted fields: companyName, roleName, jobPostingUrl, notes, appliedDate, createdAt, updatedAt
+ * Non-encrypted fields: jobBoard, applicationType, roleType, locationType
+ */
 const CreateApplicationSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  roleName: z.string().min(1, "Job title is required"),
-  jobPostingUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
-  appliedDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format")
-    .optional()
-    .or(z.literal("")),
+  // Encrypted fields - validate structure only, not content
+  companyName: z.string().min(1, "companyName is required"),
+  roleName: z.string().min(1, "roleName is required"),
+  jobPostingUrl: z.string().optional().or(z.literal("")), // Encrypted - no URL validation
+  appliedDate: z.string().optional().or(z.literal("")), // Encrypted - no date format validation
+  notes: z.string().optional().or(z.literal("")), // Encrypted - basic string validation
+  createdAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
+  updatedAt: z.string().optional().or(z.literal("")), // Encrypted timestamp from client
+  events: z.string().optional().or(z.literal("")), // JSON string of encrypted events array
+
+  // Non-encrypted fields - full validation
   jobBoard: z.string().optional().or(z.literal("")),
   applicationType: z.enum(["cold", "warm"]).optional(),
   roleType: z.enum(["manager", "engineer"]).optional(),
   locationType: z.enum(["on-site", "hybrid", "remote"]).optional(),
-  notes: z.string().optional().or(z.literal("")),
 });
 
 // Schema for bulk application creation
@@ -42,6 +51,8 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
       const userId = auth.user.id;
 
       try {
+        // Initialize services
+        const services = await createServices();
         // Parse form data
         const formData = await request.formData();
 
@@ -80,10 +91,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               BulkCreateApplicationSchema.safeParse(parsedApplications);
 
             if (!bulkValidation.success) {
-              return createErrorResponse(
-                bulkValidation.error.issues[0].message,
-                400,
-              );
+              const issue = bulkValidation.error.issues[0];
+              const fieldName =
+                issue.path.length > 0 ? issue.path.join(".") : "unknown field";
+              return createErrorResponse(`${fieldName}: ${issue.message}`, 400);
             }
 
             bulkValidatedData = bulkValidation.data;
@@ -101,6 +112,10 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
           const roleType = formData.get("roleType") as string;
           const locationType = formData.get("locationType") as string;
           const notes = formData.get("notes") as string;
+          // Extract encrypted timestamps from ServicesProvider (if present)
+          const createdAt = formData.get("createdAt") as string;
+          const updatedAt = formData.get("updatedAt") as string;
+          const eventsJson = formData.get("events") as string;
 
           // Validate input
           const validation = CreateApplicationSchema.safeParse({
@@ -113,21 +128,28 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             roleType,
             locationType,
             notes,
+            createdAt,
+            updatedAt,
+            events: eventsJson,
           });
 
           if (!validation.success) {
-            return createErrorResponse(validation.error.issues[0].message, 400);
+            const issue = validation.error.issues[0];
+            const fieldName =
+              issue.path.length > 0 ? issue.path.join(".") : "unknown field";
+            return createErrorResponse(`${fieldName}: ${issue.message}`, 400);
           }
 
           validatedData = validation.data;
         }
 
         // Get default workflow and status for user (shared for both single and bulk)
-        let defaultWorkflow = await workflowService.getDefaultWorkflow(userId);
+        let defaultWorkflow =
+          await services.workflowService.getDefaultWorkflow(userId);
 
         if (!defaultWorkflow) {
           // Create a basic default workflow if none exists
-          defaultWorkflow = await workflowService.createWorkflow({
+          defaultWorkflow = await services.workflowService.createWorkflow({
             userId,
             name: "Default Workflow",
             description: "Default application workflow",
@@ -146,15 +168,17 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
         if (isBulkOperation) {
           // Handle bulk creation using optimized batch operations
           // Get unique job board names for batch processing
-          const uniqueJobBoardNames = applicationService.getUniqueJobBoards(
-            bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
-          );
+          const uniqueJobBoardNames =
+            services.applicationService.getUniqueJobBoards(
+              bulkValidatedData.map((app) => ({ jobBoard: app.jobBoard })),
+            );
 
           // Batch get/create all job boards at once
-          const jobBoardsMap = await jobBoardService.getOrCreateJobBoardsBatch(
-            userId,
-            uniqueJobBoardNames,
-          );
+          const jobBoardsMap =
+            await services.jobBoardService.getOrCreateJobBoardsBatch(
+              userId,
+              uniqueJobBoardNames,
+            );
 
           // Prepare all applications for batch creation
           const applicationsToCreate = bulkValidatedData.map((appData) => {
@@ -168,7 +192,24 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             const hasAppliedDate =
               appData.appliedDate && appData.appliedDate.trim() !== "";
 
-            return {
+            // Parse events from JSON string if provided
+            let appEvents: any[] = [];
+            if (appData.events && appData.events.trim() !== "") {
+              try {
+                appEvents = JSON.parse(appData.events);
+                if (!Array.isArray(appEvents)) {
+                  appEvents = [];
+                }
+              } catch {
+                appEvents = [];
+              }
+            }
+
+            // For bulk operations (CSV import), timestamps are optional
+            // They will be generated server-side if not provided
+            const hasTimestamps = appData.createdAt && appData.updatedAt;
+
+            const applicationData: any = {
               userId,
               companyName: appData.companyName,
               roleName: appData.roleName,
@@ -184,27 +225,29 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
               applicationType: applicationType as "cold" | "warm",
               roleType: roleType as "manager" | "engineer",
               locationType: locationType as "on-site" | "hybrid" | "remote",
-              events: hasAppliedDate
-                ? [
-                    {
-                      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                      title: "Application submitted",
-                      description: appData.notes || "Applied to position",
-                      date: appData.appliedDate!,
-                    },
-                  ]
-                : [],
+              // Use events from client (encrypted events array)
+              events: appEvents,
               appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
               notes: appData.notes || undefined,
-              currentStatus: applicationService.calculateCurrentStatus({
-                appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
-              }),
+              currentStatus: services.applicationService.calculateCurrentStatus(
+                {
+                  appliedDate: hasAppliedDate ? appData.appliedDate : undefined,
+                },
+              ),
             };
+
+            // Add timestamps if provided (encrypted from client)
+            if (hasTimestamps) {
+              applicationData.createdAt = appData.createdAt;
+              applicationData.updatedAt = appData.updatedAt;
+            }
+
+            return applicationData;
           });
 
           // Batch create all applications at once
           const createdApplications =
-            await applicationService.createApplicationsBatch(
+            await services.applicationService.createApplicationsBatch(
               applicationsToCreate,
             );
 
@@ -234,10 +277,11 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
 
           // Get or create job board - use default if not provided
           const jobBoardName = validatedData.jobBoard || "General";
-          const jobBoardRecord = await jobBoardService.getOrCreateJobBoard(
-            userId,
-            jobBoardName,
-          );
+          const jobBoardRecord =
+            await services.jobBoardService.getOrCreateJobBoard(
+              userId,
+              jobBoardName,
+            );
 
           // Set defaults for optional fields
           const applicationType = validatedData.applicationType || "cold";
@@ -247,7 +291,35 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             validatedData.appliedDate &&
             validatedData.appliedDate.trim() !== "";
 
-          // Create application data without currentStatus first
+          // Check if this is a legacy form submission (no encrypted timestamps)
+          const hasEncryptedTimestamps =
+            validatedData.createdAt &&
+            validatedData.createdAt.trim() !== "" &&
+            validatedData.updatedAt &&
+            validatedData.updatedAt.trim() !== "";
+
+          // Require encrypted timestamps for security
+          if (!hasEncryptedTimestamps) {
+            return createErrorResponse(
+              "Encrypted timestamps are required for security. Please ensure your client provides encrypted createdAt and updatedAt fields.",
+              400,
+            );
+          }
+
+          // Parse encrypted events from client if provided
+          let clientEvents: any[] = [];
+          if (validatedData.events && validatedData.events.trim() !== "") {
+            try {
+              clientEvents = JSON.parse(validatedData.events);
+              if (!Array.isArray(clientEvents)) {
+                return createErrorResponse("Events must be an array", 400);
+              }
+            } catch {
+              return createErrorResponse("Invalid events JSON format", 400);
+            }
+          }
+
+          // Create application data - timestamps are required and validated by schema
           const applicationData = {
             userId,
             companyName: validatedData.companyName,
@@ -264,19 +336,14 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
             applicationType: applicationType as "cold" | "warm",
             roleType: roleType as "manager" | "engineer",
             locationType: locationType as "on-site" | "hybrid" | "remote",
-            events: hasAppliedDate
-              ? [
-                  {
-                    id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    title: "Application submitted",
-                    description: validatedData.notes || "Applied to position",
-                    date: validatedData.appliedDate!,
-                  },
-                ]
-              : [],
+            // Use events from client (encrypted events array)
+            events: clientEvents,
             appliedDate: hasAppliedDate ? validatedData.appliedDate : undefined,
             notes: validatedData.notes || undefined,
-            currentStatus: applicationService.calculateCurrentStatus({
+            // Always include encrypted timestamps from client - server cannot generate them
+            createdAt: validatedData.createdAt, // Required encrypted timestamp from client
+            updatedAt: validatedData.updatedAt, // Required encrypted timestamp from client
+            currentStatus: services.applicationService.calculateCurrentStatus({
               appliedDate: hasAppliedDate
                 ? validatedData.appliedDate
                 : undefined,
@@ -285,7 +352,9 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
 
           // Create the job application
           const application =
-            await applicationService.createApplication(applicationData);
+            await services.applicationService.createApplication(
+              applicationData,
+            );
 
           return createSuccessResponse(
             {
@@ -295,6 +364,7 @@ export const ServerRoute = createServerFileRoute("/api/applications/create")
                 roleName: application.roleName,
                 currentStatus: application.currentStatus,
                 createdAt: application.createdAt,
+                updatedAt: application.updatedAt,
               },
             },
             201,

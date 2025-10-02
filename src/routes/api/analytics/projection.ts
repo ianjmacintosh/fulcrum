@@ -4,7 +4,8 @@ import {
   createErrorResponse,
 } from "../../../utils/auth-helpers";
 import { requireUserAuth } from "../../../middleware/auth";
-import { analyticsService } from "../../../db/services/analytics";
+import { createServices } from "../../../services/factory";
+import { AnalyticsService } from "../../../db/services/analytics";
 
 export const ServerRoute = createServerFileRoute("/api/analytics/projection")
   .middleware([requireUserAuth])
@@ -22,6 +23,10 @@ export const ServerRoute = createServerFileRoute("/api/analytics/projection")
         console.log(
           "Analytics API: Fetching projection data for userId:",
           userId,
+        );
+        const services = await createServices();
+        const analyticsService = new AnalyticsService(
+          services.applicationService,
         );
         const projectionData = await analyticsService.getJobProjection(userId);
 

@@ -1,43 +1,29 @@
+import React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireUserAuth } from "../../utils/route-guards";
 import { JobApplicationCardsList } from "../../components/JobApplicationCardsList";
+import { useApplications } from "../../contexts/ApplicationsContext";
 import "./index.css";
 
 export const Route = createFileRoute("/applications/")({
   beforeLoad: requireUserAuth,
-  loader: async () => {
-    // On server-side, skip loading data if user is not authenticated
-    // Client will reload once auth context is available
-    if (typeof window === "undefined") {
-      return { applications: [] };
-    }
-
-    try {
-      const response = await fetch("/api/applications/", {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch applications");
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error("Applications API returned error");
-      }
-
-      return { applications: result.applications };
-    } catch (error) {
-      console.error("Applications loader error:", error);
-      throw error;
-    }
-  },
   component: Applications,
 });
 
 function Applications() {
-  const { applications } = Route.useLoaderData();
+  const { applications, isLoading, error, decryptionError } = useApplications();
+
+  if (error) {
+    return (
+      <div className="page">
+        <div className="page-content">
+          <div className="error-message">
+            Failed to load applications: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
@@ -49,59 +35,69 @@ function Applications() {
       </header>
 
       <main className="page-content">
-        <section className="applications-summary">
-          <div className="summary-stats">
-            <div className="summary-stat">
-              <span className="summary-label">Total Applications</span>
-              <span className="summary-value">{applications.length}</span>
-            </div>
-            <div className="summary-stat">
-              <span className="summary-label">Open Applications</span>
-              <span className="summary-value">
-                {
-                  applications.filter(
-                    (app: any) =>
-                      !["rejected", "declined", "withdrawn"].includes(
-                        app.currentStatus.id.toLowerCase(),
-                      ),
-                  ).length
-                }
-              </span>
-            </div>
-            <div className="summary-stat">
-              <span className="summary-label">Closed/Rejected</span>
-              <span className="summary-value">
-                {
-                  applications.filter((app: any) =>
-                    ["rejected", "declined", "withdrawn"].includes(
-                      app.currentStatus.id.toLowerCase(),
-                    ),
-                  ).length
-                }
-              </span>
-            </div>
-          </div>
-        </section>
+        {decryptionError && (
+          <div className="error-message">{decryptionError}</div>
+        )}
 
-        <section className="add-application">
-          <Link to="/applications/new" className="add-button">
-            + Add New Application
-          </Link>
-          <Link to="/applications/import" className="import-button">
-            Import from CSV
-          </Link>
-        </section>
+        {isLoading ? (
+          <div className="loading-message">Loading applications...</div>
+        ) : (
+          <>
+            <section className="applications-summary">
+              <div className="summary-stats">
+                <div className="summary-stat">
+                  <span className="summary-label">Total Applications</span>
+                  <span className="summary-value">{applications.length}</span>
+                </div>
+                <div className="summary-stat">
+                  <span className="summary-label">Open Applications</span>
+                  <span className="summary-value">
+                    {
+                      applications.filter(
+                        (app: any) =>
+                          !["rejected", "declined", "withdrawn"].includes(
+                            app.currentStatus.id.toLowerCase(),
+                          ),
+                      ).length
+                    }
+                  </span>
+                </div>
+                <div className="summary-stat">
+                  <span className="summary-label">Closed/Rejected</span>
+                  <span className="summary-value">
+                    {
+                      applications.filter((app: any) =>
+                        ["rejected", "declined", "withdrawn"].includes(
+                          app.currentStatus.id.toLowerCase(),
+                        ),
+                      ).length
+                    }
+                  </span>
+                </div>
+              </div>
+            </section>
 
-        <JobApplicationCardsList applications={applications} />
+            <section className="add-application">
+              <Link to="/applications/new" className="add-button">
+                + Add New Application
+              </Link>
+              <Link to="/applications/import" className="import-button">
+                Import from CSV
+              </Link>
+            </section>
 
-        <section className="add-application">
-          <Link to="/applications/new" className="add-button">
-            + Add New Application
-          </Link>
-          <Link to="/applications/import" className="import-button">
-            Import from CSV
-          </Link>
-        </section>
+            <JobApplicationCardsList applications={applications} />
+
+            <section className="add-application">
+              <Link to="/applications/new" className="add-button">
+                + Add New Application
+              </Link>
+              <Link to="/applications/import" className="import-button">
+                Import from CSV
+              </Link>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

@@ -51,7 +51,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       testApplication._id!.toString(),
     );
     expect(application).toBeTruthy();
-    expect(application?.events).toHaveLength(1);
+    expect(application?.events).toHaveLength(2); // Auto-created "Application created" event + 1 client event
 
     // Step 2: Get available statuses (simulating GET /api/application-statuses)
     const statuses =
@@ -90,7 +90,7 @@ describe("Event Recording Unit Tests - New Architecture", () => {
 
     // Step 4: Verify the update was successful
     expect(updatedApplication).toBeTruthy();
-    expect(updatedApplication?.events).toHaveLength(2);
+    expect(updatedApplication?.events).toHaveLength(3); // Auto-created "Application created" event + 1 existing + 1 new event
 
     // Step 5: Fetch the updated application to verify persistence
     const refreshedApplication =
@@ -99,16 +99,17 @@ describe("Event Recording Unit Tests - New Architecture", () => {
         testApplication._id!.toString(),
       );
 
-    expect(refreshedApplication?.events).toHaveLength(2);
+    expect(refreshedApplication?.events).toHaveLength(3);
 
     // Verify events are sorted chronologically
     const sortedEvents = [...refreshedApplication!.events].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].title).toBe("Application submitted");
-    expect(sortedEvents[1].title).toBe("Phone screen scheduled");
-    expect(sortedEvents[1].description).toBe(
+    expect(sortedEvents[0].title).toBe("Application created"); // Auto-created first (earliest date)
+    expect(sortedEvents[1].title).toBe("Application submitted"); // Original client event
+    expect(sortedEvents[2].title).toBe("Phone screen scheduled");
+    expect(sortedEvents[2].description).toBe(
       "Phone screen scheduled for next week",
     );
   });
@@ -145,17 +146,18 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       },
     );
 
-    expect(updatedApplication?.events).toHaveLength(4); // 1 initial + 3 new
+    expect(updatedApplication?.events).toHaveLength(5); // Auto-created "Application created" event + 1 existing + 3 new events
 
     // Verify chronological order
     const sortedEvents = [...updatedApplication!.events].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
-    expect(sortedEvents[0].title).toBe("Application submitted"); // 2025-01-15
-    expect(sortedEvents[1].title).toBe("Phone screen completed"); // 2025-01-25
-    expect(sortedEvents[2].title).toBe("Interview scheduled"); // 2025-02-01
-    expect(sortedEvents[3].title).toBe("Interview completed"); // 2025-02-05
+    expect(sortedEvents[0].title).toBe("Application created"); // Auto-created first (earliest date)
+    expect(sortedEvents[1].title).toBe("Application submitted"); // Original client event (2025-01-15)
+    expect(sortedEvents[2].title).toBe("Phone screen completed"); // 2025-01-25
+    expect(sortedEvents[3].title).toBe("Interview scheduled"); // 2025-02-01
+    expect(sortedEvents[4].title).toBe("Interview completed"); // 2025-02-05
   });
 
   it("should handle terminal status events correctly", async () => {
@@ -215,8 +217,8 @@ describe("Event Recording Unit Tests - New Architecture", () => {
       },
     );
 
-    expect(updatedApplication?.events).toHaveLength(2);
-    expect(updatedApplication?.events[1].title).toBe("Phone screen scheduled");
+    expect(updatedApplication?.events).toHaveLength(3); // Auto-created "Application created" event + 1 existing + 1 new event
+    expect(updatedApplication?.events[2].title).toBe("Phone screen scheduled"); // Now at index 2 (after creation and existing events)
     expect(updatedApplication?.phoneScreenDate).toBe("2025-01-20");
   });
 
